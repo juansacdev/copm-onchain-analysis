@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.local
+.DS_Store
+
+# scan progress + caches that get regenerated
+scan-progress.json
+block-samples.json

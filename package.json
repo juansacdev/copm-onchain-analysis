@@ -1,0 +1,37 @@
+{
+  "name": "copm-onchain-analysis",
+  "version": "1.0.0",
+  "description": "Reproducible on-chain audit of Minteo's COPM (Colombian peso stablecoin) on Polygon. Scans every Transfer event directly from the contract via RPC.",
+  "type": "module",
+  "scripts": {
+    "discover": "node --env-file=.env 01-discover.js",
+    "scan": "node --env-file=.env 02-scan.js",
+    "scan:fresh": "node --env-file=.env 02-scan.js --fresh",
+    "timestamps": "node --env-file=.env 03-resolve-timestamps.js",
+    "aggregate": "node --env-file=.env 04-aggregate.js",
+    "charts": "node --env-file=.env 05-charts.js",
+    "audit": "npm run discover && npm run scan:fresh && npm run timestamps && npm run aggregate && npm run charts"
+  },
+  "keywords": [
+    "blockchain",
+    "stablecoin",
+    "polygon",
+    "minteo",
+    "copm",
+    "on-chain",
+    "audit",
+    "viem"
+  ],
+  "author": "Juan Sebastián Agudelo <juansac.me@gmail.com> (https://github.com/juansacdev)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/juansacdev/copm-onchain-analysis.git"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "dependencies": {
+    "viem": "^2.48.8"
+  }
+}

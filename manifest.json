@@ -1,0 +1,12 @@
+{
+  "address": "0x12050c705152931cFEe3DD56c52Fb09Dea816C23",
+  "name": "COP Minteo",
+  "symbol": "COPM",
+  "decimals": 18,
+  "currentTotalSupplyRaw": "8970288483754852048213337676",
+  "currentTotalSupplyTokens": 8970288483.754852,
+  "deployBlock": "47747145",
+  "deployTimestamp": "2023-09-19T22:41:52.000Z",
+  "latestBlockAtRun": "86370123",
+  "latestBlockTimestamp": "2026-05-04T02:04:54.014Z"
+}
