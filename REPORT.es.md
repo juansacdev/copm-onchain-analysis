@@ -34,28 +34,6 @@ tags:
 
 ---
 
-## Visualizaciones
-
-### Volumen mensual bruto (USD)
-![Volumen mensual](charts/04-monthly-volume-usd.svg)
-
-### Transferencias diarias
-![Transferencias diarias](charts/01-daily-transfers.svg)
-
-### Volumen diario bruto (USD)
-![Volumen diario USD](charts/02-daily-volume-usd.svg)
-
-### Supply circulante a través del tiempo
-![Supply over time](charts/03-supply-over-time.svg)
-
-### Top 10 días por volumen
-![Top 10 días](charts/05-top10-volume-days.svg)
-
-### Mints vs Burns (mensual)
-![Mints vs Burns](charts/06-monthly-mints-burns.svg)
-
----
-
 ## Respuestas a las preguntas
 
 ### 1️⃣ ¿Cuál ha sido el promedio de tokens en los últimos ~2 años?
@@ -65,6 +43,8 @@ tags:
 Este número es bajo respecto al supply actual (10.28B COPM) porque la serie incluye los primeros ~16 meses (sept 2023 – ene 2025) en los que el supply estuvo entre 0 y unos pocos millones. La curva crece exponencialmente desde inicios de 2025.
 
 Si lo que buscas es el promedio "en operación" (excluyendo el periodo de testing pre-lanzamiento), el promedio del **último año** es de aproximadamente **8–10B COPM** (≈ $2.0–2.5M USD).
+
+![Supply circulante a través del tiempo](charts/03-supply-over-time.svg)
 
 ### 2️⃣ ¿Cuál ha sido el valor total de dinero movido on-chain?
 
@@ -77,11 +57,15 @@ Si lo que buscas es el promedio "en operación" (excluyendo el periodo de testin
 
 > El bruto incluye absolutamente todo movimiento on-chain. El neto refleja mejor el "dinero realmente moviéndose entre usuarios", filtrando los eventos de creación/destrucción de tokens.
 
+![Volumen diario bruto USD](charts/02-daily-volume-usd.svg)
+
 ### 3️⃣ ¿Cuántas han sido el máximo de transacciones en un día?
 
 **2,597 transacciones el 24 de noviembre de 2025.**
 
 Ese mismo día también fue el pico histórico de **volumen** ($38.6M USD movidos en 24 horas).
+
+![Transferencias diarias](charts/01-daily-transfers.svg)
 
 ---
 
@@ -115,6 +99,8 @@ Ese mismo día también fue el pico histórico de **volumen** ($38.6M USD movido
 | 2025-08-15 | $21.9M | 796 |
 | 2025-11-25 | $21.8M | 2,404 |
 
+![Top 10 días por volumen bruto](charts/05-top10-volume-days.svg)
+
 ## Hitos del ramp-up
 
 | Hito | Fecha |
@@ -147,6 +133,8 @@ En **noviembre 2025 el volumen bruto fue de $296M USD** — confirma e incluso s
 
 Vale la pena investigar qué pasó internamente en noviembre 2025 — esa concentración de actividad no es ruido aleatorio.
 
+![Volumen mensual bruto USD](charts/04-monthly-volume-usd.svg)
+
 ### 2. El 24 de noviembre de 2025 fue un día genuinamente excepcional.
 
 **2,597 txns en un día y $38.6M de volumen en el mismo día** — ambos picos coinciden. Las cifras del top 10 muestran que **9 de los 10 días con más transacciones ocurrieron entre octubre y noviembre 2025**, lo cual sugiere una causa estructural (lanzamiento de un partner grande, una campaña, o integración con un payroll/payout pipeline). Vale identificar qué fue para entender si es replicable o un outlier.
@@ -176,6 +164,8 @@ Para comparar: USDT/USDC tienen velocidades on-chain del orden de 10–20x al a�
 - **Diferencia neta:** +10.3B COPM (= supply actual)
 
 Los burns son casi tan grandes como los mints (99%), lo cual indica un flujo activo de redención (usuarios convirtiendo COPM → COP fiat). Si los burns hubieran sido muy bajos relativos a los mints, sería señal de "tokens emitidos pero no redimibles" → red flag de estabilidad. El balance actual es señal de un peg sano y operación bidireccional fluida.
+
+![Mints vs Burns mensual](charts/06-monthly-mints-burns.svg)
 
 ### 6. La distribución temporal de la actividad es extremadamente sesgada hacia 2025.
 

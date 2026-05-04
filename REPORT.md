@@ -36,28 +36,6 @@ related:
 
 ---
 
-## Visualizations
-
-### Monthly gross volume (USD)
-![Monthly volume](charts/04-monthly-volume-usd.svg)
-
-### Daily transfers
-![Daily transfers](charts/01-daily-transfers.svg)
-
-### Daily gross volume (USD)
-![Daily volume USD](charts/02-daily-volume-usd.svg)
-
-### Circulating supply over time
-![Supply over time](charts/03-supply-over-time.svg)
-
-### Top 10 days by volume
-![Top 10 days](charts/05-top10-volume-days.svg)
-
-### Mints vs Burns (monthly)
-![Mints vs Burns](charts/06-monthly-mints-burns.svg)
-
----
-
 ## Headline answers
 
 ### 1️⃣ What has the average token supply been over ~2 years?
@@ -67,6 +45,8 @@ related:
 This is low compared to the current supply (10.28B COPM) because the series includes the first ~16 months (Sept 2023 – Jan 2025) when supply was between 0 and a few million. The curve grows exponentially from early 2025 onward.
 
 If you only want the "operational" average (excluding the pre-launch testing period), the average over the **last year** is approximately **8–10B COPM** (≈ $2.0–2.5M USD).
+
+![Circulating supply over time](charts/03-supply-over-time.svg)
 
 ### 2️⃣ What is the total dollar value moved on-chain?
 
@@ -79,11 +59,15 @@ If you only want the "operational" average (excluding the pre-launch testing per
 
 > Gross includes every on-chain movement. Net better reflects "money actually moving between users" by filtering token creation/destruction events.
 
+![Daily gross volume USD](charts/02-daily-volume-usd.svg)
+
 ### 3️⃣ What is the maximum number of transactions in one day?
 
 **2,597 transactions on November 24, 2025.**
 
 That same day was also the all-time **volume** peak ($38.6M USD moved in 24 hours).
+
+![Daily transfers](charts/01-daily-transfers.svg)
 
 ---
 
@@ -117,6 +101,8 @@ That same day was also the all-time **volume** peak ($38.6M USD moved in 24 hour
 | 2025-08-15 | $21.9M | 796 |
 | 2025-11-25 | $21.8M | 2,404 |
 
+![Top 10 days by gross volume](charts/05-top10-volume-days.svg)
+
 ## Ramp-up milestones
 
 | Milestone | Date |
@@ -149,6 +135,8 @@ In **November 2025 the gross volume reached $296M USD** — confirming and even 
 
 Worth investigating internally what happened in November 2025 — that activity concentration is not random noise.
 
+![Monthly gross volume USD](charts/04-monthly-volume-usd.svg)
+
 ### 2. November 24, 2025 was a genuinely exceptional day.
 
 **2,597 txns in one day and $38.6M of volume on the same day** — both peaks coincide. The top-10 figures show that **9 of the 10 highest-transaction days happened between October and November 2025**, suggesting a structural cause (a major partner launch, a campaign, or a payroll/payout pipeline integration). Worth identifying what it was to determine if it's replicable or an outlier.
@@ -178,6 +166,8 @@ For reference: USDT/USDC have on-chain velocities on the order of 10–20x per y
 - **Net difference:** +10.3B COPM (= current supply)
 
 Burns are nearly as large as mints (99%), indicating an active redemption flow (users converting COPM → fiat COP). If burns were much smaller relative to mints, that would be a "tokens issued but not redeemable" red flag for stability. The current balance is a sign of a healthy peg with fluid bidirectional operation.
+
+![Monthly mints vs burns](charts/06-monthly-mints-burns.svg)
 
 ### 6. The temporal distribution of activity is heavily skewed toward 2025.
 
