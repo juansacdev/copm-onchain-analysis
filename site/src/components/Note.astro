@@ -1,0 +1,11 @@
+---
+interface Props {
+  variant?: 'green' | 'gold';
+}
+
+const { variant } = Astro.props;
+---
+
+<aside class:list={['note', variant]}>
+  <p><slot /></p>
+</aside>

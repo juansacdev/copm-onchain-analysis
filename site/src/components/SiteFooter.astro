@@ -1,0 +1,18 @@
+---
+interface Props {
+  navLabel: string;
+  links: { href: string; text: string }[];
+  credit: string;
+}
+
+const { navLabel, links, credit } = Astro.props;
+---
+
+<footer class="site">
+  <nav class="links" aria-label={navLabel}>
+    {links.map((link) => (
+      <a href={link.href} target="_blank" rel="noopener noreferrer">{link.text}</a>
+    ))}
+  </nav>
+  <p class="credit">{credit}</p>
+</footer>

@@ -1,0 +1,15 @@
+{
+  "name": "copm-onchain-analysis-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Storytelling site for the COPM on-chain audit, in Spanish and English.",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.0.0"
+  }
+}

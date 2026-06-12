@@ -1,0 +1,24 @@
+---
+interface Props {
+  eyebrow: string;
+  stats: { value: string; label: string }[];
+  scrollHint: string;
+}
+
+const { eyebrow, stats, scrollHint } = Astro.props;
+---
+
+<header class="hero">
+  <p class="eyebrow"><span class="dot-p" aria-hidden="true"></span> Polygon · Celo <span class="dot-c" aria-hidden="true"></span> {eyebrow}</p>
+  <h1><slot name="title" /></h1>
+  <p class="sub"><slot name="sub" /></p>
+  <dl class="hero-stats">
+    {stats.map((stat) => (
+      <div class="stat-chip">
+        <dt class="k">{stat.label}</dt>
+        <dd class="v">{stat.value}</dd>
+      </div>
+    ))}
+  </dl>
+  <span class="scroll-hint" aria-hidden="true">{scrollHint}</span>
+</header>

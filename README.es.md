@@ -6,7 +6,7 @@
 
 | | |
 | :--- | :--- |
-| 📖 **[La historia en una página (HTML)](./index.html)** | El storytelling para todo público — ábrelo en el navegador |
+| 📖 **[La historia como sitio web](https://copm.juansac.dev/)** | El storytelling para todo público — sitio Astro bilingüe (ES/EN), código en [`site/`](./site) |
 | 📊 **[Auditoría unificada (Polygon + Celo)](./AUDIT.es.md)** | La vista consolidada, lado a lado |
 | 🟣 **[Auditoría de Polygon](./audit/polygon.es.md)** | $2.03B movidos en 2.7 años |
 | 🟢 **[Auditoría de Celo](./audit/celo.es.md)** | 120,900 pagos con ticket promedio de $96 |
@@ -90,6 +90,7 @@ Cada corrida es completa e idempotente: escanea desde el deploy block hasta `lat
 │   └── validation.json           # resultado de los 12 checks
 ├── charts/<chain>/               # 6 SVGs por chain
 ├── charts/combined/              # 4 SVGs comparativos
+├── site/                         # sitio web del storytelling (Astro, ES + EN)
 └── 0*.js                         # el pipeline
 ```
 
