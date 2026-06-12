@@ -25,6 +25,7 @@
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; scroll-padding-top: 4rem; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0; background: var(--bg); color: var(--text);
     font-family: var(--sans); font-size: 1.0625rem; line-height: 1.7;
@@ -39,9 +40,28 @@
   #progress { position: fixed; top: 0; left: 0; height: 3px; width: 0;
     background: linear-gradient(90deg, var(--polygon), var(--celo)); z-index: 50; transition: width .1s linear; }
 
+  /* navegación lateral de capítulos */
+  #sidenav {
+    position: fixed; left: 1.75rem; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: .35rem; z-index: 40;
+  }
+  #sidenav a {
+    display: flex; align-items: center; gap: .6rem;
+    color: var(--faint); text-decoration: none; font-size: .78rem;
+    padding: .25rem .5rem; border-radius: 8px; border-left: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+  }
+  #sidenav a .num { font-family: var(--mono); font-size: .68rem; opacity: .7; }
+  #sidenav a:hover { color: var(--text); background: rgba(255,255,255,.03); }
+  #sidenav a.active {
+    color: var(--text); border-left-color: var(--celo);
+    background: rgba(53,208,127,.06);
+  }
+  @media (max-width: 1240px) { #sidenav { display: none; } }
+
   /* hero */
   .hero {
-    min-height: 88vh; display: flex; flex-direction: column; justify-content: center;
+    min-height: 100svh; display: flex; flex-direction: column; justify-content: center;
     padding: 5rem 1.5rem 4rem; text-align: center; position: relative; overflow: hidden;
     background:
       radial-gradient(700px 360px at 18% 8%, rgba(154,107,255,.16), transparent 60%),
@@ -169,10 +189,22 @@
 <body>
 <div id="progress"></div>
 
+<nav id="sidenav" aria-label="Capítulos">
+  <a href="#problema"><span class="num">01</span> El problema</a>
+  <a href="#copm"><span class="num">02</span> Qué es COPM</a>
+  <a href="#metodo"><span class="num">03</span> El método</a>
+  <a href="#polygon"><span class="num">04</span> Polygon</a>
+  <a href="#celo"><span class="num">05</span> Celo</a>
+  <a href="#duo"><span class="num">06</span> La síntesis</a>
+  <a href="#confianza"><span class="num">07</span> La confianza</a>
+  <a href="#prensa"><span class="num">08</span> En los medios</a>
+  <a href="#glosario"><span class="num">A</span> Glosario</a>
+</nav>
+
 <header class="hero">
   <span class="eyebrow"><span class="dot-p"></span> Polygon · Celo <span class="dot-c"></span> Auditoría y análisis on-chain</span>
   <h1>La stablecoin colombiana<br>que ha movido<br><span class="big">US$2,046 millones</span></h1>
-  <p class="sub">Hice parte del equipo que la construyó. No puedo mostrarte el código — pero la blockchain es pública, así que audité cada movimiento que hizo. Esta es la historia, contada con datos que tú mismo puedes verificar.</p>
+  <p class="sub">Hice parte del equipo que la construyó. No puedo mostrarte el código, pero la blockchain es pública: audité cada movimiento que hizo. Esta es la historia, contada con datos que tú mismo puedes verificar.</p>
   <div class="hero-stats">
     <div class="stat-chip"><span class="v">317,696</span><span class="k">eventos auditados</span></div>
     <div class="stat-chip"><span class="v">~US$2.05B</span><span class="k">volumen bruto</span></div>
@@ -448,6 +480,26 @@ npm install && npm run audit:all</div>
       });
     }, { rootMargin: '0px 0px -10% 0px' });
     document.querySelectorAll('.reveal').forEach(function (el) { obs.observe(el); });
+  })();
+
+  // scrollspy de la navegación lateral
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#sidenav a'));
+    if (!links.length) return;
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && map[e.target.id]) {
+          links.forEach(function (l) { l.classList.remove('active'); });
+          map[e.target.id].classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    Object.keys(map).forEach(function (id) {
+      var sec = document.getElementById(id);
+      if (sec) spy.observe(sec);
+    });
   })();
 </script>
 </body>
