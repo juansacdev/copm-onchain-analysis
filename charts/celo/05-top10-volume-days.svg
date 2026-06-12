@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="500" viewBox="0 0 1080 500" role="img" aria-label="COPM — Top 10 Days by Gross Volume">
   <style>
-    .title { font: 600 19px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #e6edf3; }
-    .subtitle { font: 400 12.5px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #7d8590; }
-    .axis { font: 400 11px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #8b949e; }
-    .label { font: 500 12px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #e6edf3; }
-    .annot { font: 600 11.5px -apple-system, 'Segoe UI', system-ui, sans-serif; }
-    .badge { font: 600 11.5px -apple-system, 'Segoe UI', system-ui, sans-serif; }
-    .footer { font: 400 10.5px ui-monospace, 'SF Mono', Menlo, monospace; fill: #7d8590; }
+    .title { font: 600 22px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #e6edf3; }
+    .subtitle { font: 400 14px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #7d8590; }
+    .axis { font: 400 13px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #8b949e; }
+    .label { font: 500 14px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: #e6edf3; }
+    .annot { font: 600 13px -apple-system, 'Segoe UI', system-ui, sans-serif; }
+    .badge { font: 600 13px -apple-system, 'Segoe UI', system-ui, sans-serif; }
+    .footer { font: 400 12px ui-monospace, 'SF Mono', Menlo, monospace; fill: #7d8590; }
   </style>
   <defs></defs>
   <rect width="1080" height="500" fill="#0b0e14"/>
   <rect x="8" y="8" width="1064" height="484" rx="10" fill="#11151d" stroke="#222938" stroke-width="1"/>
   <text x="28" y="40" class="title">COPM — Top 10 Days by Gross Volume</text>
-  <rect x="1000" y="24" width="52" height="22" rx="11" fill="#35d07f22" stroke="#35d07f" stroke-width="1"/>
-  <text x="1026" y="39" class="badge" fill="#35d07f" text-anchor="middle">Celo</text>
+  <rect x="994" y="24" width="58" height="22" rx="11" fill="#35d07f22" stroke="#35d07f" stroke-width="1"/>
+  <text x="1023" y="39" class="badge" fill="#35d07f" text-anchor="middle">Celo</text>
   <text x="28" y="59" class="subtitle">Highest single-day volumes on Celo</text>
   <text x="130" y="108.69999999999999" class="label" text-anchor="end">2025-07-23</text><rect x="140" y="92.0" width="830.0" height="25.4" fill="#f0883e" fill-opacity="0.9" rx="3"/><text x="978" y="108.69999999999999" class="label">$737K</text><text x="130" y="146.10000000000002" class="label" text-anchor="end">2025-07-17</text><rect x="140" y="129.4" width="290.6" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="438.56640371127025" y="146.10000000000002" class="label">$258K</text><text x="130" y="183.50000000000003" class="label" text-anchor="end">2025-07-24</text><rect x="140" y="166.8" width="264.3" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="412.34249635067" y="183.50000000000003" class="label">$235K</text><text x="130" y="220.9" class="label" text-anchor="end">2024-10-03</text><rect x="140" y="204.2" width="228.5" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="376.5350554435212" y="220.9" class="label">$203K</text><text x="130" y="258.3" class="label" text-anchor="end">2025-07-25</text><rect x="140" y="241.6" width="218.8" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="366.8275402319348" y="258.3" class="label">$194K</text><text x="130" y="295.7" class="label" text-anchor="end">2025-12-19</text><rect x="140" y="279.0" width="198.0" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="345.97575131566896" y="295.7" class="label">$176K</text><text x="130" y="333.09999999999997" class="label" text-anchor="end">2024-12-04</text><rect x="140" y="316.4" width="176.1" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="324.1416647561516" y="333.09999999999997" class="label">$156K</text><text x="130" y="370.5" class="label" text-anchor="end">2025-07-03</text><rect x="140" y="353.8" width="171.0" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="318.9696366644038" y="370.5" class="label">$152K</text><text x="130" y="407.9" class="label" text-anchor="end">2025-11-13</text><rect x="140" y="391.2" width="168.1" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="316.1113127841196" y="407.9" class="label">$149K</text><text x="130" y="445.29999999999995" class="label" text-anchor="end">2025-02-05</text><rect x="140" y="428.6" width="144.7" height="25.4" fill="#35d07f" fill-opacity="0.9" rx="3"/><text x="292.7056690493514" y="445.29999999999995" class="label">$128K</text>
   <text x="28" y="484" class="footer">COPM 0xC92E…5606 · Celo · Transfer events up to 2026-06-12 · source: on-chain RPC scan</text>

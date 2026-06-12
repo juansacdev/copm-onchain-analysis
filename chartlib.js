@@ -85,16 +85,16 @@ function niceTicks(max, count = 5) {
 let uid = 0;
 
 function svgDoc({ width, height, title, subtitle, badge, badgeColor, footer, body, defs = "" }) {
-  const badgeW = badge ? badge.length * 7.5 + 22 : 0;
+  const badgeW = badge ? badge.length * 8.5 + 24 : 0;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}">
   <style>
-    .title { font: 600 19px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.text}; }
-    .subtitle { font: 400 12.5px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.muted}; }
-    .axis { font: 400 11px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.axis}; }
-    .label { font: 500 12px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.text}; }
-    .annot { font: 600 11.5px -apple-system, 'Segoe UI', system-ui, sans-serif; }
-    .badge { font: 600 11.5px -apple-system, 'Segoe UI', system-ui, sans-serif; }
-    .footer { font: 400 10.5px ui-monospace, 'SF Mono', Menlo, monospace; fill: ${BASE.muted}; }
+    .title { font: 600 22px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.text}; }
+    .subtitle { font: 400 14px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.muted}; }
+    .axis { font: 400 13px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.axis}; }
+    .label { font: 500 14px -apple-system, 'Segoe UI', system-ui, sans-serif; fill: ${BASE.text}; }
+    .annot { font: 600 13px -apple-system, 'Segoe UI', system-ui, sans-serif; }
+    .badge { font: 600 13px -apple-system, 'Segoe UI', system-ui, sans-serif; }
+    .footer { font: 400 12px ui-monospace, 'SF Mono', Menlo, monospace; fill: ${BASE.muted}; }
   </style>
   <defs>${defs}</defs>
   <rect width="${width}" height="${height}" fill="${BASE.bg}"/>
@@ -210,7 +210,7 @@ export function lineChart({
       const i = topIdx[0];
       const [x, y] = points[i];
       const label = `${data[i][xKey]} · ${yFormatter(data[i][yKey])}`;
-      const boxW = label.length * 6.8 + 16;
+      const boxW = label.length * 7.8 + 18;
       const lx = Math.min(Math.max(x - boxW / 2, padL), padL + W - boxW);
       const ly = Math.max(y - 38, padT + 4);
       body += `<rect x="${lx}" y="${ly}" width="${boxW}" height="22" rx="6" fill="${BASE.bg}" stroke="${BASE.warn}" stroke-width="1"/>`;
@@ -257,7 +257,7 @@ export function multiLineChart({
   for (const s of series) {
     body += `<rect x="${lx}" y="70" width="14" height="4" rx="2" fill="${s.color}"/>`;
     body += `<text x="${lx + 20}" y="76" class="label">${s.label}</text>`;
-    lx += 20 + s.label.length * 7 + 24;
+    lx += 20 + s.label.length * 8 + 26;
   }
 
   for (const s of series) {
@@ -358,7 +358,7 @@ export function groupedBarChart({
   for (const s of series) {
     body += `<rect x="${lx}" y="72" width="12" height="12" rx="3" fill="${s.color}"/>`;
     body += `<text x="${lx + 18}" y="82" class="label">${s.label}</text>`;
-    lx += 18 + s.label.length * 7 + 26;
+    lx += 18 + s.label.length * 8 + 28;
   }
 
   data.forEach((d, i) => {
@@ -445,7 +445,7 @@ export function stackedBarChart({
   for (const s of series) {
     body += `<rect x="${lx}" y="72" width="12" height="12" rx="3" fill="${s.color}"/>`;
     body += `<text x="${lx + 18}" y="82" class="label">${s.label}</text>`;
-    lx += 18 + s.label.length * 7 + 26;
+    lx += 18 + s.label.length * 8 + 28;
   }
 
   data.forEach((d, i) => {
