@@ -56,7 +56,7 @@
   }
   .eyebrow .dot-p { width: 8px; height: 8px; border-radius: 50%; background: var(--polygon); }
   .eyebrow .dot-c { width: 8px; height: 8px; border-radius: 50%; background: var(--celo); }
-  .hero h1 { font-size: clamp(2.1rem, 6vw, 3.6rem); line-height: 1.12; margin: 0 auto 1.25rem; max-width: 17ch; letter-spacing: -.02em; }
+  .hero h1 { font-size: clamp(2.1rem, 6vw, 3.6rem); line-height: 1.12; margin: 0 auto 1.25rem; letter-spacing: -.02em; }
   .hero h1 .big { background: linear-gradient(90deg, var(--polygon), var(--celo)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
   .hero .sub { color: var(--muted); max-width: 36rem; margin: 0 auto 2.5rem; font-size: 1.15rem; }
   .hero-stats { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
@@ -64,8 +64,8 @@
     border: 1px solid var(--line); background: var(--panel); border-radius: 12px;
     padding: .6rem 1.1rem; text-align: left;
   }
-  .stat-chip .v { font-family: var(--mono); font-weight: 700; font-size: 1.05rem; }
-  .stat-chip .k { font-size: .72rem; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
+  .stat-chip .v { display: block; font-family: var(--mono); font-weight: 700; font-size: 1.05rem; }
+  .stat-chip .k { display: block; font-size: .72rem; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
   .scroll-hint { position: absolute; bottom: 1.4rem; left: 50%; transform: translateX(-50%); color: var(--faint); font-size: .8rem; animation: float 2.2s ease-in-out infinite; }
   @keyframes float { 0%,100% { transform: translate(-50%,0); } 50% { transform: translate(-50%,7px); } }
   @media (prefers-reduced-motion: reduce) { .scroll-hint { animation: none; } }
@@ -171,8 +171,8 @@
 
 <header class="hero">
   <span class="eyebrow"><span class="dot-p"></span> Polygon · Celo <span class="dot-c"></span> Auditoría y análisis on-chain</span>
-  <h1>La stablecoin colombiana que ha movido <span class="big">US$2,046 millones</span></h1>
-  <p class="sub">Yo ayudé a construirla. No puedo mostrarte el código — pero la blockchain es pública, así que audité cada movimiento que hizo. Esta es la historia, contada con datos que tú mismo puedes verificar.</p>
+  <h1>La stablecoin colombiana<br>que ha movido<br><span class="big">US$2,046 millones</span></h1>
+  <p class="sub">Hice parte del equipo que la construyó. No puedo mostrarte el código — pero la blockchain es pública, así que audité cada movimiento que hizo. Esta es la historia, contada con datos que tú mismo puedes verificar.</p>
   <div class="hero-stats">
     <div class="stat-chip"><span class="v">317,696</span><span class="k">eventos auditados</span></div>
     <div class="stat-chip"><span class="v">~US$2.05B</span><span class="k">volumen bruto</span></div>
