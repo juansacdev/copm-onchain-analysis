@@ -24,8 +24,7 @@
   }
 
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: 4rem; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  html { scroll-padding-top: 4rem; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
     font-family: var(--sans); font-size: 18px; line-height: 1.7;
@@ -175,9 +174,9 @@
   @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
 
   /* footer */
-  footer { border-top: 1px solid var(--line); margin-top: 5rem; padding: 2.5rem 1.5rem 3rem; text-align: center; color: var(--muted); font-size: 16px; }
+  footer { border-top: 1px solid var(--line); margin-top: 5rem; padding: 2.5rem 1.5rem 3rem; text-align: center; color: var(--muted); font-size: 14px; }
   footer .links { display: flex; flex-wrap: wrap; gap: 1.25rem; justify-content: center; margin-bottom: 1.25rem; }
-  .repro { background: #0d1626; border: 1px solid #1f2c44; border-radius: 12px; padding: 1rem 1.25rem; font-family: var(--mono); font-size: 14px; text-align: left; overflow-x: auto; margin: 1.5rem 0; color: #d6e0f5; }
+  .repro { background: #0d1626; border: 1px solid #1f2c44; border-radius: 12px; padding: 1rem 1.25rem; font-family: var(--mono); font-size: 14px; text-align: left; white-space: pre; line-height: 1.8; overflow-x: auto; margin: 1.5rem 0; color: #d6e0f5; }
   .repro .c { color: #5b6a90; }
 
   @media (max-width: 40rem) {
@@ -482,12 +481,24 @@ npm install && npm run audit:all</div>
     document.querySelectorAll('.reveal').forEach(function (el) { obs.observe(el); });
   })();
 
-  // scrollspy de la navegación lateral
+  // scrollspy de la navegación lateral + desplazamiento suave SOLO al
+  // hacer click en un link (el scroll nativo no se toca)
   (function () {
     var links = Array.prototype.slice.call(document.querySelectorAll('#sidenav a'));
     if (!links.length) return;
     var map = {};
     links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    links.forEach(function (a) {
+      a.addEventListener('click', function (ev) {
+        var target = document.getElementById(a.getAttribute('href').slice(1));
+        if (!target) return;
+        ev.preventDefault();
+        target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+        history.pushState(null, '', a.getAttribute('href'));
+      });
+    });
     var spy = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (e.isIntersecting && map[e.target.id]) {
