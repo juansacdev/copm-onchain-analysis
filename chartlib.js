@@ -1,25 +1,25 @@
 // Shared SVG chart library — no canvas, no headless browser, no deps.
-// Every chart is a self-contained SVG with its own dark background, so it
+// Every chart is a self-contained SVG with its own light background, so it
 // renders identically on GitHub (light or dark theme), in editors, and in
-// any browser.
+// any browser. Palette matches the site theme (Data-Dense Pro).
 
 export const BASE = {
-  bg: "#0b0e14",
-  panel: "#11151d",
-  grid: "#222938",
-  axis: "#8b949e",
-  text: "#e6edf3",
-  muted: "#7d8590",
-  warn: "#f0883e",
-  danger: "#f85149",
+  bg: "#eeefe9",
+  panel: "#ffffff",
+  grid: "#d4d5cc",
+  axis: "#52524c",
+  text: "#151515",
+  muted: "#6e6e66",
+  warn: "#f54e00",
+  danger: "#c4302b",
 };
 
-// Chain visual identity. Polygon's purple and Celo's green/yellow are the
-// brands' own palettes, so combined charts read instantly.
+// Chain visual identity. Polygon's purple and Celo's green are the brands'
+// own palettes, darkened to keep contrast on the light background.
 export const CHAIN_PALETTES = {
-  polygon: { primary: "#9a6bff", secondary: "#58a6ff", label: "Polygon" },
-  celo: { primary: "#35d07f", secondary: "#fcff52", label: "Celo" },
-  combined: { primary: "#58a6ff", secondary: "#f0883e", label: "Polygon + Celo" },
+  polygon: { primary: "#6549c4", secondary: "#2a66c2", label: "Polygon" },
+  celo: { primary: "#1d9e5f", secondary: "#b5a300", label: "Celo" },
+  combined: { primary: "#2a66c2", secondary: "#f54e00", label: "Polygon + Celo" },
 };
 
 /* ==========================================================================
