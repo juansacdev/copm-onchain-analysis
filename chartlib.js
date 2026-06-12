@@ -45,11 +45,20 @@ export function fmtNum(n) {
   return n.toLocaleString("en-US");
 }
 
+// timeZone UTC: without it, midnight-UTC dates rendered from a
+// negative-offset timezone shift back one month/day.
 function monthLabel(isoDay) {
   return new Date(isoDay + "T00:00:00Z").toLocaleString("en-US", {
     month: "short",
     year: "2-digit",
+    timeZone: "UTC",
   });
+}
+
+// "2025-11" → "Nov 25" for category axes (bar charts).
+function tickLabel(value) {
+  if (/^\d{4}-\d{2}$/.test(value)) return monthLabel(value + "-01");
+  return value;
 }
 
 /* ==========================================================================
@@ -310,7 +319,7 @@ export function barChart({
     }
     if (data.length <= 26 || i % Math.ceil(data.length / 26) === 0) {
       const tx = x + barW / 2;
-      body += `<text x="${tx}" y="${padT + H + 20}" class="axis" text-anchor="middle" transform="rotate(-45 ${tx} ${padT + H + 20})">${d[xKey]}</text>`;
+      body += `<text x="${tx}" y="${padT + H + 20}" class="axis" text-anchor="middle" transform="rotate(-45 ${tx} ${padT + H + 20})">${tickLabel(d[xKey])}</text>`;
     }
   });
 
@@ -362,7 +371,7 @@ export function groupedBarChart({
     });
     if (data.length <= 26 || i % Math.ceil(data.length / 26) === 0) {
       const tx = padL + i * slot + slot / 2;
-      body += `<text x="${tx}" y="${padT + H + 20}" class="axis" text-anchor="middle" transform="rotate(-45 ${tx} ${padT + H + 20})">${d.label}</text>`;
+      body += `<text x="${tx}" y="${padT + H + 20}" class="axis" text-anchor="middle" transform="rotate(-45 ${tx} ${padT + H + 20})">${tickLabel(d.label)}</text>`;
     }
   });
 
@@ -449,7 +458,7 @@ export function stackedBarChart({
     }
     if (data.length <= 26 || i % Math.ceil(data.length / 26) === 0) {
       const tx = x + barW / 2;
-      body += `<text x="${tx}" y="${padT + H + 20}" class="axis" text-anchor="middle" transform="rotate(-45 ${tx} ${padT + H + 20})">${d[xKey]}</text>`;
+      body += `<text x="${tx}" y="${padT + H + 20}" class="axis" text-anchor="middle" transform="rotate(-45 ${tx} ${padT + H + 20})">${tickLabel(d[xKey])}</text>`;
     }
   });
 
