@@ -6,6 +6,8 @@ Los charts SVG **no viven aquí**: se generan con el pipeline del repo (`npm run
 
 ## Comandos
 
+Requiere Node ≥22.12 (fijado en `.node-version`; con fnm/nvm se toma solo).
+
 ```bash
 npm install
 npm run dev       # http://localhost:4321
