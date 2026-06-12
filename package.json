@@ -1,7 +1,7 @@
 {
   "name": "copm-onchain-analysis",
   "version": "1.0.0",
-  "description": "Reproducible on-chain audit of Minteo's COPM (Colombian peso stablecoin) on Polygon. Scans every Transfer event directly from the contract via RPC.",
+  "description": "Reproducible on-chain audit and analysis of Minteo's COPM (Colombian peso stablecoin) on Polygon and Celo. Scans every Transfer event directly from the contracts via RPC.",
   "type": "module",
   "scripts": {
     "discover": "node --env-file=.env 01-discover.js",
@@ -10,12 +10,18 @@
     "timestamps": "node --env-file=.env 03-resolve-timestamps.js",
     "aggregate": "node --env-file=.env 04-aggregate.js",
     "charts": "node --env-file=.env 05-charts.js",
-    "audit": "npm run discover && npm run scan:fresh && npm run timestamps && npm run aggregate && npm run charts"
+    "validate": "node --env-file=.env 07-validate.js",
+    "charts:combined": "node --env-file=.env 06-combined-charts.js",
+    "audit": "npm run discover && npm run scan:fresh && npm run timestamps && npm run aggregate && npm run charts && npm run validate",
+    "audit:polygon": "CHAIN=polygon npm run audit",
+    "audit:celo": "CHAIN=celo npm run audit",
+    "audit:all": "npm run audit:polygon && npm run audit:celo && npm run charts:combined"
   },
   "keywords": [
     "blockchain",
     "stablecoin",
     "polygon",
+    "celo",
     "minteo",
     "copm",
     "on-chain",

@@ -1,9 +1,16 @@
 import { writeFileSync } from "node:fs";
-import { client, COPM_ADDRESS, ERC20_ABI } from "./config.js";
+import {
+  client,
+  COPM_ADDRESS,
+  ERC20_ABI,
+  CHAIN_KEY,
+  CHAIN_LABEL,
+  dataPath,
+} from "./config.js";
 
-async function findDeployBlock() {
+async function findDeployBlock(latestBlock) {
   let lo = 0n;
-  let hi = 50_000_001n;
+  let hi = latestBlock;
 
   while (lo + 1n < hi) {
     const mid = (lo + hi) / 2n;
@@ -25,19 +32,24 @@ const [decimals, symbol, name, totalSupply] = await Promise.all([
 ]);
 
 const latestBlock = await client.getBlockNumber();
+console.log(`chain: ${CHAIN_LABEL} (${CHAIN_KEY})`);
 console.log(`latest block: ${latestBlock}`);
 console.log(`name=${name} symbol=${symbol} decimals=${decimals}`);
-console.log(`current totalSupply (COPM): ${Number(totalSupply) / 10 ** decimals}`);
+console.log(`current totalSupply (${symbol}): ${Number(totalSupply) / 10 ** decimals}`);
 
-console.log("\nbinary search for deploy block (lo=0, hi=50M)...");
-const deployBlock = await findDeployBlock();
+console.log(`\nbinary search for deploy block (lo=0, hi=${latestBlock})...`);
+const deployBlock = await findDeployBlock(latestBlock);
 console.log(`deploy block: ${deployBlock}`);
 
 const deployBlockData = await client.getBlock({ blockNumber: deployBlock });
 const deployTs = new Date(Number(deployBlockData.timestamp) * 1000).toISOString();
 console.log(`deploy block timestamp: ${deployTs}`);
 
+const latestBlockData = await client.getBlock({ blockNumber: latestBlock });
+
 const manifest = {
+  chain: CHAIN_KEY,
+  chainLabel: CHAIN_LABEL,
   address: COPM_ADDRESS,
   name,
   symbol,
@@ -47,12 +59,11 @@ const manifest = {
   deployBlock: deployBlock.toString(),
   deployTimestamp: deployTs,
   latestBlockAtRun: latestBlock.toString(),
-  latestBlockTimestamp: new Date().toISOString(),
+  latestBlockTimestamp: new Date(
+    Number(latestBlockData.timestamp) * 1000
+  ).toISOString(),
 };
 
-writeFileSync(
-  new URL("./manifest.json", import.meta.url),
-  JSON.stringify(manifest, null, 2),
-);
-console.log("\nmanifest.json written");
+writeFileSync(dataPath("manifest.json"), JSON.stringify(manifest, null, 2));
+console.log(`\ndata/${CHAIN_KEY}/manifest.json written`);
 console.log(manifest);

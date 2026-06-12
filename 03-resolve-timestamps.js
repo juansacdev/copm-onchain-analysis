@@ -1,13 +1,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { client } from "./config.js";
+import { client, CHAIN_KEY, dataPath } from "./config.js";
 
-const TRANSFERS = new URL("./transfers.jsonl", import.meta.url);
-const TS_OUT = new URL("./block-ts.json", import.meta.url);
-const SAMPLES_OUT = new URL("./block-samples.json", import.meta.url);
+const TRANSFERS = dataPath("transfers.jsonl");
+const TS_OUT = dataPath("block-ts.json");
+const SAMPLES_OUT = dataPath("block-samples.json");
 
-const manifest = JSON.parse(
-  readFileSync(new URL("./manifest.json", import.meta.url), "utf8")
-);
+console.log(`chain: ${CHAIN_KEY}`);
+const manifest = JSON.parse(readFileSync(dataPath("manifest.json"), "utf8"));
 const deployBlock = Number(manifest.deployBlock);
 const latestBlock = Number(manifest.latestBlockAtRun);
 

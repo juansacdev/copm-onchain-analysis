@@ -1,0 +1,14 @@
+{
+  "chain": "celo",
+  "chainLabel": "Celo",
+  "address": "0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606",
+  "name": "COP Minteo",
+  "symbol": "COPM",
+  "decimals": 18,
+  "currentTotalSupplyRaw": "1028163109628110192879069442",
+  "currentTotalSupplyTokens": 1028163109.6281102,
+  "deployBlock": "27680993",
+  "deployTimestamp": "2024-09-11T17:52:53.000Z",
+  "latestBlockAtRun": "69326020",
+  "latestBlockTimestamp": "2026-06-12T01:12:58.000Z"
+}

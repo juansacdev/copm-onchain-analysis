@@ -1,0 +1,14 @@
+{
+  "chain": "polygon",
+  "chainLabel": "Polygon",
+  "address": "0x12050c705152931cFEe3DD56c52Fb09Dea816C23",
+  "name": "COP Minteo",
+  "symbol": "COPM",
+  "decimals": 18,
+  "currentTotalSupplyRaw": "6323055810754852048213337676",
+  "currentTotalSupplyTokens": 6323055810.754852,
+  "deployBlock": "47747145",
+  "deployTimestamp": "2023-09-19T22:41:52.000Z",
+  "latestBlockAtRun": "88347879",
+  "latestBlockTimestamp": "2026-06-12T01:13:24.000Z"
+}

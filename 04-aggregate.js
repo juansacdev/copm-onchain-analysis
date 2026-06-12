@@ -1,21 +1,15 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { COP_PER_USD } from "./config.js";
+import { COP_PER_USD, CHAIN_KEY, dataPath } from "./config.js";
 
-const manifest = JSON.parse(
-  readFileSync(new URL("./manifest.json", import.meta.url), "utf8")
-);
+console.log(`chain: ${CHAIN_KEY}`);
+const manifest = JSON.parse(readFileSync(dataPath("manifest.json"), "utf8"));
 const ZERO = "0x0000000000000000000000000000000000000000";
 const DEC = 10n ** BigInt(manifest.decimals);
 const toCOPM = (raw) => Number(raw / 10n ** 12n) / 1e6;
 
-const tsCache = JSON.parse(
-  readFileSync(new URL("./block-ts.json", import.meta.url), "utf8")
-);
+const tsCache = JSON.parse(readFileSync(dataPath("block-ts.json"), "utf8"));
 
-const transfers = readFileSync(
-  new URL("./transfers.jsonl", import.meta.url),
-  "utf8"
-)
+const transfers = readFileSync(dataPath("transfers.jsonl"), "utf8")
   .split("\n")
   .filter(Boolean)
   .map((l) => JSON.parse(l));
@@ -136,6 +130,9 @@ const totalBurnCOPM = toCOPM(totalBurn);
 const currentSupplyCOPM = Number(cumulativeSupply / 10n ** 12n) / 1e6;
 
 const summary = {
+  chain: manifest.chain ?? CHAIN_KEY,
+  chainLabel: manifest.chainLabel,
+  address: manifest.address,
   range: {
     firstDay,
     lastDay,
@@ -174,10 +171,7 @@ const summary = {
   },
 };
 
-writeFileSync(
-  new URL("./summary.json", import.meta.url),
-  JSON.stringify(summary, null, 2)
-);
+writeFileSync(dataPath("summary.json"), JSON.stringify(summary, null, 2));
 
 const csvHeader = "day,supply_end_copm,transfers,unique_txs,active_addresses,gross_volume_copm,net_volume_copm,mint_copm,burn_copm,mint_count,burn_count";
 const csvRows = fullSeries.map((r) => [
@@ -193,10 +187,7 @@ const csvRows = fullSeries.map((r) => [
   r.mintCount,
   r.burnCount,
 ].join(","));
-writeFileSync(
-  new URL("./daily.csv", import.meta.url),
-  [csvHeader, ...csvRows].join("\n")
-);
+writeFileSync(dataPath("daily.csv"), [csvHeader, ...csvRows].join("\n"));
 
 console.log(JSON.stringify(summary, null, 2));
 console.log(`\nwrote summary.json + daily.csv`);

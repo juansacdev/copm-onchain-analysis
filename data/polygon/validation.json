@@ -1,0 +1,68 @@
+{
+  "chain": "polygon",
+  "validatedAt": "2026-06-12T01:25:02.203Z",
+  "checks": [
+    {
+      "name": "event count matches scan progress",
+      "ok": true,
+      "detail": "jsonl=196796 scan=196796"
+    },
+    {
+      "name": "no duplicate (tx, logIndex) pairs",
+      "ok": true,
+      "detail": "duplicates=0"
+    },
+    {
+      "name": "all events inside scanned block range",
+      "ok": true,
+      "detail": "outOfRange=0 (range 47747145 → 88347879)"
+    },
+    {
+      "name": "scan completed (all slices reached their end)",
+      "ok": true,
+      "detail": "completedAt=2026-06-12T01:23:35.540Z"
+    },
+    {
+      "name": "every event block has a timestamp",
+      "ok": true,
+      "detail": "uniqueBlocks=136082 missing=0"
+    },
+    {
+      "name": "timestamps inside deploy → latest window",
+      "ok": true,
+      "detail": "outside=0 of 136082"
+    },
+    {
+      "name": "daily series length matches summary range",
+      "ok": true,
+      "detail": "csv=996 summary=996"
+    },
+    {
+      "name": "daily series is continuous (no missing days)",
+      "ok": true,
+      "detail": "gaps=0"
+    },
+    {
+      "name": "csv transfer total equals summary total",
+      "ok": true,
+      "detail": "csv=196796 summary=196796"
+    },
+    {
+      "name": "mints − burns equals derived supply",
+      "ok": true,
+      "detail": "mints−burns=7633653032.75 derived=7633653032.75"
+    },
+    {
+      "name": "derived supply within 25% of live totalSupply()",
+      "ok": true,
+      "detail": "derived=7633653033 onChain=6323055811 deviation=20.7%"
+    },
+    {
+      "name": "random transfers re-verified against live receipts",
+      "ok": true,
+      "detail": "verified=12 mismatched=0 (sampled every 16399th event)"
+    }
+  ],
+  "passed": 12,
+  "failed": 0
+}

@@ -1,17 +1,16 @@
 import { existsSync, readFileSync, writeFileSync, appendFileSync, unlinkSync } from "node:fs";
 import { parseAbiItem } from "viem";
-import { client, COPM_ADDRESS } from "./config.js";
+import { client, COPM_ADDRESS, CHAIN_KEY, dataPath } from "./config.js";
 
 const TRANSFER_EVENT = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 value)"
 );
 
-const manifest = JSON.parse(
-  readFileSync(new URL("./manifest.json", import.meta.url), "utf8")
-);
+const manifest = JSON.parse(readFileSync(dataPath("manifest.json"), "utf8"));
 
-const OUT_PATH = new URL("./transfers.jsonl", import.meta.url);
-const PROGRESS_PATH = new URL("./scan-progress.json", import.meta.url);
+console.log(`chain: ${CHAIN_KEY}`);
+const OUT_PATH = dataPath("transfers.jsonl");
+const PROGRESS_PATH = dataPath("scan-progress.json");
 
 const FRESH = process.argv.includes("--fresh");
 if (FRESH) {
@@ -25,7 +24,7 @@ const deployBlock = BigInt(manifest.deployBlock);
 const latestBlock = BigInt(manifest.latestBlockAtRun);
 const totalBlocks = latestBlock - deployBlock + 1n;
 
-const WORKERS = 8;
+const WORKERS = Number(process.env.SCAN_WORKERS ?? 8);
 const INITIAL_CHUNK = 10_000n;
 const MIN_CHUNK = 500n;
 const MAX_CHUNK = 10_000n;
@@ -73,26 +72,43 @@ async function workerLoop(slice) {
         totalEvents += logs.length;
       }
       slice.cursor = to + 1n;
+      slice.retries = 0;
       if (slice.chunk < MAX_CHUNK) {
         const next = slice.chunk + 1_000n;
         slice.chunk = next > MAX_CHUNK ? MAX_CHUNK : next;
       }
     } catch (err) {
       const msg = err.message || String(err);
-      const transient =
+      // Range/size errors → shrink the chunk. Overload/availability errors
+      // (public RPCs throw these under load) → back off and retry as-is.
+      const oversized =
         msg.includes("range") ||
         msg.includes("limit") ||
         msg.includes("too large") ||
-        msg.includes("timeout") ||
-        msg.includes("rate") ||
-        msg.includes("429") ||
         msg.includes("response size") ||
         msg.includes("requested too many blocks") ||
         msg.includes("more than 10000");
-      if (transient) {
+      const overloaded =
+        msg.includes("timeout") ||
+        msg.includes("rate") ||
+        msg.includes("429") ||
+        msg.includes("backend") ||
+        msg.includes("healthy") ||
+        msg.includes("502") ||
+        msg.includes("503") ||
+        msg.includes("ECONNRESET") ||
+        msg.includes("fetch failed");
+      slice.retries = (slice.retries ?? 0) + 1;
+      if (oversized) {
         slice.chunk = slice.chunk / 2n < MIN_CHUNK ? MIN_CHUNK : slice.chunk / 2n;
         process.stdout.write(`w${slice.id} shrink->${slice.chunk}\n`);
         await new Promise((r) => setTimeout(r, 500));
+      } else if (overloaded || slice.retries <= 10) {
+        const backoff = Math.min(1000 * 2 ** Math.min(slice.retries, 5), 15_000);
+        process.stdout.write(
+          `w${slice.id} retry ${slice.retries} in ${backoff}ms (${msg.slice(0, 60)})\n`
+        );
+        await new Promise((r) => setTimeout(r, backoff + Math.random() * 500));
       } else {
         throw err;
       }

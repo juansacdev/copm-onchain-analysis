@@ -1,0 +1,44 @@
+{
+  "chain": "polygon",
+  "chainLabel": "Polygon",
+  "address": "0x12050c705152931cFEe3DD56c52Fb09Dea816C23",
+  "range": {
+    "firstDay": "2023-09-21",
+    "lastDay": "2026-06-12",
+    "totalDays": 996
+  },
+  "totals": {
+    "transferEvents": 196796,
+    "grossVolumeCOPM": 8136335626343.065,
+    "grossVolumeUSD": 2034083906.5857663,
+    "netVolumeCOPM": 5787969887007.82,
+    "netVolumeUSD": 1446992471.751955,
+    "totalMintedCOPM": 1177999696184,
+    "totalBurnedCOPM": 1170366043151.245,
+    "currentSupplyCOPM": 7633653032.754852,
+    "currentSupplyUSD": 1908413.258188713
+  },
+  "averages": {
+    "avgEndOfDaySupplyCOPM": 3996583735.9564905,
+    "avgEndOfDaySupplyUSD": 999145.9339891226,
+    "avgDailyTransfers": 197.58634538152612,
+    "avgDailyGrossVolumeCOPM": 8169011673.035206,
+    "avgDailyGrossVolumeUSD": 2042252.9182588016
+  },
+  "peaks": {
+    "maxTransfersInOneDay": {
+      "day": "2025-11-24",
+      "count": 2597
+    },
+    "maxGrossVolumeInOneDay": {
+      "day": "2025-11-24",
+      "copm": 154473254726.26196,
+      "usd": 38618313.68156549
+    },
+    "maxSupplyEndOfDay": {
+      "day": "2026-05-07",
+      "copm": 12673117545.754852,
+      "usd": 3168279.386438713
+    }
+  }
+}
