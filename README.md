@@ -6,10 +6,11 @@
 
 | | |
 | :--- | :--- |
+| 📖 **[The story in one page (HTML, Spanish)](./index.html)** | The storytelling version for every audience — open it in a browser |
 | 📊 **[Unified audit (Polygon + Celo)](./AUDIT.md)** | The consolidated, side-by-side view |
 | 🟣 **[Polygon audit](./audit/polygon.md)** | $2.03B moved in 2.7 years |
 | 🟢 **[Celo audit](./audit/celo.md)** | 120,900 payments at a $96 average ticket |
-| 📖 **[Glossary](./GLOSSARY.md)** | Every term, in plain language |
+| 📚 **[Glossary](./GLOSSARY.md)** | Every term, in plain language |
 
 ---
 
@@ -36,6 +37,10 @@ So instead of asking you to take my word for it, I audited it: **317,696 events,
 | Validation | **24/24 checks** — including transfer re-verification against the live chain |
 
 → The detail, the charts, and the full story live in the **[unified audit](./AUDIT.md)**.
+
+## In the press
+
+In September 2025, **La República** (Colombia's financial newspaper) covered Minteo's milestone of crossing **US$200 million monthly** in COPM transactions on Polygon: [*"Cómo hacer transacciones con stablecoins"*](https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338) (in Spanish). This audit confirms that milestone with public data — and shows that two months later the system reached **$318.4M** in a single month.
 
 ## How it works
 

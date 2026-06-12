@@ -6,10 +6,11 @@
 
 | | |
 | :--- | :--- |
+| 📖 **[La historia en una página (HTML)](./index.html)** | El storytelling para todo público — ábrelo en el navegador |
 | 📊 **[Auditoría unificada (Polygon + Celo)](./AUDIT.es.md)** | La vista consolidada, lado a lado |
 | 🟣 **[Auditoría de Polygon](./audit/polygon.es.md)** | $2.03B movidos en 2.7 años |
 | 🟢 **[Auditoría de Celo](./audit/celo.es.md)** | 120,900 pagos con ticket promedio de $96 |
-| 📖 **[Glosario](./GLOSSARY.es.md)** | Todos los términos, en lenguaje claro |
+| 📚 **[Glosario](./GLOSSARY.es.md)** | Todos los términos, en lenguaje claro |
 
 ---
 
@@ -36,6 +37,10 @@ Así que en vez de pedirte que me creas, lo audité: **317,696 eventos, ~$2.05 m
 | Validación | **24/24 checks** — incluye re-verificación de transfers contra la chain en vivo |
 
 → El detalle, los gráficos y la historia completa están en la **[auditoría unificada](./AUDIT.es.md)**.
+
+## En los medios
+
+En septiembre de 2025, **La República** (el diario financiero colombiano) cubrió el hito de Minteo superando los **US$200 millones mensuales** en transacciones con COPM sobre Polygon: [*"Cómo hacer transacciones con stablecoins"*](https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338). Esta auditoría confirma ese hito con datos públicos — y muestra que dos meses después el sistema llegó a **$318.4M** en un solo mes.
 
 ## Cómo funciona
 
