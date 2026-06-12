@@ -6,7 +6,7 @@
 
 | | |
 | :--- | :--- |
-| 📖 **[The story in one page (HTML, Spanish)](./index.html)** | The storytelling version for every audience — open it in a browser |
+| 📖 **[The story as a website](https://copm.juansac.dev/en/)** | The storytelling version for every audience — bilingual (ES/EN) Astro site, source in [`site/`](./site) |
 | 📊 **[Unified audit (Polygon + Celo)](./AUDIT.md)** | The consolidated, side-by-side view |
 | 🟣 **[Polygon audit](./audit/polygon.md)** | $2.03B moved in 2.7 years |
 | 🟢 **[Celo audit](./audit/celo.md)** | 120,900 payments at a $96 average ticket |
@@ -90,6 +90,7 @@ Every run is complete and idempotent: it scans from the deploy block to `latest`
 │   └── validation.json           # the 12 checks' results
 ├── charts/<chain>/               # 6 SVGs per chain
 ├── charts/combined/              # 4 comparative SVGs
+├── site/                         # storytelling website (Astro, ES + EN)
 └── 0*.js                         # the pipeline
 ```
 

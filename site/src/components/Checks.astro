@@ -1,0 +1,16 @@
+---
+interface Props {
+  items: { title: string; body: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<ul class="checks">
+  {items.map((check) => (
+    <li class="check">
+      <span class="ok" aria-hidden="true">✓</span>
+      <span><strong>{check.title}</strong> {check.body}</span>
+    </li>
+  ))}
+</ul>

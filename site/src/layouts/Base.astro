@@ -1,0 +1,66 @@
+---
+import '../styles/global.css';
+import LangSwitch from '../components/LangSwitch.astro';
+
+interface Props {
+  lang: 'es' | 'en';
+  title: string;
+  description: string;
+}
+
+const { lang, title, description } = Astro.props;
+
+// URLs canónicas de cada idioma para hreflang y el switcher
+const urls = { es: '/', en: '/en/' };
+const site = Astro.site ?? new URL('https://copm.juansac.dev');
+const absolute = {
+  es: new URL(urls.es, site).href,
+  en: new URL(urls.en, site).href,
+};
+const canonical = new URL(urls[lang], site).href;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="es" href={absolute.es} />
+    <link rel="alternate" hreflang="en" href={absolute.en} />
+    <link rel="alternate" hreflang="x-default" href={absolute.es} />
+  </head>
+  <body>
+    <div id="progress" role="presentation"></div>
+    <LangSwitch lang={lang} urls={urls} />
+    <slot />
+
+    <script>
+      // barra de progreso de lectura
+      const bar = document.getElementById('progress')!;
+      function update() {
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+      }
+      addEventListener('scroll', update, { passive: true });
+      update();
+
+      // aparición progresiva de capítulos
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add('visible');
+              obs.unobserve(e.target);
+            }
+          });
+        },
+        { rootMargin: '0px 0px -10% 0px' }
+      );
+      document.querySelectorAll('.reveal').forEach((el) => obs.observe(el));
+    </script>
+  </body>
+</html>

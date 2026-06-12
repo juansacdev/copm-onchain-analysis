@@ -1,0 +1,205 @@
+---
+import Base from '../../layouts/Base.astro';
+import SideNav from '../../components/SideNav.astro';
+import Hero from '../../components/Hero.astro';
+import Chapter from '../../components/Chapter.astro';
+import BigNum from '../../components/BigNum.astro';
+import Note from '../../components/Note.astro';
+import Quote from '../../components/Quote.astro';
+import Steps from '../../components/Steps.astro';
+import Checks from '../../components/Checks.astro';
+import Glossary from '../../components/Glossary.astro';
+import ChartFigure from '../../components/ChartFigure.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+
+import polygonMonthly from '../../../../charts/polygon/04-monthly-volume-usd.svg?raw';
+import celoMonthly from '../../../../charts/celo/04-monthly-volume-usd.svg?raw';
+import transfersByChain from '../../../../charts/combined/02-monthly-transfers-by-chain.svg?raw';
+import cumulativeByChain from '../../../../charts/combined/03-cumulative-volume-by-chain.svg?raw';
+
+const navItems = [
+  { href: '#problema', num: '01', text: 'The problem' },
+  { href: '#copm', num: '02', text: 'What is COPM' },
+  { href: '#metodo', num: '03', text: 'The method' },
+  { href: '#polygon', num: '04', text: 'Polygon' },
+  { href: '#celo', num: '05', text: 'Celo' },
+  { href: '#duo', num: '06', text: 'The synthesis' },
+  { href: '#confianza', num: '07', text: 'The trust' },
+  { href: '#prensa', num: '08', text: 'In the press' },
+  { href: '#glosario', num: 'A', text: 'Glossary' },
+];
+
+const heroStats = [
+  { value: '317,696', label: 'events audited' },
+  { value: '~US$2.05B', label: 'gross volume' },
+  { value: '2', label: 'blockchains' },
+  { value: '$318M', label: 'peak month' },
+];
+
+const methodSteps = [
+  { title: "Find the contract's birth", desc: 'Binary search over the chain until hitting the exact block where the contract appeared.' },
+  { title: 'Download every Transfer event', desc: 'From that block to today, in parallel, with automatic retries. Polygon: 196,796 events. Celo: 120,900.' },
+  { title: 'Put a date on every movement', desc: 'Every event lives in a block; every block has a timestamp. That builds the complete daily series.' },
+  { title: 'Rebuild the accounting', desc: 'Replaying the events in order: daily volume, mints, redemptions and circulating supply.' },
+  { title: 'Validate everything against the live chain', desc: 'Randomly sampled transfers are requested again directly from the blockchain, to confirm the scan matches reality.' },
+];
+
+const trustChecks = [
+  { title: 'Primary source.', body: 'Everything comes from standard RPC calls against each blockchain. Zero indexers, zero third-party APIs.' },
+  { title: 'Validated against the live chain.', body: 'The scan is checked against the current state of each blockchain before being reported.' },
+  { title: 'Reproducible.', body: 'The scripts are open source. Run them yourself and get the same numbers.' },
+  { title: 'Documented limitations.', body: 'Fixed rate of 4,000 COP/USD (±5%), and a known supply difference on Polygon, explained in the audit.' },
+];
+
+const glossaryItems = [
+  { term: 'Token', def: 'A unit of digital value that lives inside a blockchain. It can represent money (like COPM), an asset or a right. It moves between addresses through transfers.' },
+  { term: 'Chain / blockchain', def: 'A public, shared record where every transaction is written into chained blocks, verifiable by anyone and impossible to edit backwards. Polygon and Celo are two different blockchains.' },
+  { term: 'Contract (smart contract)', def: "A program that lives on the blockchain and defines a token's rules: who can issue, how it transfers, how much exists. COPM's contract on Polygon was created in September 2023; the Celo one, in September 2024." },
+  { term: 'Ledger', def: 'An append-only accounting book: movements are recorded and never edited or deleted. The blockchain is, in essence, a giant public ledger — which is why this audit is possible.' },
+  { term: 'Stablecoin', def: 'A token designed to always be worth the same as a reference currency. COPM: 1 token = 1 Colombian peso.' },
+  { term: 'Peg', def: 'The parity promise. A "1:1 peg with bank deposits" means every token is backed by a real peso in a bank.' },
+  { term: 'Mint / Burn', def: 'Creating tokens (money entered the system) / destroying tokens (money left). On the blockchain they appear as transfers from or to the "zero address".' },
+  { term: 'Transfer event', def: 'The record left by every token movement: who sent, who received, how much and when. The atomic unit of this audit.' },
+  { term: 'Circulating supply', def: 'The tokens that exist right now: everything minted minus everything burned.' },
+  { term: 'RPC', def: "A blockchain node's API door. It is the only data source of this audit — it can be a paid service or a free public one." },
+  { term: 'Velocity (turnover)', def: 'How many times the supply moves in a period. High velocity = the token is used to pay, not to store.' },
+  { term: 'Settlement rail', def: 'Infrastructure whose job is to move value between parties — like the rails money runs on, not the warehouse where it is stored.' },
+];
+
+const footerLinks = [
+  { href: 'https://github.com/juansacdev/copm-onchain-analysis', text: 'Repository & raw data' },
+  { href: 'https://github.com/juansacdev/copm-onchain-analysis/blob/main/AUDIT.md', text: 'Unified audit' },
+  { href: 'https://polygonscan.com/token/0x12050c705152931cFEe3DD56c52Fb09Dea816C23', text: 'Contract on Polygon (Sep 2023)' },
+  { href: 'https://celoscan.io/token/0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606', text: 'Contract on Celo (Sep 2024)' },
+  { href: 'https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338', text: 'La República article' },
+  { href: 'https://github.com/juansacdev', text: 'GitHub — @juansacdev' },
+];
+---
+
+<Base
+  lang="en"
+  title="COPM — The on-chain audit told as a story"
+  description="US$2.05 billion moved by a Colombian stablecoin, audited event by event on Polygon and Celo. A story anyone can verify."
+>
+  <SideNav label="Chapters" items={navItems} />
+
+  <Hero eyebrow="On-chain audit & analysis" stats={heroStats} scrollHint="scroll to read ↓">
+    <Fragment slot="title">The Colombian stablecoin<br />that has moved<br /><span class="big">US$2.05 billion</span></Fragment>
+    <Fragment slot="sub">I was part of the team that built it. I can't show you the code — but the blockchain is public, so I audited every move it made. This is the story, told with data you can verify yourself.</Fragment>
+  </Hero>
+
+  <main>
+    <Chapter id="problema" label="Chapter 1 · The problem">
+      <Fragment slot="title">I built something I can't show</Fragment>
+      <p class="lead">I was part of the founding team that built <strong>COPM</strong> at Minteo: a Colombian peso stablecoin. We designed the systems, the workflows and the architecture that moved real money for years.</p>
+      <p>And here comes the classic engineer's problem: almost none of it can be shown. The code belongs to the company. The dashboards are internal. NDAs exist and are respected.</p>
+      <p>But there is one huge exception.</p>
+      <p><strong>The blockchain is public by definition.</strong> Every COPM movement was recorded on Polygon and on Celo: verifiable by anyone, forever. It isn't internal information, or code, or intellectual property — it's the public record of what the system did.</p>
+      <p>So instead of asking you to take my word for it, I audited it. All of it.</p>
+    </Chapter>
+
+    <Chapter id="copm" label="Chapter 2 · The context">
+      <Fragment slot="title">What is COPM? (explained without jargon)</Fragment>
+      <p>A <strong>stablecoin</strong> is a digital peso: a token that is always worth the same as its reference currency. <strong>1 COPM = 1 Colombian peso</strong>, backed by real pesos in a bank.</p>
+      <p>The system works like a currency exchange booth with two windows:</p>
+      <div class="duo">
+        <article class="card pol">
+          <h4>Mint — money comes in</h4>
+          <p class="small" style="margin:0">Someone deposits pesos and receives COPM. New tokens are "minted" (created). On the blockchain it's recorded as a transfer <em>from nowhere</em> (the zero address).</p>
+        </article>
+        <article class="card cel">
+          <h4>Burn — money goes out</h4>
+          <p class="small" style="margin:0">Someone returns COPM and receives pesos. The tokens are "burned" (destroyed). It's recorded as a transfer <em>to nowhere</em>.</p>
+        </article>
+      </div>
+      <p>Between those two windows, tokens move around: payments, settlements between companies, remittances. Every movement — every <strong>transfer</strong> — is recorded on the blockchain with amount, origin, destination and date. Forever.</p>
+      <p>This audit read <strong>all</strong> of those records. All 317,696 of them.</p>
+    </Chapter>
+
+    <Chapter id="metodo" label="Chapter 3 · The method">
+      <Fragment slot="title">How you audit a blockchain</Fragment>
+      <p>No middlemen. No third-party dashboards. No "trust me". The pipeline talks directly to each blockchain through an RPC endpoint — a node's API door — which can be paid or public:</p>
+      <Steps steps={methodSteps} />
+    </Chapter>
+
+    <Chapter id="polygon" label="Chapter 4 · Polygon">
+      <Fragment slot="title">The institutional rail: <span class="accent-p">US$2,034 million</span></Fragment>
+      <p class="lead">Polygon is where the big operation lives: settlement between companies, large amounts, the bulk of the volume.</p>
+      <BigNum value="$2,034M" variant="p" desc="gross volume in 996 days · 196,796 transfers · average ticket ~$10,300" />
+      <p>The story has three acts:</p>
+      <p><strong>Act 1 — the wait.</strong> The contract existed for <strong>17 months</strong> before crossing 100 daily transactions. That's how B2B infrastructure scales: not through individual users, but through big integrations. Each new partner is a step, not a slope.</p>
+      <p><strong>Act 2 — the explosion.</strong> November 2025: <span class="accent-p">US$318.4 million in a single month</span>. And within that month, the record day: on November 24, <strong>$38.6M moved in 2,597 transactions</strong>. Nine of the ten most active days in history fell between October and November 2025.</p>
+      <p><strong>Act 3 — maturity.</strong> After the peak, volume settled at $60–95M per month… and in May 2026 it bounced back to <strong>$189.9M</strong>, with the second-best day ever ($31.5M on May 5).</p>
+      <ChartFigure svg={polygonMonthly} caption="COPM monthly gross volume on Polygon, in USD. The orange bar is the peak month." />
+      <Note>
+        <strong>The data point that defines the use case:</strong> COPM's supply on Polygon turns over <strong>~35 times per month</strong> (~420x per year). USDT and USDC turn over 10–20 times <em>per year</em>. Nobody hoards COPM: every peso issued moves dozens of times before being redeemed. On-chain, that is the signature of a <strong>payments rail</strong> — not a vault.
+      </Note>
+    </Chapter>
+
+    <Chapter id="celo" label="Chapter 5 · Celo">
+      <Fragment slot="title">The small-payments network: <span class="accent-c">a US$96 ticket</span></Fragment>
+      <p class="lead">Same token, different movie. On Celo, COPM doesn't move millions per transaction — it moves what people move.</p>
+      <BigNum value="$96" variant="c" desc="average ticket per transfer · 120,900 transfers · $11.7M total volume" />
+      <p>Compare: the average transfer on Polygon moves ~$10,300. On Celo, ~$96. <strong>Two orders of magnitude apart</strong> — and that difference isn't noise, it's architecture: Polygon carries institutional settlement, Celo carries the profile of remittances, micropayments and end-user wallets.</p>
+      <p>And one detail that changes everything: here the takeoff didn't take 17 months. <strong>It took 6 weeks.</strong> The second chain doesn't start from zero — it inherits the partners, the operation and the use case already proven on the first one.</p>
+      <ChartFigure svg={celoMonthly} caption="COPM monthly gross volume on Celo, in USD." />
+      <Note variant="green">
+        <strong>The accounting gem:</strong> replaying Celo's 120,900 events, the derived supply comes out to <strong>1,028,163,109.63 COPM</strong>. The live contract reports <strong>1,028,163,109.63 COPM</strong>. Difference: <strong>zero</strong>. The books balance to the peso — derived exclusively from public data.
+      </Note>
+    </Chapter>
+
+    <Chapter id="duo" label="Chapter 6 · The synthesis">
+      <Fragment slot="title">One currency, two roles</Fragment>
+      <p class="lead">Seen together, the multi-chain design explains itself: each network serves the use case where it is strongest.</p>
+      <ChartFigure svg={transfersByChain} caption="Monthly transactions per chain: the Celo → Polygon relay." />
+      <p>The chart tells the relay: <span class="accent-c">Celo took off first in activity</span> (its 18,491-transaction peak came in January 2025, 4 months after deploy) and <span class="accent-p">Polygon took the baton</span> with the institutional wave that culminated in November's record.</p>
+      <table class="tbl">
+        <thead><tr><th>Metric</th><th>Polygon</th><th>Celo</th></tr></thead>
+        <tbody>
+          <tr><td>Contract created</td><td class="mono">Sep 2023</td><td class="mono">Sep 2024</td></tr>
+          <tr><td>Contract on the explorer</td><td class="mono"><a href="https://polygonscan.com/token/0x12050c705152931cFEe3DD56c52Fb09Dea816C23" target="_blank" rel="noopener noreferrer">0x1205…6C23 ↗</a></td><td class="mono"><a href="https://celoscan.io/token/0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606" target="_blank" rel="noopener noreferrer">0xC92E…5606 ↗</a></td></tr>
+          <tr><td>Gross volume</td><td class="mono">$2,034M</td><td class="mono">$11.7M</td></tr>
+          <tr><td>Transfer events</td><td class="mono">196,796</td><td class="mono">120,900</td></tr>
+          <tr><td>Average ticket</td><td class="mono">~$10,300</td><td class="mono">~$96</td></tr>
+          <tr><td>Transfers per day (average)</td><td class="mono">198</td><td class="mono">191</td></tr>
+          <tr><td>Takeoff (&gt;100 tx/day)</td><td class="mono">17 months</td><td class="mono">6 weeks</td></tr>
+          <tr><td>Peak month</td><td class="mono">$318.4M (Nov 25)</td><td class="mono">$2.15M (Jul 25)</td></tr>
+          <tr class="hl"><td><strong>Combined total</strong></td><td class="mono" colspan="2" style="text-align:center"><strong>~US$2,046M · 317,696 events</strong></td></tr>
+        </tbody>
+      </table>
+      <ChartFigure svg={cumulativeByChain} caption="Cumulative volume per chain since each deploy." />
+    </Chapter>
+
+    <Chapter id="confianza" label="Chapter 7 · The trust">
+      <Fragment slot="title">Why believe these numbers?</Fragment>
+      <p>Because you don't have to believe me — that's the point. Three reasons, none based on trust:</p>
+      <Checks items={trustChecks} />
+      <pre class="repro"><code><span class="c"># reproduce everything with your own eyes</span>
+git clone https://github.com/juansacdev/copm-onchain-analysis.git
+cd copm-onchain-analysis && cp .env.example .env
+npm install && npm run audit:all</code></pre>
+      <p class="muted" style="font-size:.92rem">Want the full technical detail? The per-chain audits and the unified one live in the repository, in Spanish and English, with methodology, tables and limitations.</p>
+    </Chapter>
+
+    <Chapter id="prensa" label="Chapter 8 · In the press">
+      <Fragment slot="title">The press told it. The blockchain confirms it.</Fragment>
+      <Quote>
+        "Minteo surpassed US$200 million in monthly digital transactions [with COPM] on the Polygon network."
+        <Fragment slot="cite">— <cite><a href="https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338" target="_blank" rel="noopener noreferrer">La República, September 2025</a></cite> (paraphrase of the reported milestone)</Fragment>
+      </Quote>
+      <p>That's what the Colombian financial press said in September 2025. This audit doesn't just confirm it with public data: it shows that two months later, in November, the system reached <strong class="accent-g">US$318.4 million in a single month</strong>.</p>
+      <p>When the record is public, milestones aren't declared. They're verified.</p>
+    </Chapter>
+
+    <Chapter id="glosario" label="Appendix · Quick glossary">
+      <Fragment slot="title">Twelve terms to read this story</Fragment>
+      <Glossary items={glossaryItems} />
+    </Chapter>
+  </main>
+
+  <SiteFooter
+    navLabel="Links"
+    links={footerLinks}
+    credit="Built by Juan Sebastián Agudelo (Juanse) · Data as of 2026-06-12 · Rate: 1 USD = 4,000 COP (±5%)"
+  />
+</Base>

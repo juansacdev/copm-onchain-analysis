@@ -1,0 +1,14 @@
+---
+interface Props {
+  items: { term: string; def: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+{items.map((item) => (
+  <details class="gl">
+    <summary>{item.term}</summary>
+    <div class="gl-body">{item.def}</div>
+  </details>
+))}

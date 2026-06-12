@@ -1,0 +1,11 @@
+---
+// Cita con atribución: blockquote semántico dentro de figure,
+// con la fuente en figcaption (patrón recomendado por la spec HTML).
+---
+
+<figure class="quote">
+  <blockquote>
+    <p><slot /></p>
+  </blockquote>
+  <figcaption class="who"><slot name="cite" /></figcaption>
+</figure>

@@ -1,0 +1,15 @@
+---
+interface Props {
+  value: string;
+  desc: string;
+  /** p = Polygon, c = Celo, g = gradiente combinado */
+  variant: 'p' | 'c' | 'g';
+}
+
+const { value, desc, variant } = Astro.props;
+---
+
+<p class="bignum">
+  <strong class:list={['n', variant]}>{value}</strong>
+  <span class="d">{desc}</span>
+</p>

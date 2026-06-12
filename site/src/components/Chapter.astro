@@ -1,0 +1,16 @@
+---
+interface Props {
+  id: string;
+  label: string;
+}
+
+const { id, label } = Astro.props;
+---
+
+<section class="chapter reveal" id={id}>
+  <header>
+    <p class="ch-label">{label}</p>
+    <h2><slot name="title" /></h2>
+  </header>
+  <slot />
+</section>
