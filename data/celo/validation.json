@@ -1,0 +1,68 @@
+{
+  "chain": "celo",
+  "validatedAt": "2026-06-12T01:44:51.909Z",
+  "checks": [
+    {
+      "name": "event count matches scan progress",
+      "ok": true,
+      "detail": "jsonl=120900 scan=120900"
+    },
+    {
+      "name": "no duplicate (tx, logIndex) pairs",
+      "ok": true,
+      "detail": "duplicates=0"
+    },
+    {
+      "name": "all events inside scanned block range",
+      "ok": true,
+      "detail": "outOfRange=0 (range 27680993 → 69326020)"
+    },
+    {
+      "name": "scan completed (all slices reached their end)",
+      "ok": true,
+      "detail": "completedAt=2026-06-12T01:42:18.898Z"
+    },
+    {
+      "name": "every event block has a timestamp",
+      "ok": true,
+      "detail": "uniqueBlocks=77103 missing=0"
+    },
+    {
+      "name": "timestamps inside deploy → latest window",
+      "ok": true,
+      "detail": "outside=0 of 77103"
+    },
+    {
+      "name": "daily series length matches summary range",
+      "ok": true,
+      "detail": "csv=634 summary=634"
+    },
+    {
+      "name": "daily series is continuous (no missing days)",
+      "ok": true,
+      "detail": "gaps=0"
+    },
+    {
+      "name": "csv transfer total equals summary total",
+      "ok": true,
+      "detail": "csv=120900 summary=120900"
+    },
+    {
+      "name": "mints − burns equals derived supply",
+      "ok": true,
+      "detail": "mints−burns=1028163109.63 derived=1028163109.63"
+    },
+    {
+      "name": "derived supply within 25% of live totalSupply()",
+      "ok": true,
+      "detail": "derived=1028163110 onChain=1028163110 deviation=0.0%"
+    },
+    {
+      "name": "random transfers re-verified against the live chain",
+      "ok": true,
+      "detail": "viaReceipt=6 viaLogs=6 mismatched=0 (sampled every 10075th event)"
+    }
+  ],
+  "passed": 12,
+  "failed": 0
+}

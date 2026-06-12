@@ -150,32 +150,63 @@ check(
 const TRANSFER_TOPIC =
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 const SAMPLES = 12;
-// Deterministic sample: evenly spaced across the dataset.
+// Deterministic sample: evenly spaced across the dataset. Each sample is
+// re-verified with a fresh, independent read from the chain: the
+// transaction receipt when available, or a single-block eth_getLogs query
+// as fallback (some endpoints don't serve receipts for legacy eras, e.g.
+// Celo blocks before the L2 migration).
 const step = Math.max(1, Math.floor(transfers.length / SAMPLES));
-let verified = 0;
+let viaReceipt = 0;
+let viaLogs = 0;
 let mismatched = 0;
-for (let i = 0; i < transfers.length && verified + mismatched < SAMPLES; i += step) {
+
+async function verifyViaReceipt(t) {
+  const receipt = await client.getTransactionReceipt({ hash: t.t });
+  const log = receipt.logs.find(
+    (l) =>
+      l.logIndex === t.i &&
+      l.address.toLowerCase() === COPM_ADDRESS.toLowerCase() &&
+      l.topics[0] === TRANSFER_TOPIC
+  );
+  return log && BigInt(log.data) === BigInt(t.v) && Number(receipt.blockNumber) === t.b;
+}
+
+async function verifyViaLogs(t) {
+  const logs = await client.getLogs({
+    address: COPM_ADDRESS,
+    fromBlock: BigInt(t.b),
+    toBlock: BigInt(t.b),
+  });
+  return logs.some(
+    (l) =>
+      l.transactionHash === t.t &&
+      l.logIndex === t.i &&
+      l.topics[0] === TRANSFER_TOPIC &&
+      BigInt(l.data) === BigInt(t.v)
+  );
+}
+
+for (let i = 0; i < transfers.length && viaReceipt + viaLogs + mismatched < SAMPLES; i += step) {
   const t = transfers[i];
   try {
-    const receipt = await client.getTransactionReceipt({ hash: t.t });
-    const log = receipt.logs.find(
-      (l) =>
-        l.logIndex === t.i &&
-        l.address.toLowerCase() === COPM_ADDRESS.toLowerCase() &&
-        l.topics[0] === TRANSFER_TOPIC
-    );
-    const valueMatches =
-      log && BigInt(log.data) === BigInt(t.v) && Number(receipt.blockNumber) === t.b;
-    if (valueMatches) verified++;
+    if (await verifyViaReceipt(t)) {
+      viaReceipt++;
+      continue;
+    }
+  } catch {
+    // fall through to the logs-based check
+  }
+  try {
+    if (await verifyViaLogs(t)) viaLogs++;
     else mismatched++;
   } catch {
     mismatched++;
   }
 }
 check(
-  "random transfers re-verified against live receipts",
-  mismatched === 0 && verified > 0,
-  `verified=${verified} mismatched=${mismatched} (sampled every ${step}th event)`
+  "random transfers re-verified against the live chain",
+  mismatched === 0 && viaReceipt + viaLogs > 0,
+  `viaReceipt=${viaReceipt} viaLogs=${viaLogs} mismatched=${mismatched} (sampled every ${step}th event)`
 );
 
 /* -------------------------------------------------------------------------- */

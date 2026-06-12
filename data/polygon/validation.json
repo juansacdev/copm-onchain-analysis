@@ -1,6 +1,6 @@
 {
   "chain": "polygon",
-  "validatedAt": "2026-06-12T01:25:02.203Z",
+  "validatedAt": "2026-06-12T01:44:54.352Z",
   "checks": [
     {
       "name": "event count matches scan progress",
@@ -55,12 +55,12 @@
     {
       "name": "derived supply within 25% of live totalSupply()",
       "ok": true,
-      "detail": "derived=7633653033 onChain=6323055811 deviation=20.7%"
+      "detail": "derived=7633653033 onChain=6322997918 deviation=20.7%"
     },
     {
-      "name": "random transfers re-verified against live receipts",
+      "name": "random transfers re-verified against the live chain",
       "ok": true,
-      "detail": "verified=12 mismatched=0 (sampled every 16399th event)"
+      "detail": "viaReceipt=12 viaLogs=0 mismatched=0 (sampled every 16399th event)"
     }
   ],
   "passed": 12,

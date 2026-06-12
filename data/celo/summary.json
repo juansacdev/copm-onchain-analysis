@@ -1,0 +1,44 @@
+{
+  "chain": "celo",
+  "chainLabel": "Celo",
+  "address": "0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606",
+  "range": {
+    "firstDay": "2024-09-17",
+    "lastDay": "2026-06-12",
+    "totalDays": 634
+  },
+  "totals": {
+    "transferEvents": 120900,
+    "grossVolumeCOPM": 46660327756.20362,
+    "grossVolumeUSD": 11665081.939050905,
+    "netVolumeCOPM": 37293988749.392426,
+    "netVolumeUSD": 9323497.187348107,
+    "totalMintedCOPM": 5197251058.219653,
+    "totalBurnedCOPM": 4169087948.591542,
+    "currentSupplyCOPM": 1028163109.62811,
+    "currentSupplyUSD": 257040.77740702752
+  },
+  "averages": {
+    "avgEndOfDaySupplyCOPM": 514794429.0809739,
+    "avgEndOfDaySupplyUSD": 128698.60727024348,
+    "avgDailyTransfers": 190.69400630914828,
+    "avgDailyGrossVolumeCOPM": 73596731.47666186,
+    "avgDailyGrossVolumeUSD": 18399.182869165466
+  },
+  "peaks": {
+    "maxTransfersInOneDay": {
+      "day": "2025-01-19",
+      "count": 1919
+    },
+    "maxGrossVolumeInOneDay": {
+      "day": "2025-07-23",
+      "copm": 2946517266.737456,
+      "usd": 736629.316684364
+    },
+    "maxSupplyEndOfDay": {
+      "day": "2026-03-24",
+      "copm": 1144606266.62811,
+      "usd": 286151.56665702746
+    }
+  }
+}
