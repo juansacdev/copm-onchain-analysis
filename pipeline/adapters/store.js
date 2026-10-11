@@ -39,6 +39,7 @@ const readJsonIfExists = (url, fallback) => (existsSync(url) ? readJson(url) : f
 
 // Everything a scan persists for one chain, under data/<chain>/:
 //   transfers/YYYY-MM.jsonl, admin-events.jsonl, approvals.json, state.json
+// plus the holders snapshot (holders.csv, holders.json) taken at its checkpoint.
 // state.json is written last, so its presence at a given lastBlock is the
 // proof that everything before it is complete.
 export function createStore(dirUrl) {
@@ -47,6 +48,8 @@ export function createStore(dirUrl) {
   const stateUrl = new URL("state.json", dirUrl);
   const adminUrl = new URL("admin-events.jsonl", dirUrl);
   const approvalsUrl = new URL("approvals.json", dirUrl);
+  const holdersCsvUrl = new URL("holders.csv", dirUrl);
+  const holdersJsonUrl = new URL("holders.json", dirUrl);
 
   const listPartitions = () =>
     existsSync(transfersDir)
@@ -90,10 +93,22 @@ export function createStore(dirUrl) {
       writeAtomic(approvalsUrl, `${JSON.stringify(approvals, null, 2)}\n`);
     },
 
+    readHolders: () => ({
+      csv: existsSync(holdersCsvUrl) ? readText(holdersCsvUrl) : null,
+      json: readJsonIfExists(holdersJsonUrl, null),
+    }),
+    // The json goes last: a reader that finds it at the checkpoint block also
+    // finds the csv of the same snapshot.
+    writeHolders({ csv, json }) {
+      ensureDir(dirUrl);
+      writeAtomic(holdersCsvUrl, csv);
+      writeAtomic(holdersJsonUrl, `${JSON.stringify(json, null, 2)}\n`);
+    },
+
     // --fresh: only the scan outputs go; manifest and legacy files stay.
     clear() {
       rmSync(transfersDir, { recursive: true, force: true });
-      for (const url of [adminUrl, approvalsUrl, stateUrl]) rmSync(url, { force: true });
+      for (const url of [adminUrl, approvalsUrl, stateUrl, holdersCsvUrl, holdersJsonUrl]) rmSync(url, { force: true });
     },
   };
 }

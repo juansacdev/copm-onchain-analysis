@@ -56,3 +56,37 @@ test("reconcileSupply is exact: equal passes, one wei off fails with the differe
   assert.equal(bad.ok, false);
   assert.equal(bad.diff, -1n);
 });
+
+test("activity tracking records received, sent, transfer counts and first/last timestamps per address", () => {
+  const ledger = createLedger({ trackActivity: true });
+  const at = (ts, f, r, v) => ({ ...row(f, r, v), ts });
+  foldTransfers(ledger, [
+    at(100, ZERO_ADDRESS, A, 500n),
+    at(200, A, B, 120n),
+    at(300, B, ZERO_ADDRESS, 20n),
+  ]);
+
+  assert.deepEqual(ledger.activity.get(A), {
+    received: 500n,
+    sent: 120n,
+    transfersIn: 1,
+    transfersOut: 1,
+    firstSeen: 100,
+    lastSeen: 200,
+  });
+  assert.deepEqual(ledger.activity.get(B), {
+    received: 120n,
+    sent: 20n,
+    transfersIn: 1,
+    transfersOut: 1,
+    firstSeen: 200,
+    lastSeen: 300,
+  });
+  assert.equal(ledger.activity.has(ZERO_ADDRESS), false);
+});
+
+test("a ledger created without activity tracking keeps no per-address history", () => {
+  const ledger = createLedger();
+  foldTransfers(ledger, [row(ZERO_ADDRESS, A, 5n)]);
+  assert.equal(ledger.activity, undefined);
+});

@@ -16,7 +16,7 @@ export function requireRpcUrl(chainKey, env = process.env) {
   return url;
 }
 
-// viem client for the steps that read contract state (discover, validate).
+// viem client for the steps that read contract metadata (discover).
 // Built on demand so that steps that never touch the network (aggregate,
 // charts) run without an RPC URL.
 export function createRpcClient(chainKey, env = process.env) {

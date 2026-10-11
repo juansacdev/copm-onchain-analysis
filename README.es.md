@@ -50,10 +50,12 @@ Un pipeline de Node.js, liviano a propósito (una sola dependencia: [viem](https
 discover          → actualiza los metadatos estáticos del token (manifest.json)
 scan              → scan incremental y verificado de todos los eventos del contrato
                      (eth_getLogs, workers paralelos); continúa desde el último checkpoint
+holders           → snapshot de holders en el bloque del checkpoint, cada balance
+                     verificado con balanceOf (holders.csv, holders.json)
 aggregate         → serie diaria: volumen, mints, burns, supply derivado, approvals
 charts            → SVGs autocontenidos (sin canvas, sin headless browser)
 charts:combined   → gráficos Polygon + Celo en los mismos ejes
-validate          → 12 checks por chain, incluyendo spot checks contra la chain en vivo
+validate          → 17 reglas estrictas por chain, offline y sin tolerancia; exit 1 si falla alguna
 ```
 
 Cada paso es un comando de un único CLI: `node pipeline/cli.js <comando> [--chain polygon|celo] [--fresh]`. `--chain` toma por defecto la variable de entorno `CHAIN` y, si no existe, `polygon`. Los scripts de `npm run` de abajo lo envuelven.
@@ -69,6 +71,22 @@ Los endpoints públicos están detrás de balanceadores de carga, y un backend a
 - **Reconciliación exacta antes de mover el checkpoint.** Minted − burned debe ser igual a `totalSupply()` en el último bloque de la etapa, al wei (un `eth_call` fijado a ese bloque y enviado por separado). Si no cuadra, la corrida falla y no escribe nada de esa etapa.
 - **Timestamps exactos.** Cada transferencia lleva el timestamp de su bloque (del log, o del header del bloque cuando el nodo devuelve `0x0`), así que los días no se interpolan.
 - **Idempotente y reanudable.** Las escrituras son atómicas; `data/<chain>/state.json` se escribe al final, y una nueva corrida tras una caída descarta todo lo que esté por encima del checkpoint.
+
+### El snapshot de holders
+
+`holders` lee las transferencias que guardó `scan` y la chain en el mismo bloque, `state.lastBlock`, nunca en el head actual. No escribe nada salvo que se cumplan tres cosas, al wei:
+
+- toda dirección que aparece alguna vez en una transferencia tiene un balance del libro igual a `balanceOf` en ese bloque;
+- los balances positivos on-chain suman `totalSupply()`;
+- ningún balance del libro es negativo.
+
+Un `eth_call` fijado a un bloque o falla o responde bien, y los ítems de un lote pueden ser atendidos por backends distintos, así que cada ítem se verifica por separado y se reintenta (lotes de máximo 100 llamadas, `--max-batch-attempts` por ítem). Un error nunca se interpreta como cero. El paso también lee `paused()`, el slot de implementación ERC-1967, los miembros de cada rol, `eth_getCode` de cada holder (`contract` o `wallet`) e `isFrozen` de las cuentas que aparecen en eventos `Frozen`, `Thawed` o `BurnedFrozen`.
+
+Escribe `data/<chain>/holders.csv` (una fila por dirección con balance positivo: `rank,address,balance_copm,share_pct,kind,frozen,received_copm,sent_copm,transfers_in,transfers_out,first_seen,last_seen`) y `data/<chain>/holders.json` (bloque, supply, cantidad de holders, concentración del top 1/5/10/50, rangos de balance, miembros de cada rol, estado de pausa, implementación, top 25).
+
+### Validación
+
+`validate` es estricto y offline: lee solo los archivos que escriben `scan`, `holders` y `aggregate`, así que el CI puede correrlo en cada push. Entre sus 17 reglas: minted − burned es igual a `totalSupply` al wei, recorrer las transferencias guardadas reproduce el checkpoint, ningún balance negativo, `holders.csv` suma `totalSupply` en el bloque del checkpoint, las particiones están estrictamente ordenadas y cada fila está en su mes UTC, nada queda por encima del checkpoint y `daily.csv` es exactamente lo que producen las transferencias. El resultado va a `data/<chain>/validation.json`.
 
 Ajustes, todos opcionales: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (o las variables `SCAN_*` equivalentes). Los valores por defecto están por chain en `pipeline/config/chains.js`. `scan --fresh` descarta lo que el scan generó para esa chain y empieza de cero.
 
@@ -109,10 +127,11 @@ El primer `scan` recorre todo el historial desde el deploy block; las corridas s
 │   ├── admin-events.jsonl        # upgrades, roles, pausas, congelamientos
 │   ├── approvals.json            # conteo de Approval por día y por spender
 │   ├── state.json                # checkpoint del scan (solo se escribe tras reconciliar)
+│   ├── holders.csv / holders.json # snapshot de holders en el bloque del checkpoint
 │   ├── daily.csv                 # serie diaria agregada
 │   ├── summary.json              # totales, promedios, picos
 │   ├── manifest.json             # metadatos estáticos del contrato
-│   └── validation.json           # resultado de los 12 checks
+│   └── validation.json           # resultado de las 17 reglas
 ├── charts/<chain>/               # 6 SVGs por chain
 ├── charts/combined/              # 4 SVGs comparativos
 ├── site/                         # sitio web del storytelling (Astro, ES + EN)

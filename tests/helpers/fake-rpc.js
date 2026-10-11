@@ -1,5 +1,6 @@
 import { keccak256, stringToHex } from "viem";
 import { EVENT_TOPICS } from "../../pipeline/domain/events.js";
+import { ROLE_HASHES, SELECTORS } from "../../pipeline/domain/contract.js";
 import { ZERO_ADDRESS } from "../../pipeline/domain/units.js";
 
 // A scripted JSON-RPC backend for the scan: a list of contract logs, a head,
@@ -39,6 +40,8 @@ export const upgraded = (b, i, implementation = BOB) => ({
   topics: [EVENT_TOPICS.Upgraded, pad(implementation)],
   data: "0x",
 });
+export const frozen = (b, i, account) => ({ b, i, topics: [EVENT_TOPICS.Frozen, pad(account)], data: "0x" });
+export const thawed = (b, i, account) => ({ b, i, topics: [EVENT_TOPICS.Thawed, pad(account)], data: "0x" });
 export const roleGranted = (b, i, role, account) => ({
   b,
   i,
@@ -51,15 +54,31 @@ export const roleGranted = (b, i, role, account) => ({
   data: "0x",
 });
 
-const SUPPLY_SELECTOR = "0x18160ddd";
+const SUPPLY_SELECTOR = SELECTORS.totalSupply;
+const ROLE_BY_HASH = Object.fromEntries(Object.entries(ROLE_HASHES).map(([name, hash]) => [hash, name]));
 
-export function createFakeChain({ logs, head, address = TOKEN, zeroTimestamps = false }) {
+// `contract` scripts the state reads of the holders snapshot: pause flag,
+// implementation address, role members by role name, frozen accounts and code
+// of the addresses that are contracts. Balances and supply come from the logs.
+export function createFakeChain({
+  logs,
+  head,
+  address = TOKEN,
+  zeroTimestamps = false,
+  contract = {},
+}) {
   const chain = {
     head,
     logs: [...logs],
-    faults: {}, // hooks: getLogs, head, header, supply, callError
-    seen: { batches: [], singles: [], getLogsCalls: 0, headerCalls: 0 },
+    // hooks: getLogs, head, header, supply, callError, and `read`, called for
+    // every eth_call / eth_getCode / eth_getStorageAt with
+    // { method, selector, data, block, attempt } and answering an Error (the
+    // item fails), a string (the forced result) or nothing (the real answer).
+    faults: {},
+    seen: { batches: [], singles: [], getLogsCalls: 0, headerCalls: 0, reads: [] },
+    contract: { paused: false, implementation: BOB, roles: {}, frozen: [], codes: {}, ...contract },
   };
+  const attempts = new Map();
 
   const toRaw = (log) => ({
     address,
@@ -80,8 +99,69 @@ export function createFakeChain({ logs, head, address = TOKEN, zeroTimestamps = 
         return sum;
       }, 0n);
 
+  const balanceAt = (account, block) =>
+    chain.logs
+      .filter((l) => l.b <= block && l.topics[0] === EVENT_TOPICS.Transfer)
+      .reduce((sum, l) => {
+        const value = BigInt(l.data);
+        let next = sum;
+        if (l.topics[1] === pad(account)) next -= value;
+        if (l.topics[2] === pad(account)) next += value;
+        return next;
+      }, 0n);
+
+  const lastAddress = (data) => `0x${data.slice(-40)}`;
+
+  function realRead(method, params) {
+    if (method === "eth_getCode") return chain.contract.codes[params[0].toLowerCase()] ?? "0x";
+    if (method === "eth_getStorageAt") return word(BigInt(chain.contract.implementation));
+    const [{ data }, blockTag] = params;
+    const block = Number(blockTag);
+    switch (data.slice(0, 10)) {
+      case SELECTORS.balanceOf:
+        return word(balanceAt(lastAddress(data), block));
+      case SELECTORS.totalSupply:
+        return word(chain.faults.supply?.(block) ?? supplyAt(block));
+      case SELECTORS.paused:
+        return word(chain.contract.paused ? 1 : 0);
+      case SELECTORS.isFrozen:
+        return word(chain.contract.frozen.includes(lastAddress(data)) ? 1 : 0);
+      case SELECTORS.getRoleMemberCount:
+        return word((chain.contract.roles[ROLE_BY_HASH[`0x${data.slice(10, 74)}`]] ?? []).length);
+      case SELECTORS.getRoleMember: {
+        const members = chain.contract.roles[ROLE_BY_HASH[`0x${data.slice(10, 74)}`]] ?? [];
+        return word(BigInt(members[Number(`0x${data.slice(74)}`)]));
+      }
+      default:
+        throw new Error(`unexpected call data ${data.slice(0, 10)}`);
+    }
+  }
+
+  function answerRead(call) {
+    const { method, params } = call;
+    const data = method === "eth_call" ? params[0].data : method === "eth_getCode" ? params[0] : params[1];
+    const block = Number(method === "eth_call" ? params[1] : params[method === "eth_getCode" ? 1 : 2]);
+    const key = `${method}:${data}@${block}`;
+    const attempt = (attempts.get(key) ?? 0) + 1;
+    attempts.set(key, attempt);
+    const selector = method === "eth_call" ? data.slice(0, 10) : method;
+    chain.seen.reads.push({ method, selector, data, block, attempt });
+    const forced = chain.faults.read?.({ method, selector, data, block, attempt });
+    if (forced instanceof Error) return { ok: false, error: forced.message };
+    if (typeof forced === "string") return { ok: true, result: forced };
+    try {
+      return { ok: true, result: realRead(method, params) };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
   function answer(call, ctx) {
     switch (call.method) {
+      case "eth_call":
+      case "eth_getCode":
+      case "eth_getStorageAt":
+        return answerRead(call);
       case "eth_blockNumber":
         return { ok: true, result: hex(chain.faults.head?.(ctx) ?? chain.head) };
       case "eth_getLogs": {
@@ -117,6 +197,11 @@ export function createFakeChain({ logs, head, address = TOKEN, zeroTimestamps = 
     async call(method, params) {
       chain.seen.singles.push({ method, params });
       if (method === "eth_blockNumber") return hex(chain.head);
+      if (method === "eth_call" && params[0].data !== SUPPLY_SELECTOR) {
+        const reply = answerRead({ method, params });
+        if (!reply.ok) throw new Error(reply.error);
+        return reply.result;
+      }
       if (method === "eth_call") {
         const failure = chain.faults.callError?.({ attempt: chain.seen.singles.length });
         if (failure) throw failure;
@@ -133,5 +218,6 @@ export function createFakeChain({ logs, head, address = TOKEN, zeroTimestamps = 
   };
 
   chain.supplyAt = supplyAt;
+  chain.balanceAt = balanceAt;
   return chain;
 }

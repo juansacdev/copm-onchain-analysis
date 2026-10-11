@@ -6,6 +6,7 @@ import { CHAIN_KEYS, SCAN_SETTING_KEYS } from "./config/chains.js";
 const STEPS = {
   discover: "./steps/discover.js",
   scan: "./steps/scan.js",
+  holders: "./steps/holders.js",
   aggregate: "./steps/aggregate.js",
   charts: "./steps/charts.js",
   "charts:combined": "./steps/combined-charts.js",

@@ -50,10 +50,12 @@ A Node.js pipeline, deliberately lightweight (a single dependency: [viem](https:
 discover          → refreshes the token's static metadata (manifest.json)
 scan              → verified incremental scan of every contract event (eth_getLogs,
                      parallel workers); resumes from the last checkpoint
+holders           → holders snapshot at the checkpoint block, every balance checked
+                     against balanceOf (holders.csv, holders.json)
 aggregate         → daily series: volume, mints, burns, derived supply, approvals
 charts            → self-contained SVGs (no canvas, no headless browser)
 charts:combined   → Polygon + Celo charts on shared axes
-validate          → 12 checks per chain, including live-chain spot checks
+validate          → 17 strict rules per chain, offline, no tolerance; exit 1 on any failure
 ```
 
 Each step is a command of one CLI: `node pipeline/cli.js <command> [--chain polygon|celo] [--fresh]`. `--chain` defaults to the `CHAIN` environment variable, then to `polygon`. The `npm run` scripts below wrap it.
@@ -69,6 +71,22 @@ Public endpoints sit behind load balancers, and a backend that lacks part of the
 - **Exact reconciliation before the checkpoint moves.** Minted − burned must equal `totalSupply()` at the stage's last block, to the wei (a pinned `eth_call` sent on its own). On a mismatch the run fails and writes nothing for that stage.
 - **Exact timestamps.** Every transfer carries the timestamp of its block (from the log, or from the block header when the node returns `0x0`), so day buckets are not interpolated.
 - **Idempotent and resumable.** Writes are atomic; `data/<chain>/state.json` is written last, and a re-run after a crash drops anything above the checkpoint.
+
+### The holders snapshot
+
+`holders` reads the transfers `scan` stored and the chain at the same block, `state.lastBlock`, never at the live head. It writes nothing unless three things hold, to the wei:
+
+- every address that ever appears in a transfer has a ledger balance equal to `balanceOf` at that block;
+- the positive on-chain balances add up to `totalSupply()`;
+- no ledger balance is negative.
+
+Pinned `eth_call`s either error or are right, and the items of a batch can be served by different backends, so each item is checked on its own and retried (batches of at most 100 calls, `--max-batch-attempts` per item). An error is never read as zero. The step also reads `paused()`, the ERC-1967 implementation slot, the members of each role, `eth_getCode` of every holder (`contract` or `wallet`) and `isFrozen` for the accounts that appear in `Frozen`, `Thawed` or `BurnedFrozen` events.
+
+It writes `data/<chain>/holders.csv` (one row per address with a positive balance: `rank,address,balance_copm,share_pct,kind,frozen,received_copm,sent_copm,transfers_in,transfers_out,first_seen,last_seen`) and `data/<chain>/holders.json` (block, supply, holder count, concentration of the top 1/5/10/50, balance buckets, role members, pause state, implementation, top 25).
+
+### Validation
+
+`validate` is strict and offline: it reads only the files written by `scan`, `holders` and `aggregate`, so CI can run it on every push. Among its 17 rules: minted − burned equals `totalSupply` to the wei, folding the stored transfers reproduces the checkpoint, no negative balance, `holders.csv` adds up to `totalSupply` at the checkpoint block, partitions are strictly ordered and each row sits in its UTC month, nothing lies above the checkpoint, and `daily.csv` is exactly what the transfers produce. Results go to `data/<chain>/validation.json`.
 
 Tuning, all optional: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (or the matching `SCAN_*` variables). Defaults are per chain in `pipeline/config/chains.js`. `scan --fresh` discards the chain's scan output and starts over.
 
@@ -109,10 +127,11 @@ The first `scan` walks the whole history from the deploy block; later runs only 
 │   ├── admin-events.jsonl        # upgrades, roles, pauses, freezes
 │   ├── approvals.json            # Approval counts per day and per spender
 │   ├── state.json                # scan checkpoint (written only after reconciliation)
+│   ├── holders.csv / holders.json # holders snapshot at the checkpoint block
 │   ├── daily.csv                 # aggregated daily series
 │   ├── summary.json              # totals, averages, peaks
 │   ├── manifest.json             # static contract metadata
-│   └── validation.json           # the 12 checks' results
+│   └── validation.json           # the 17 rules' results
 ├── charts/<chain>/               # 6 SVGs per chain
 ├── charts/combined/              # 4 comparative SVGs
 ├── site/                         # storytelling website (Astro, ES + EN)

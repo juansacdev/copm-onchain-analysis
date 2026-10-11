@@ -81,3 +81,12 @@ test("a partition file is one JSON object per line", () => {
   const text = readdirSync(fileURLToPath(new URL("transfers/", url)));
   assert.deepEqual(text, ["2024-01.jsonl"]);
 });
+
+test("holders.csv and holders.json round-trip together; absent files read as null", () => {
+  const { store, dir } = tempStore();
+  assert.deepEqual(store.readHolders(), { csv: null, json: null });
+
+  store.writeHolders({ csv: "rank,address\n", json: { block: 7, holders: 0 } });
+  assert.deepEqual(store.readHolders(), { csv: "rank,address\n", json: { block: 7, holders: 0 } });
+  assert.deepEqual(readdirSync(dir).filter((n) => n.endsWith(".tmp")), []);
+});

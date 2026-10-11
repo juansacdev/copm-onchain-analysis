@@ -1,50 +1,119 @@
-// Pure rule checks over the pipeline artifacts. Each returns
-// { name, ok, detail }; the names and details are what validation.json
-// records, so keep them stable.
-const check = (name, ok, detail) => ({ name, ok, detail });
+// Strict, offline rules over everything `scan`, `holders` and `aggregate`
+// wrote for one chain. Each rule returns { id, ok, detail }; ids and details
+// are what validation.json records, so keep them stable. There is no
+// tolerance anywhere: amounts are compared to the wei.
+import { buildDailySeries, dailyCsv } from "./aggregate.js";
+import { parseHoldersCsv, formatUnits } from "./holders.js";
+import { createLedger, foldTransfers, negativeBalances } from "./ledger.js";
+import { monthKey } from "./partition.js";
+import { reconcileSupply } from "./reconcile.js";
+import { toCOPM } from "./units.js";
+
+const check = (id, ok, detail) => ({ id, ok, detail });
+
+const bySeq = (a, b) => a.b - b.b || a.i - b.i;
+
+// Counts rows that do not come strictly after the previous one.
+function sequenceBreaks(rows) {
+  let breaks = 0;
+  for (let k = 1; k < rows.length; k++) if (bySeq(rows[k - 1], rows[k]) >= 0) breaks++;
+  return breaks;
+}
 
 export function checkEventCount(transfers, state) {
   return check(
-    "event count matches checkpoint",
+    "event-count",
     transfers.length === state.transfers,
     `partitions=${transfers.length} checkpoint=${state.transfers}`
   );
 }
 
-export function checkNoDuplicates(transfers) {
-  const seen = new Set();
-  let dupes = 0;
-  for (const t of transfers) {
-    const key = `${t.t}#${t.i}`;
-    if (seen.has(key)) dupes++;
-    seen.add(key);
-  }
-  return check("no duplicate (tx, logIndex) pairs", dupes === 0, `duplicates=${dupes}`);
-}
-
-export function checkBlockRange(transfers, manifest, state) {
-  const deployBlock = Number(manifest.deployBlock);
-  const outOfRange = transfers.filter((t) => t.b < deployBlock || t.b > state.lastBlock).length;
-  return check(
-    "all events inside scanned block range",
-    outOfRange === 0,
-    `outOfRange=${outOfRange} (range ${deployBlock} → ${state.lastBlock})`
-  );
-}
-
 // The scan only advances its checkpoint after this holds; re-checking it here
 // catches a hand-edited or truncated state.json.
-export function checkCheckpointSupply(state) {
-  const derived = BigInt(state.minted) - BigInt(state.burned);
+export function checkSupplyExact(state) {
+  const { ok, derived, totalSupply, diff } = reconcileSupply({
+    minted: BigInt(state.minted),
+    burned: BigInt(state.burned),
+    totalSupply: BigInt(state.totalSupply),
+  });
+  return check("supply-exact", ok, `minted-burned=${derived} totalSupply=${totalSupply} diff ${diff}`);
+}
+
+export function checkLedgerMatchesState(ledger, transferCount, state) {
+  const same =
+    ledger.minted.toString() === state.minted &&
+    ledger.burned.toString() === state.burned &&
+    transferCount === state.transfers;
   return check(
-    "checkpoint supply reconciles exactly (minted − burned = totalSupply)",
-    derived === BigInt(state.totalSupply),
-    `minted−burned=${derived} totalSupply=${state.totalSupply}`
+    "ledger-matches-state",
+    same,
+    `partitions minted=${ledger.minted} burned=${ledger.burned} transfers=${transferCount}; ` +
+      `checkpoint minted=${state.minted} burned=${state.burned} transfers=${state.transfers}`
   );
+}
+
+export function checkNoNegativeBalance(ledger) {
+  const negative = negativeBalances(ledger);
+  return check(
+    "no-negative-balance",
+    negative.length === 0,
+    negative.length === 0 ? "negative=0" : `negative=${negative.length} first=${negative[0]}`
+  );
+}
+
+// holders.csv must add up to totalSupply and belong to the checkpoint block.
+export function checkHoldersSumExact(holders, state) {
+  if (!holders?.csv || !holders?.json) {
+    return check("holders-sum-exact", false, `holders.csv / holders.json missing: run "holders --chain ${state.chain}"`);
+  }
+  let sum;
+  try {
+    sum = parseHoldersCsv(holders.csv).reduce((total, h) => total + h.balance, 0n);
+  } catch (err) {
+    return check("holders-sum-exact", false, err.message);
+  }
+  const totalSupply = BigInt(state.totalSupply);
+  const ok =
+    sum === totalSupply &&
+    holders.json.block === state.lastBlock &&
+    holders.json.totalSupply === formatUnits(totalSupply);
+  return check(
+    "holders-sum-exact",
+    ok,
+    `sum=${sum} totalSupply=${totalSupply} holders.json block=${holders.json.block} checkpoint=${state.lastBlock}`
+  );
+}
+
+export function checkPartitionsOrderedUnique(partitions) {
+  const breaks = sequenceBreaks(partitions.flatMap((p) => p.rows));
+  return check("partitions-ordered-unique", breaks === 0, `outOfOrderOrDuplicate=${breaks}`);
+}
+
+// A row without a timestamp is timestamps-exact's finding, not this rule's.
+export function checkPartitionMonth(partitions) {
+  let misplaced = 0;
+  let first = "";
+  for (const { key, rows } of partitions) {
+    for (const row of rows) {
+      if (!row.ts || monthKey(row.ts) === key) continue;
+      if (++misplaced === 1) first = `; first: block ${row.b} in ${key} belongs to ${monthKey(row.ts)}`;
+    }
+  }
+  return check("partition-month-matches-ts", misplaced === 0, `misplaced=${misplaced}${first}`);
+}
+
+export function checkNoRowAboveCheckpoint(transfers, state) {
+  const above = transfers.filter((t) => t.b > state.lastBlock).length;
+  return check("no-row-above-checkpoint", above === 0, `above=${above} checkpoint=${state.lastBlock}`);
+}
+
+export function checkNoRowBeforeDeploy(transfers, deployBlock) {
+  const before = transfers.filter((t) => t.b < deployBlock).length;
+  return check("no-row-before-deploy", before === 0, `before=${before} deployBlock=${deployBlock}`);
 }
 
 // Rows arrive in block order, and block time never goes back.
-export function checkTimestampCoverage(transfers) {
+export function checkTimestampsExact(transfers) {
   let missing = 0;
   let outOfOrder = 0;
   let previous = 0;
@@ -57,92 +126,130 @@ export function checkTimestampCoverage(transfers) {
     previous = t.ts;
   }
   return check(
-    "every event has an exact, non-decreasing timestamp",
+    "timestamps-exact",
     missing === 0 && outOfOrder === 0,
     `events=${transfers.length} missing=${missing} outOfOrder=${outOfOrder}`
   );
 }
 
-export function checkTimestampWindow(transfers, manifest, state, toleranceSeconds = 120) {
+// The slack covers a block's timestamp being a little ahead of the manifest's.
+export function checkTimestampWindow(transfers, manifest, state, slackSeconds = 120) {
   const deployTs = Date.parse(manifest.deployTimestamp) / 1000;
   const outside = transfers.filter(
-    (t) => t.ts < deployTs - toleranceSeconds || t.ts > state.lastBlockTime + toleranceSeconds
+    (t) => t.ts < deployTs - slackSeconds || t.ts > state.lastBlockTime + slackSeconds
   ).length;
+  return check("timestamps-in-window", outside === 0, `outside=${outside} of ${transfers.length}`);
+}
+
+export function checkAdminEventsOrdered(adminEvents, state) {
+  const breaks = sequenceBreaks(adminEvents);
+  const above = adminEvents.filter((e) => e.b > state.lastBlock).length;
   return check(
-    "timestamps inside deploy → checkpoint window",
-    outside === 0,
-    `outside=${outside} of ${transfers.length}`
+    "admin-events-ordered",
+    breaks === 0 && above === 0,
+    `outOfOrderOrDuplicate=${breaks} aboveCheckpoint=${above}`
   );
 }
 
-// csvRows are the data lines of daily.csv (header already removed).
+export function checkAdminEventsCount(adminEvents, state) {
+  return check(
+    "admin-events-count",
+    adminEvents.length === state.adminEvents,
+    `stored=${adminEvents.length} checkpoint=${state.adminEvents}`
+  );
+}
+
+// daily.csv is a pure function of the transfers and the approval counts, so
+// the file must be byte for byte what they produce now. That also pins its
+// supply column to the ledger, and the last row to totalSupply.
+export function checkDailyMatchesLedger({ transfers, approvals, csvText, state }) {
+  if (transfers.some((t) => !t.ts)) {
+    return check("daily-matches-ledger", false, "cannot rebuild the daily series: rows without a timestamp");
+  }
+  const { series } = buildDailySeries(transfers, approvals.daily);
+  const expected = dailyCsv(series).split("\n");
+  const actual = csvText.trimEnd().split("\n");
+
+  const line = expected.findIndex((text, k) => text !== actual[k]);
+  if (line >= 0 || actual.length !== expected.length) {
+    const where = line >= 0 ? `line ${line + 1}` : `length (${actual.length} lines, expected ${expected.length})`;
+    return check("daily-matches-ledger", false, `daily.csv differs from the transfers at ${where}`);
+  }
+  const lastSupply = actual.at(-1)?.split(",")[1];
+  const wanted = String(toCOPM(BigInt(state.totalSupply)));
+  return check(
+    "daily-matches-ledger",
+    lastSupply === wanted,
+    `rows=${actual.length - 1} lastSupply=${lastSupply} totalSupply=${wanted}`
+  );
+}
+
+// csvRows are the data lines of daily.csv (header removed).
 export function checkSeriesLength(csvRows, summary) {
   return check(
-    "daily series length matches summary range",
+    "series-length",
     csvRows.length === summary.range.totalDays,
     `csv=${csvRows.length} summary=${summary.range.totalDays}`
   );
 }
 
-export function checkSeriesContinuity(csvRows) {
+export function checkSeriesContinuous(csvRows) {
   let prev = null;
   let gaps = 0;
   for (const row of csvRows) {
     const day = row.slice(0, 10);
     if (prev) {
-      const expected = new Date(new Date(prev + "T00:00:00Z").getTime() + 864e5)
+      const expected = new Date(new Date(`${prev}T00:00:00Z`).getTime() + 864e5)
         .toISOString()
         .slice(0, 10);
       if (day !== expected) gaps++;
     }
     prev = day;
   }
-  return check("daily series is continuous (no missing days)", gaps === 0, `gaps=${gaps}`);
+  return check("series-continuous", gaps === 0, `gaps=${gaps}`);
 }
 
 export function checkCsvTransferTotal(csvRows, summary) {
   const csvTransfers = csvRows.reduce((acc, r) => acc + Number(r.split(",")[2]), 0);
   return check(
-    "csv transfer total equals summary total",
+    "csv-transfer-total",
     csvTransfers === summary.totals.transferEvents,
     `csv=${csvTransfers} summary=${summary.totals.transferEvents}`
   );
 }
 
-export function checkSupplyInvariant(summary) {
-  const mintMinusBurn = summary.totals.totalMintedCOPM - summary.totals.totalBurnedCOPM;
-  const supplyDelta = Math.abs(mintMinusBurn - summary.totals.currentSupplyCOPM);
-  return check(
-    "mints − burns equals derived supply",
-    supplyDelta < 1, // tolerance: rounding at 6 decimals
-    `mints−burns=${mintMinusBurn.toFixed(2)} derived=${summary.totals.currentSupplyCOPM.toFixed(2)}`
-  );
-}
-
-// totalSupply() moves between scan time and validation time (live mints and
-// burns), so this is a sanity bound, not an equality.
-export function checkLiveSupply(summary, onChainSupply) {
-  const deviation =
-    Math.abs(onChainSupply - summary.totals.currentSupplyCOPM) / Math.max(onChainSupply, 1);
-  return check(
-    "derived supply within 25% of live totalSupply()",
-    deviation < 0.25,
-    `derived=${summary.totals.currentSupplyCOPM.toFixed(0)} onChain=${onChainSupply.toFixed(0)} deviation=${(deviation * 100).toFixed(1)}%`
-  );
-}
-
-// The checks that only need files on disk, in report order.
-export function offlineChecks({ transfers, manifest, state, csvRows, summary }) {
+// Every rule, in report order. `partitions` is [{ key, rows }] in month order.
+export function strictChecks({
+  deployBlock,
+  manifest,
+  state,
+  partitions,
+  adminEvents,
+  approvals,
+  csvText,
+  summary,
+  holders,
+}) {
+  const transfers = partitions.flatMap((p) => p.rows);
+  const ledger = foldTransfers(createLedger(), transfers);
+  const csvRows = csvText.trim().split("\n").slice(1);
   return [
     checkEventCount(transfers, state),
-    checkNoDuplicates(transfers),
-    checkBlockRange(transfers, manifest, state),
-    checkCheckpointSupply(state),
-    checkTimestampCoverage(transfers),
+    checkSupplyExact(state),
+    checkLedgerMatchesState(ledger, transfers.length, state),
+    checkNoNegativeBalance(ledger),
+    checkHoldersSumExact(holders, state),
+    checkPartitionsOrderedUnique(partitions),
+    checkPartitionMonth(partitions),
+    checkNoRowAboveCheckpoint(transfers, state),
+    checkNoRowBeforeDeploy(transfers, deployBlock),
+    checkTimestampsExact(transfers),
     checkTimestampWindow(transfers, manifest, state),
+    checkAdminEventsOrdered(adminEvents, state),
+    checkAdminEventsCount(adminEvents, state),
+    checkDailyMatchesLedger({ transfers, approvals, csvText, state }),
     checkSeriesLength(csvRows, summary),
-    checkSeriesContinuity(csvRows),
+    checkSeriesContinuous(csvRows),
     checkCsvTransferTotal(csvRows, summary),
-    checkSupplyInvariant(summary),
   ];
 }

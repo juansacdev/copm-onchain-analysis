@@ -15,6 +15,7 @@
 //       re-run after a crash never duplicates anything
 //   R6  no message ever contains the endpoint URL (see adapters/rpc.js)
 import { getChain, scanSettings, dataDir } from "../config/chains.js";
+import { mapPool } from "../adapters/pool.js";
 import { createRpc, requireRpcUrl } from "../adapters/rpc.js";
 import { createStore, ensureDir } from "../adapters/store.js";
 import { applyApprovals } from "../domain/approvals.js";
@@ -32,15 +33,6 @@ const HEADERS_PER_BATCH = 100;
 const hex = (n) => `0x${n.toString(16)}`;
 const defaultSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const byLogOrder = (a, b) => a.b - b.b || a.i - b.i;
-
-// Runs `fn` over `items` with at most `concurrency` in flight.
-async function mapPool(items, concurrency, fn) {
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) await fn(items[next++]);
-  };
-  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
-}
 
 // Work queue where a worker may wait for items that another worker's result
 // will put back (ranges that still need an empty confirmation).

@@ -33,6 +33,7 @@ test("accepts every documented command", () => {
   assert.deepEqual(COMMANDS, [
     "discover",
     "scan",
+    "holders",
     "aggregate",
     "charts",
     "charts:combined",
@@ -106,4 +107,14 @@ test("a step failure prints its message without a stack trace and exits 1", () =
   assert.equal(result.status, 1);
   assert.match(result.stderr, /missing POLYGON_RPC_URL/);
   assert.doesNotMatch(result.stderr, /\n\s+at /);
+});
+
+test("holders without an RPC URL fails with the same message as scan, before touching any file", () => {
+  const cli = fileURLToPath(new URL("../pipeline/cli.js", import.meta.url));
+  const result = spawnSync(process.execPath, [cli, "holders", "--chain", "celo"], {
+    env: { PATH: process.env.PATH },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /missing CELO_RPC_URL/);
 });
