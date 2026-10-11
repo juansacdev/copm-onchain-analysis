@@ -32,23 +32,23 @@ Look at the average ticket: **$10,300 on Polygon, $96 on Celo**. That two-orders
 
 Polygon is the institutional rail: B2B settlement, large amounts, the $2B of historical volume. Celo is the small-payments network: remittances, micropayments, end-user wallets — with a daily transaction count nearly identical to Polygon's (~191 vs ~198), while moving a thousandth of the value.
 
-![Monthly volume by chain](./charts/combined/01-monthly-volume-by-chain.svg)
+![Monthly volume by chain](../charts/combined/01-monthly-volume-by-chain.svg)
 
 ## The relay between chains is visible to the naked eye
 
 The monthly transactions chart tells a story no internal dashboard could tell better: **Celo took off first in activity** (its 18,491-transaction peak came in January 2025, barely 4 months after deploy), and **Polygon took over** with the institutional wave of mid-to-late 2025 that culminated in November's record.
 
-![Monthly transfers by chain](./charts/combined/02-monthly-transfers-by-chain.svg)
+![Monthly transfers by chain](../charts/combined/02-monthly-transfers-by-chain.svg)
 
 It also explains why a second chain takes off faster: COPM took **17 months** to cross 100 daily transactions on Polygon, and **6 weeks** to do it on Celo. A second chain doesn't start from zero — it inherits partners, operations, and proven use cases.
 
 ## The running total: ~$2.05B and counting
 
-![Cumulative volume by chain](./charts/combined/03-cumulative-volume-by-chain.svg)
+![Cumulative volume by chain](../charts/combined/03-cumulative-volume-by-chain.svg)
 
 ## Each chain's supply, derived event by event
 
-![Supply by chain](./charts/combined/04-supply-by-chain.svg)
+![Supply by chain](../charts/combined/04-supply-by-chain.svg)
 
 On Celo, the supply derived from replaying the 120,900 events reconciles **exactly** (0.0% deviation) against the contract's live `totalSupply()`. On Polygon there's a known ~1.3B COPM difference attributable to proxy operations (documented in [its audit](./audit/polygon.md#limitations)); it doesn't affect volumes or peaks.
 
@@ -60,8 +60,8 @@ Both audits run the same battery of 12 checks — dataset integrity, series cont
 
 | Chain | Checks | Detail |
 | :--- | :--- | :--- |
-| Polygon | 12/12 ✅ | [`data/polygon/validation.json`](./data/polygon/validation.json) |
-| Celo | 12/12 ✅ | [`data/celo/validation.json`](./data/celo/validation.json) |
+| Polygon | 12/12 ✅ | [`data/polygon/validation.json`](../data/polygon/validation.json) |
+| Celo | 12/12 ✅ | [`data/celo/validation.json`](../data/celo/validation.json) |
 
 ## Why you can trust these numbers
 

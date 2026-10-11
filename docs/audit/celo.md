@@ -38,7 +38,7 @@ On Polygon, the average COPM transfer moves **~$10,300**. On Celo it moves **~$9
 
 The reading: Polygon carries the institutional settlement — large amounts, B2B partners. Celo carries small, frequent payments — the profile of remittances, micropayments, and end-user wallets. Both living under the same token is precisely the multi-chain design doing its job: each network serves the use case where it's strongest.
 
-![Daily transfers](../charts/celo/01-daily-transfers.svg)
+![Daily transfers](../../charts/celo/01-daily-transfers.svg)
 
 ### On Polygon, takeoff took 17 months. On Celo, 6 weeks.
 
@@ -50,7 +50,7 @@ The explanation is textbook: by the time COPM reached Celo, the operation, the p
 
 $11.7M gross over 1.7 years sounds tiny next to Polygon's $2B — and it is. But the surprising number is a different one: **the average daily transaction count is nearly identical across the two chains** (~191/day on Celo vs ~198/day on Polygon). Celo processes a steady flow of small operations: there was activity on 571 of the 634 audited days (90%).
 
-![Monthly volume USD](../charts/celo/04-monthly-volume-usd.svg)
+![Monthly volume USD](../../charts/celo/04-monthly-volume-usd.svg)
 
 ### July 2025: the volume peak.
 
@@ -62,7 +62,7 @@ Replaying the 120,900 events yields a derived supply of **1,028,163,109.63 COPM*
 
 **Difference: zero.** Every mint and every burn in the contract's history on Celo is classified and reconciles against the current on-chain state. It's the perfect reconciliation an accountant would call "balanced books" — derived exclusively from public events.
 
-![Circulating supply](../charts/celo/03-supply-over-time.svg)
+![Circulating supply](../../charts/celo/03-supply-over-time.svg)
 
 ### Mints and burns: the peg operated bidirectionally here too.
 
@@ -70,7 +70,7 @@ Replaying the 120,900 events yields a derived supply of **1,028,163,109.63 COPM*
 - Total redeemed: **4.17B COPM** (80% of issuance)
 - Difference: 1.03B = exactly the current supply ✓
 
-![Monthly mints vs burns](../charts/celo/06-monthly-mints-burns.svg)
+![Monthly mints vs burns](../../charts/celo/06-monthly-mints-burns.svg)
 
 ---
 
@@ -106,7 +106,7 @@ Replaying the 120,900 events yields a derived supply of **1,028,163,109.63 COPM*
 | 2025-11-13 | $149K | 26 |
 | 2025-02-05 | $128K | 279 |
 
-![Top 10 days by gross volume](../charts/celo/05-top10-volume-days.svg)
+![Top 10 days by gross volume](../../charts/celo/05-top10-volume-days.svg)
 
 ---
 
@@ -129,7 +129,7 @@ The same 12 checks as Polygon, all green:
 | 11 | **Derived supply vs live `totalSupply()`** | ✅ **0.0% deviation — exact reconciliation** |
 | 12 | Spot check: 12 transfers re-verified against the chain | ✅ 12/12 (6 via receipt, 6 via fresh logs) |
 
-A note on check 12: Celo migrated from L1 to L2 in March 2025, and current endpoints don't serve individual receipts from the pre-migration era. For those samples, re-verification used a fresh `eth_getLogs` query at the exact block — a second, independent read confirming block, log index, and amount. Full results in [`data/celo/validation.json`](../data/celo/validation.json).
+A note on check 12: Celo migrated from L1 to L2 in March 2025, and current endpoints don't serve individual receipts from the pre-migration era. For those samples, re-verification used a fresh `eth_getLogs` query at the exact block — a second, independent read confirming block, log index, and amount. Full results in [`data/celo/validation.json`](../../data/celo/validation.json).
 
 ---
 

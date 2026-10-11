@@ -34,7 +34,7 @@ Unfamiliar with a term? It's in the [glossary](../GLOSSARY.md).
 
 8.14 trillion (10¹²) COPM changed hands in 996 days: **~$2.03B USD** gross, **$1.45B** net between wallets. The series shows no anomalous pauses, no mass reversals, no zero days after operations ramped up.
 
-![Daily gross volume USD](../charts/polygon/02-daily-volume-usd.svg)
+![Daily gross volume USD](../../charts/polygon/02-daily-volume-usd.svg)
 
 ### The token existed for 17 months before crossing 100 transactions per day.
 
@@ -42,7 +42,7 @@ Deploy: September 2023. First day above 100 transfers: **2025-02-03**.
 
 That gap tells you how a B2B settlement layer scales: not through retail user acquisition, but through large integrations. Each new partner is a step, not a slope. The early months were testing; the real takeoff came when integrations hit production — and from there the curve is a different animal.
 
-![Daily transfers](../charts/polygon/01-daily-transfers.svg)
+![Daily transfers](../../charts/polygon/01-daily-transfers.svg)
 
 ### November 2025: the month that changed everything.
 
@@ -50,7 +50,7 @@ That gap tells you how a B2B settlement layer scales: not through retail user ac
 
 9 of the 10 highest-transaction days in the token's entire history happened between October and November 2025. That's not noise: it's the signature of a major integration or a new use case entering production.
 
-![Monthly volume USD](../charts/polygon/04-monthly-volume-usd.svg)
+![Monthly volume USD](../../charts/polygon/04-monthly-volume-usd.svg)
 
 ### After the peak, activity normalized — and re-accelerated in May 2026.
 
@@ -71,7 +71,7 @@ After November's high ($318M), monthly volume settled into a $60–95M range fro
 
 For reference: USDT and USDC turn over on the order of 10–20x **per year**. COPM rotates its supply **~25 times faster** than the major USD stablecoins. The reading is direct: nobody holds COPM — every issued peso moves dozens of times before being redeemed. That is the behavior of a *settlement rail*, not a store of value.
 
-![Circulating supply](../charts/polygon/03-supply-over-time.svg)
+![Circulating supply](../../charts/polygon/03-supply-over-time.svg)
 
 ### Mints and burns nearly mirror each other: the peg operated in both directions.
 
@@ -80,7 +80,7 @@ For reference: USDT and USDC turn over on the order of 10–20x **per year**. CO
 
 Why does this matter? Because a burn is someone converting COPM back into pesos. If burns were much smaller than mints, that would be a red flag: tokens being issued but not redeemable. The near 1:1 balance sustained over years is the on-chain evidence of a peg with fluid bidirectional operation.
 
-![Monthly mints vs burns](../charts/polygon/06-monthly-mints-burns.svg)
+![Monthly mints vs burns](../../charts/polygon/06-monthly-mints-burns.svg)
 
 ---
 
@@ -116,13 +116,13 @@ Why does this matter? Because a burn is someone converting COPM back into pesos.
 | 2025-10-08 | $22.1M | 1,972 |
 | 2025-08-15 | $21.9M | 796 |
 
-![Top 10 days by gross volume](../charts/polygon/05-top10-volume-days.svg)
+![Top 10 days by gross volume](../../charts/polygon/05-top10-volume-days.svg)
 
 ---
 
 ## Validation
 
-No number in this audit is reported unverified. The validation step ([`07-validate.js`](../07-validate.js)) runs 12 checks, and all of them passed:
+No number in this audit is reported unverified. The validation step ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) runs 12 checks, and all of them passed:
 
 | # | Check | Result |
 | :--- | :--- | :--- |
@@ -139,7 +139,7 @@ No number in this audit is reported unverified. The validation step ([`07-valida
 | 11 | Derived supply vs live `totalSupply()` | ✅ within bound (see caveat) |
 | 12 | **Spot check: 12 transfers re-verified against live receipts** | ✅ 12/12 match |
 
-Check 12 is the strongest one: it takes events spread across the whole dataset, re-fetches each transaction's receipt directly from the chain, and verifies that block, log index, and amount match the scanned data exactly. Full results in [`data/polygon/validation.json`](../data/polygon/validation.json).
+Check 12 is the strongest one: it takes events spread across the whole dataset, re-fetches each transaction's receipt directly from the chain, and verifies that block, log index, and amount match the scanned data exactly. Full results in [`data/polygon/validation.json`](../../data/polygon/validation.json).
 
 ---
 

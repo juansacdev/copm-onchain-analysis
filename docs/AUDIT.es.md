@@ -32,23 +32,23 @@ Mira el ticket promedio: **$10,300 en Polygon, $96 en Celo**. Esa diferencia de 
 
 Polygon es el rail institucional: settlement B2B, montos grandes, los $2B de volumen histórico. Celo es la red de pagos pequeños: remesas, micropagos, billeteras de usuario final — con un conteo de transacciones diarias casi idéntico al de Polygon (~191 vs ~198), pero moviendo la milésima parte del valor.
 
-![Volumen mensual por chain](./charts/combined/01-monthly-volume-by-chain.svg)
+![Volumen mensual por chain](../charts/combined/01-monthly-volume-by-chain.svg)
 
 ## El relevo entre chains se ve a simple vista
 
 El gráfico de transacciones mensuales cuenta una historia que ningún dashboard interno podría contar mejor: **Celo despegó primero en actividad** (su pico de 18,491 transacciones fue en enero 2025, apenas 4 meses después del deploy), y **Polygon tomó el relevo** con la ola institucional de mediados-finales de 2025 que culminó en el récord de noviembre.
 
-![Transfers mensuales por chain](./charts/combined/02-monthly-transfers-by-chain.svg)
+![Transfers mensuales por chain](../charts/combined/02-monthly-transfers-by-chain.svg)
 
 También explica por qué la segunda chain despega más rápido: COPM tardó **17 meses** en superar las 100 transacciones diarias en Polygon, y **6 semanas** en lograrlo en Celo. La segunda chain no empieza de cero — hereda partners, operación y casos de uso ya probados.
 
 ## El acumulado: ~$2.05B y subiendo
 
-![Volumen acumulado por chain](./charts/combined/03-cumulative-volume-by-chain.svg)
+![Volumen acumulado por chain](../charts/combined/03-cumulative-volume-by-chain.svg)
 
 ## El supply de cada chain, derivado evento por evento
 
-![Supply por chain](./charts/combined/04-supply-by-chain.svg)
+![Supply por chain](../charts/combined/04-supply-by-chain.svg)
 
 En Celo, el supply derivado de reproducir los 120,900 eventos cuadra **exacto** (0.0% de desviación) contra el `totalSupply()` del contrato en vivo. En Polygon hay una diferencia conocida de ~1.3B COPM atribuible a operaciones del proxy (documentada en [su auditoría](./audit/polygon.es.md#limitaciones)); no afecta volúmenes ni picos.
 
@@ -60,8 +60,8 @@ Las dos auditorías corren la misma batería de 12 checks — integridad del dat
 
 | Chain | Checks | Detalle |
 | :--- | :--- | :--- |
-| Polygon | 12/12 ✅ | [`data/polygon/validation.json`](./data/polygon/validation.json) |
-| Celo | 12/12 ✅ | [`data/celo/validation.json`](./data/celo/validation.json) |
+| Polygon | 12/12 ✅ | [`data/polygon/validation.json`](../data/polygon/validation.json) |
+| Celo | 12/12 ✅ | [`data/celo/validation.json`](../data/celo/validation.json) |
 
 ## Por qué puedes confiar en estos números
 

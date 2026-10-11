@@ -25,7 +25,10 @@ The site is public and claims to be a reproducible audit. A dataset that silentl
 - `TokenV1` is OpenZeppelin `ERC20Upgradeable` + Burnable + Pausable + AccessControlEnumerable + Permit + UUPS + `Freezable` + Multicall. Every balance change goes through `_mint`, `_burn` or `_transfer`, so `Transfer` is the complete balance ledger.
 - Events in the ABI: `Transfer`, `Approval`, `BurnedFrozen`, `Frozen`, `Thawed`, `Paused`, `Unpaused`, `RoleGranted`, `RoleRevoked`, `RoleAdminChanged`, `Upgraded`, `Initialized`, `AdminChanged`, `BeaconUpgraded`, `EIP712DomainChanged`.
 - Polygon all-topics scan, deploy block 47,747,145 to 95,366,956: 241,857 `Transfer`, 122,239 `Approval`, 7 `RoleGranted`, 1 `RoleRevoked`, 2 `Upgraded`, 1 `Initialized`. Minted − burned equals `totalSupply` to the wei (4,482,379,062.75 COPM). 2,555 addresses, 582 holders, every balance equal to `balanceOf`.
-- A JSON-RPC batch is answered by a single backend. A canary query in the same batch (a block whose log count is already known) plus `eth_blockNumber` identifies backends that lack history or lag behind.
+- On the public Celo endpoint, failures are all-or-nothing per 5,000-block range and non-empty answers always matched the known count. A canary query in the same batch (a block whose log count is already known) lowers the false-empty rate per range from about 55–75 % to about 11 %, but a batch is not answered atomically by one backend, so a canary is a filter, not a proof. A canary-filtered full scan still returned 114,930 of at least 120,900 transfers.
+- A backend with full log history can lack recent state; pinned `eth_call` on its own either errors or is right.
+- Celo admin history: 1 `Upgraded`, 6 `RoleGranted`, 1 `Initialized`, 2 `Frozen`, 1 `Thawed`, 1 `BurnedFrozen`.
+- Celo holders from `balanceOf` over every address seen in any scan, block 79,856,063: 995 holders, 1.64 COPM of 418,585,134.63 not located yet (dust in addresses that only appear in dropped ranges).
 - `eth_getLogs` results carry `blockTimestamp`; old Polygon blocks return `0x0`, so headers must be fetched for those.
 
 ## Scope
@@ -55,7 +58,7 @@ Out: changing hosting (Cloudflare stays; only documented), price feeds other tha
 | TDD | strict; runner `node --test` (`npm test`) | global config + accepted proposal |
 | Delivery strategy | `ask-on-risk` → chain strategy `stacked-to-main` | user, 2026-10-11 |
 | Log storage | scan all topics; persist transfers (month partitions, exact timestamp per row), admin events (one file), approvals as daily counts only | orchestrator, from evidence above |
-| Scan integrity | canary + head check inside every batch; exact reconciliation with `totalSupply` and `balanceOf` before the checkpoint advances | orchestrator, from evidence above |
+| Scan integrity | non-empty range answers are accepted at once; an empty range needs `emptyConfirmations` independent empty answers (per chain); canary + head check filter every batch; exact reconciliation of minted − burned with `totalSupply` before the checkpoint advances, and of every balance with `balanceOf` in validation | orchestrator, from evidence above |
 
 ## Target layout
 
@@ -81,11 +84,11 @@ site/src/features/{dashboard,analysis}/  site/src/i18n/{es,en}.js
 
 Route and trigger evidence are recorded per task. Lines are forecast authored additions plus deletions, generated files and pure renames excluded.
 
-- [ ] **T0 — Repository hygiene.** Commit the tooling ignore rules and the installed design skill. Route: inline (one mechanical commit). ~5 lines.
-- [ ] **T1 — Pipeline layout and test harness.** Move the root scripts into `pipeline/` per the target layout with no behavior change, extract pure functions to `domain/`, remove import-time side effects from config, add `npm test`, move long-form docs to `docs/`. Route: delegated writer (9 non-trivial files). ~450 lines.
+- [x] **T0 — Repository hygiene.** Commit the tooling ignore rules and the installed design skill. Route: inline (one mechanical commit). ~5 lines.
+- [x] **T1 — Pipeline layout and test harness.** Move the root scripts into `pipeline/` per the target layout with no behavior change, extract pure functions to `domain/`, remove import-time side effects from config, add `npm test`, move long-form docs to `docs/`. Route: delegated writer (9 non-trivial files). ~450 lines.
   - Acceptance: `npm test` green; `node pipeline/cli.js aggregate --chain celo` reproduces the committed `data/celo/daily.csv` byte for byte; README commands updated.
-- [ ] **T2 — Verified incremental scan.** All-topics scan from the checkpoint to a pinned block, canary and head check per batch, 5,000-block ranges configurable per chain, exact timestamps, month-partitioned transfers, admin events, approval counts, checkpoint written only after reconciliation. Route: delegated writer. ~750 lines.
-  - Acceptance: tests cover range planning, batch integrity (empty backend, lagging backend, wrong canary), idempotent re-run, resume after failure, reconciliation failure leaves the checkpoint untouched.
+- [ ] **T2 — Verified incremental scan.** All-topics scan from the checkpoint to a pinned block, canary and head check per batch, confirmation of empty ranges, 5,000-block ranges configurable per chain, exact timestamps, month-partitioned transfers, admin events, approval counts, checkpoint written only after reconciliation. Route: delegated writer. ~750 lines.
+  - Acceptance: tests cover range planning, batch integrity (empty backend, lagging backend, wrong canary), an empty answer followed by a non-empty one for the same range, idempotent re-run, resume after failure, reconciliation failure leaves the checkpoint untouched.
 - [ ] **T3 — Holders snapshot and strict validation.** `holders.csv` and `holders.json` at the pinned block, every balance checked with `balanceOf`; validation requires supply difference 0 and no negative balance. Route: delegated writer. ~300 lines.
 - [ ] **T4 — Report figures from data.** Markers in the Markdown reports filled from `summary.json`, so no figure is typed by hand. Route: delegated writer (10 Markdown files plus generator). ~350 lines.
 - [ ] **T5 — Full rescan and refresh.** Rescan both chains from the deploy block with the new scanner, regenerate daily series, summaries, validation, holders, SVG and report figures. Route: inline run of the CLI plus structural readback (generated output).
@@ -103,12 +106,14 @@ Forecast: about 3,900 authored lines, well above the 400-line budget. Chain stra
 | Slice | Branch | Tasks | Base |
 |---|---|---|---|
 | 1 | `refactor/pipeline-layout` | T0, T1 | `main` |
-| 2 | `feat/verified-scan` | T2, T3 | slice 1 |
-| 3 | `feat/data-refresh` | T4, T5 | slice 2 |
+| 2 | `feat/verified-scan` | T2, T3, T5 | slice 1 |
+| 3 | `docs/report-figures` | T4 | slice 2 |
 | 4 | `ci/daily-scan` | T6 | slice 3 |
 | 5 | `feat/analysis-route` | T7 | slice 4 |
 | 6 | `feat/mint-identity` | T8 | slice 5 |
 | 7 | `feat/dashboard` | T9, T10 | slice 6 |
+
+T5 lands in slice 2, right after T3, because T2 changes the on-disk format: the code and the data it reads must merge together. T4 follows on fresh data.
 
 ## Checks
 
@@ -120,8 +125,8 @@ Forecast: about 3,900 authored lines, well above the 400-line budget. Chain stra
 
 | Task | Status | Commit | Checks | Review |
 |---|---|---|---|---|
-| T0 | pending | | | |
-| T1 | pending | | | |
+| T0 | done | `af6b973` | structural readback | granted → approved and acknowledged (lineage `review-564fae3ee8ac0900`, 1 non-blocking suggestion on the vendored skill); boundary is now `af6b973` |
+| T1 | done | see `git log` (`refactor(pipeline): …`) | `npm test`: 47 pass, 0 fail. `aggregate`, `charts`, `charts:combined` for both chains: `git status data/ charts/` clean (byte-for-byte). Unknown command and unknown chain exit 1. No stale references to the old script names. `site` build: 2 pages built. Network steps not run. Writer report never arrived; all checks re-run by the parent. | assessed after commit |
 | T2 | pending | | | |
 | T3 | pending | | | |
 | T4 | pending | | | |
@@ -134,4 +139,4 @@ Forecast: about 3,900 authored lines, well above the 400-line budget. Chain stra
 
 ## Next step
 
-T0, then T1 on `refactor/pipeline-layout`.
+T2 on `feat/verified-scan`.
