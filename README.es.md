@@ -47,11 +47,10 @@ En septiembre de 2025, **La República** (el diario financiero colombiano) cubri
 Un pipeline de Node.js, liviano a propósito (una sola dependencia: [viem](https://viem.sh)), que corre por chain:
 
 ```
-discover          → encuentra el bloque de deploy (búsqueda binaria sobre eth_getCode)
-scan              → descarga todos los eventos Transfer (eth_getLogs, workers paralelos,
-                     backoff adaptativo ante rate limits)
-timestamps        → timestamps por muestreo e interpolación
-aggregate         → serie diaria: volumen, mints, burns, supply derivado
+discover          → actualiza los metadatos estáticos del token (manifest.json)
+scan              → scan incremental y verificado de todos los eventos del contrato
+                     (eth_getLogs, workers paralelos); continúa desde el último checkpoint
+aggregate         → serie diaria: volumen, mints, burns, supply derivado, approvals
 charts            → SVGs autocontenidos (sin canvas, sin headless browser)
 charts:combined   → gráficos Polygon + Celo en los mismos ejes
 validate          → 12 checks por chain, incluyendo spot checks contra la chain en vivo
@@ -59,7 +58,19 @@ validate          → 12 checks por chain, incluyendo spot checks contra la chai
 
 Cada paso es un comando de un único CLI: `node pipeline/cli.js <comando> [--chain polygon|celo] [--fresh]`. `--chain` toma por defecto la variable de entorno `CHAIN` y, si no existe, `polygon`. Los scripts de `npm run` de abajo lo envuelven.
 
-**La única fuente es un endpoint RPC.** Sin indexers, sin APIs de terceros, sin exploradores de bloques. Funciona con un RPC de pago (más rápido) o con uno público (gratis; el scanner se autorregula).
+**La única fuente es un endpoint RPC.** Sin indexers, sin APIs de terceros, sin exploradores de bloques. Funciona con un RPC de pago (más rápido) o con uno público (gratis; el scanner reintenta y contrasta sus respuestas).
+
+### Por qué se puede confiar en el scan
+
+Los endpoints públicos están detrás de balanceadores de carga, y un backend al que le falta parte del índice de logs responde `eth_getLogs` con un arreglo vacío y sin error. Un scan simple guarda esos huecos. Este no avanza hasta que los eventos que tiene cuadran con el contrato:
+
+- **Canario y verificación del head en cada lote.** Un lote es `[eth_blockNumber, un bloque con cantidad de logs conocida, ...rangos]`; se descarta salvo que el canario devuelva exactamente esa cantidad y el head cubra los rangos.
+- **Los rangos vacíos se confirman.** Una respuesta con eventos es definitiva; una vacía debe repetirse `emptyConfirmations` veces (2 en Polygon, 6 en Celo) en lotes independientes.
+- **Reconciliación exacta antes de mover el checkpoint.** Minted − burned debe ser igual a `totalSupply()` en el último bloque de la etapa, al wei (un `eth_call` fijado a ese bloque y enviado por separado). Si no cuadra, la corrida falla y no escribe nada de esa etapa.
+- **Timestamps exactos.** Cada transferencia lleva el timestamp de su bloque (del log, o del header del bloque cuando el nodo devuelve `0x0`), así que los días no se interpolan.
+- **Idempotente y reanudable.** Las escrituras son atómicas; `data/<chain>/state.json` se escribe al final, y una nueva corrida tras una caída descarta todo lo que esté por encima del checkpoint.
+
+Ajustes, todos opcionales: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (o las variables `SCAN_*` equivalentes). Los valores por defecto están por chain en `pipeline/config/chains.js`. `scan --fresh` descarta lo que el scan generó para esa chain y empieza de cero.
 
 ## Reprodúcelo
 
@@ -74,7 +85,7 @@ npm run audit:celo     # solo Celo (~25 min con el RPC público)
 npm run audit:all      # ambas + charts combinados
 ```
 
-Cada corrida es completa e idempotente: escanea desde el deploy block hasta `latest`, valida y regenera todo. Requiere Node.js 22+; `npm test` corre los tests unitarios (sin red).
+El primer `scan` recorre todo el historial desde el deploy block; las corridas siguientes solo escanean los bloques agregados desde el checkpoint. Requiere Node.js 22+; `npm test` corre los tests unitarios (sin red).
 
 ## Estructura del repositorio
 
@@ -88,16 +99,19 @@ Cada corrida es completa e idempotente: escanea desde el deploy block hasta `lat
 ├── pipeline/
 │   ├── cli.js                    # punto de entrada: node pipeline/cli.js <comando>
 │   ├── config/                   # tabla de chains y rutas (sin efectos secundarios)
-│   ├── domain/                   # lógica pura: agregación, unidades, reglas de validación
-│   ├── adapters/                 # fábrica del cliente RPC, utilidades de archivos
+│   ├── domain/                   # lógica pura: eventos, ledger, rangos, integridad, agregación, reglas de validación
+│   ├── adapters/                 # cliente JSON-RPC, almacenamiento del scan (escrituras atómicas)
 │   ├── steps/                    # un módulo por comando
 │   └── charts/                   # librería de gráficos SVG
 ├── tests/                        # node --test, sin dependencias adicionales
 ├── data/<chain>/                 # datos crudos y derivados por chain
-│   ├── transfers.jsonl           # cada evento Transfer (crudo)
+│   ├── transfers/YYYY-MM.jsonl   # cada evento Transfer, un archivo por mes UTC
+│   ├── admin-events.jsonl        # upgrades, roles, pausas, congelamientos
+│   ├── approvals.json            # conteo de Approval por día y por spender
+│   ├── state.json                # checkpoint del scan (solo se escribe tras reconciliar)
 │   ├── daily.csv                 # serie diaria agregada
 │   ├── summary.json              # totales, promedios, picos
-│   ├── manifest.json             # metadatos del contrato y del scan
+│   ├── manifest.json             # metadatos estáticos del contrato
 │   └── validation.json           # resultado de los 12 checks
 ├── charts/<chain>/               # 6 SVGs por chain
 ├── charts/combined/              # 4 SVGs comparativos

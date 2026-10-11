@@ -4,7 +4,7 @@ import {
   checkEventCount,
   checkNoDuplicates,
   checkBlockRange,
-  checkScanCompleted,
+  checkCheckpointSupply,
   checkTimestampCoverage,
   checkTimestampWindow,
   checkSeriesLength,
@@ -17,12 +17,12 @@ import {
 
 const tx = (b, i, t = `0x${b}-${i}`) => ({ b, i, t });
 
-test("event count must equal the scan's own total", () => {
-  assert.equal(checkEventCount([tx(1, 0), tx(1, 1)], { totalEvents: 2 }).ok, true);
+test("event count must equal the checkpoint's own total", () => {
+  assert.equal(checkEventCount([tx(1, 0), tx(1, 1)], { transfers: 2 }).ok, true);
 
-  const bad = checkEventCount([tx(1, 0)], { totalEvents: 2 });
+  const bad = checkEventCount([tx(1, 0)], { transfers: 2 });
   assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "jsonl=1 scan=2");
+  assert.equal(bad.detail, "partitions=1 checkpoint=2");
 });
 
 test("duplicate (tx, logIndex) pairs are counted", () => {
@@ -33,48 +33,50 @@ test("duplicate (tx, logIndex) pairs are counted", () => {
   assert.equal(bad.detail, "duplicates=1");
 });
 
-test("events outside the scanned block range fail", () => {
-  const manifest = { deployBlock: "10", latestBlockAtRun: "20" };
-  assert.equal(checkBlockRange([tx(10, 0), tx(20, 0)], manifest).ok, true);
+test("events outside the deploy block to checkpoint range fail", () => {
+  const manifest = { deployBlock: "10" };
+  const state = { lastBlock: 20 };
+  assert.equal(checkBlockRange([tx(10, 0), tx(20, 0)], manifest, state).ok, true);
 
-  const bad = checkBlockRange([tx(9, 0), tx(21, 0), tx(15, 0)], manifest);
+  const bad = checkBlockRange([tx(9, 0), tx(21, 0), tx(15, 0)], manifest, state);
   assert.equal(bad.ok, false);
   assert.equal(bad.detail, "outOfRange=2 (range 10 → 20)");
 });
 
-test("scan is complete only when every slice cursor passed its end", () => {
-  const done = { slices: [{ cursor: "11", end: "10" }], completedAt: "2024-01-01T00:00:00.000Z" };
-  const result = checkScanCompleted(done);
-  assert.equal(result.ok, true);
-  assert.equal(result.detail, "completedAt=2024-01-01T00:00:00.000Z");
+test("the checkpoint supply must reconcile exactly: minted − burned = totalSupply", () => {
+  const ok = checkCheckpointSupply({ minted: "100", burned: "40", totalSupply: "60" });
+  assert.equal(ok.ok, true);
 
-  const partial = checkScanCompleted({ slices: [{ cursor: "10", end: "10" }] });
-  assert.equal(partial.ok, false);
-  assert.equal(partial.detail, "no completedAt marker");
-});
-
-test("every event block needs a timestamp", () => {
-  assert.equal(checkTimestampCoverage([tx(1, 0), tx(2, 0)], { 1: 100, 2: 200 }).ok, true);
-
-  const bad = checkTimestampCoverage([tx(1, 0), tx(2, 0), tx(2, 1)], { 1: 100 });
+  const bad = checkCheckpointSupply({ minted: "100", burned: "40", totalSupply: "61" });
   assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "uniqueBlocks=2 missing=1");
+  assert.equal(bad.detail, "minted−burned=60 totalSupply=61");
 });
 
-test("timestamps must sit inside the deploy to latest window, with slack", () => {
-  const manifest = {
-    deployTimestamp: "2024-01-01T00:00:00.000Z",
-    latestBlockTimestamp: "2024-01-02T00:00:00.000Z",
-  };
+test("every event needs a timestamp, and timestamps never go back along the block order", () => {
+  const withTs = (b, i, ts) => ({ ...tx(b, i), ts });
+  assert.equal(checkTimestampCoverage([withTs(1, 0, 100), withTs(2, 0, 100), withTs(3, 0, 200)]).ok, true);
+
+  const missing = checkTimestampCoverage([withTs(1, 0, 100), tx(2, 0)]);
+  assert.equal(missing.ok, false);
+  assert.equal(missing.detail, "events=2 missing=1 outOfOrder=0");
+
+  const back = checkTimestampCoverage([withTs(1, 0, 200), withTs(2, 0, 100)]);
+  assert.equal(back.ok, false);
+  assert.equal(back.detail, "events=2 missing=0 outOfOrder=1");
+});
+
+test("timestamps must sit inside the deploy to checkpoint window, with slack", () => {
+  const manifest = { deployTimestamp: "2024-01-01T00:00:00.000Z" };
   const deploy = Date.parse(manifest.deployTimestamp) / 1000;
-  const latest = Date.parse(manifest.latestBlockTimestamp) / 1000;
+  const state = { lastBlockTime: deploy + 86_400 };
+  const row = (ts) => ({ ...tx(1, 0), ts });
 
   assert.equal(
-    checkTimestampWindow({ 1: deploy - 120, 2: latest + 120 }, manifest).ok,
+    checkTimestampWindow([row(deploy - 120), row(state.lastBlockTime + 120)], manifest, state).ok,
     true
   );
 
-  const bad = checkTimestampWindow({ 1: deploy - 121, 2: deploy + 5 }, manifest);
+  const bad = checkTimestampWindow([row(deploy - 121), row(deploy + 5)], manifest, state);
   assert.equal(bad.ok, false);
   assert.equal(bad.detail, "outside=1 of 2");
 });
@@ -119,19 +121,13 @@ test("derived supply may deviate from live totalSupply by less than 25%", () => 
   assert.equal(checkLiveSupply(summary, 140).ok, false);
 });
 
-test("offlineChecks runs the file-based rules in the original report order", () => {
-  const manifest = {
-    deployBlock: "1",
-    latestBlockAtRun: "10",
-    deployTimestamp: "2024-01-01T00:00:00.000Z",
-    latestBlockTimestamp: "2024-01-02T00:00:00.000Z",
-  };
+test("offlineChecks runs the file-based rules in report order", () => {
+  const manifest = { deployBlock: "1", deployTimestamp: "2024-01-01T00:00:00.000Z" };
   const ts = Date.parse(manifest.deployTimestamp) / 1000 + 60;
   const checks = offlineChecks({
-    transfers: [tx(2, 0)],
+    transfers: [{ ...tx(2, 0), ts }],
     manifest,
-    progress: { totalEvents: 1, slices: [{ cursor: "11", end: "10" }] },
-    tsCache: { 2: ts },
+    state: { transfers: 1, lastBlock: 10, lastBlockTime: ts + 60, minted: "5", burned: "0", totalSupply: "5" },
     csvRows: ["2024-01-01,0,1"],
     summary: {
       range: { totalDays: 1 },
@@ -142,12 +138,12 @@ test("offlineChecks runs the file-based rules in the original report order", () 
   assert.deepEqual(
     checks.map((c) => c.name),
     [
-      "event count matches scan progress",
+      "event count matches checkpoint",
       "no duplicate (tx, logIndex) pairs",
       "all events inside scanned block range",
-      "scan completed (all slices reached their end)",
-      "every event block has a timestamp",
-      "timestamps inside deploy → latest window",
+      "checkpoint supply reconciles exactly (minted − burned = totalSupply)",
+      "every event has an exact, non-decreasing timestamp",
+      "timestamps inside deploy → checkpoint window",
       "daily series length matches summary range",
       "daily series is continuous (no missing days)",
       "csv transfer total equals summary total",

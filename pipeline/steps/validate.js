@@ -1,8 +1,9 @@
 // Validation pass over every pipeline artifact for the selected chain.
 // Internal consistency checks + on-chain spot checks against live RPC:
 //
-//   1. transfers.jsonl    — count vs scan progress, no duplicates, block range
-//   2. block-ts.json      — full coverage, timestamps inside deploy→latest
+//   1. transfers/*.jsonl  — count vs checkpoint, no duplicates, block range
+//   2. state.json         — supply reconciles exactly; row timestamps exact and
+//                           inside deploy→checkpoint
 //   3. daily.csv          — continuous dates, totals match summary.json
 //   4. summary.json       — mints − burns == derived supply
 //   5. on-chain           — totalSupply() delta, random receipts re-verified
@@ -10,9 +11,9 @@
 // The pure rules live in domain/validation.js; this step reads the files,
 // talks to the chain and writes the report. Resolves with exitCode 1 if any
 // check fails. Writes data/<chain>/validation.json.
-import { getChain, dataPath, ERC20_ABI } from "../config/chains.js";
+import { getChain, dataPath, dataDir, ERC20_ABI } from "../config/chains.js";
 import { createRpcClient } from "../adapters/rpc.js";
-import { readJson, readJsonl, readText, writeJson } from "../adapters/store.js";
+import { createStore, readJson, readText, writeJson } from "../adapters/store.js";
 import { checkLiveSupply, offlineChecks } from "../domain/validation.js";
 
 const TRANSFER_TOPIC =
@@ -36,15 +37,16 @@ export async function run({ chainKey, env = process.env }) {
   console.log(`validating chain: ${key}\n`);
 
   const manifest = readJson(dataPath(key, "manifest.json"));
-  const progress = readJson(dataPath(key, "scan-progress.json"));
+  const store = createStore(dataDir(key));
+  const state = store.readState();
+  if (!state) throw new Error(`no state.json for ${key}: run "scan --chain ${key}" first`);
   const summary = readJson(dataPath(key, "summary.json"));
-  const tsCache = readJson(dataPath(key, "block-ts.json"));
-  const transfers = readJsonl(dataPath(key, "transfers.jsonl"));
+  const transfers = store.readTransfers();
   const csvRows = readText(dataPath(key, "daily.csv")).trim().split("\n").slice(1);
 
   /* 1-4 — file-based rules --------------------------------------------------- */
 
-  for (const check of offlineChecks({ transfers, manifest, progress, tsCache, csvRows, summary })) {
+  for (const check of offlineChecks({ transfers, manifest, state, csvRows, summary })) {
     report(check);
   }
 

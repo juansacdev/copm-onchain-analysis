@@ -8,12 +8,15 @@ const A = "0xaaaa000000000000000000000000000000000001";
 const B = "0xbbbb000000000000000000000000000000000002";
 const day = (y, m, d, h = 12) => Date.UTC(y, m - 1, d, h) / 1000;
 
-// Minimal raw event, as stored in transfers.jsonl.
+// Attaches the exact block timestamp the scan stores on every row.
+const stamp = (transfers, tsByBlock) => transfers.map((t) => ({ ...t, ts: tsByBlock[t.b] }));
+
+// Minimal raw event, as stored in a transfers partition (without ts).
 const ev = (b, i, f, r, v, t = `0xtx${b}-${i}`) => ({ b, i, f, r, v: v.toString(), t });
 
 test("a mint is counted as mint volume and raises the supply", () => {
   const transfers = [ev(100, 0, ZERO_ADDRESS, A, COPM(500))];
-  const { series, totals } = buildDailySeries(transfers, { 100: day(2024, 3, 1) });
+  const { series, totals } = buildDailySeries(stamp(transfers, { 100: day(2024, 3, 1) }));
 
   assert.equal(series.length, 1);
   const [d] = series;
@@ -31,10 +34,10 @@ test("a burn is counted as burn volume and lowers the supply", () => {
     ev(100, 0, ZERO_ADDRESS, A, COPM(500)),
     ev(101, 0, A, ZERO_ADDRESS, COPM(200)),
   ];
-  const { series, totals } = buildDailySeries(transfers, {
+  const { series, totals } = buildDailySeries(stamp(transfers, {
     100: day(2024, 3, 1),
     101: day(2024, 3, 1, 13),
-  });
+  }));
 
   assert.equal(series[0].burnVolume, COPM(200));
   assert.equal(series[0].burnCount, 1);
@@ -48,10 +51,10 @@ test("a plain transfer is net volume and leaves the supply untouched", () => {
     ev(100, 0, ZERO_ADDRESS, A, COPM(500)),
     ev(101, 0, A, B, COPM(120)),
   ];
-  const { series, totals } = buildDailySeries(transfers, {
+  const { series, totals } = buildDailySeries(stamp(transfers, {
     100: day(2024, 3, 1),
     101: day(2024, 3, 1, 13),
-  });
+  }));
 
   assert.equal(series[0].netVolume, COPM(120));
   assert.equal(series[0].grossVolume, COPM(620));
@@ -66,11 +69,11 @@ test("events are bucketed by UTC day and the supply accumulates across days", ()
     ev(200, 0, ZERO_ADDRESS, B, COPM(300)),
     ev(300, 0, A, ZERO_ADDRESS, COPM(100)),
   ];
-  const { series } = buildDailySeries(transfers, {
+  const { series } = buildDailySeries(stamp(transfers, {
     100: day(2024, 3, 1, 23),
     200: day(2024, 3, 2, 0),
     300: day(2024, 3, 2, 9),
-  });
+  }));
 
   assert.deepEqual(
     series.map((d) => [d.day, d.supplyEnd]),
@@ -86,10 +89,10 @@ test("days without events are filled in and carry the previous supply", () => {
     ev(100, 0, ZERO_ADDRESS, A, COPM(500)),
     ev(200, 0, A, B, COPM(10)),
   ];
-  const { series } = buildDailySeries(transfers, {
+  const { series } = buildDailySeries(stamp(transfers, {
     100: day(2024, 3, 1),
     200: day(2024, 3, 4),
-  });
+  }));
 
   assert.deepEqual(series.map((d) => d.day), [
     "2024-03-01",
@@ -110,7 +113,7 @@ test("active addresses counts distinct from/to addresses, zero address included"
     ev(100, 1, A, B, COPM(1)), // A -> B: adds B
     ev(100, 2, B, A, COPM(1)), // repeat pair: no new addresses
   ];
-  const { series } = buildDailySeries(transfers, { 100: day(2024, 3, 1) });
+  const { series } = buildDailySeries(stamp(transfers, { 100: day(2024, 3, 1) }));
 
   assert.equal(series[0].activeAddresses, 3);
   assert.equal(series[0].uniqueTxs, 3);
@@ -121,7 +124,7 @@ test("uniqueTxs collapses events that share a transaction hash", () => {
     ev(100, 0, A, B, COPM(1), "0xsame"),
     ev(100, 1, B, A, COPM(1), "0xsame"),
   ];
-  const { series } = buildDailySeries(transfers, { 100: day(2024, 3, 1) });
+  const { series } = buildDailySeries(stamp(transfers, { 100: day(2024, 3, 1) }));
 
   assert.equal(series[0].transfers, 2);
   assert.equal(series[0].uniqueTxs, 1);
@@ -129,7 +132,7 @@ test("uniqueTxs collapses events that share a transaction hash", () => {
 
 test("a zero-value transfer counts as an event but adds no volume", () => {
   const transfers = [ev(100, 0, A, B, 0n)];
-  const { series, totals } = buildDailySeries(transfers, { 100: day(2024, 3, 1) });
+  const { series, totals } = buildDailySeries(stamp(transfers, { 100: day(2024, 3, 1) }));
 
   assert.equal(series[0].transfers, 1);
   assert.equal(series[0].grossVolume, 0n);
@@ -141,24 +144,35 @@ test("events are ordered by timestamp then log index regardless of input order",
     ev(300, 0, A, ZERO_ADDRESS, COPM(100)),
     ev(100, 0, ZERO_ADDRESS, A, COPM(500)),
   ];
-  const { series } = buildDailySeries(transfers, {
+  const { series } = buildDailySeries(stamp(transfers, {
     100: day(2024, 3, 1),
     300: day(2024, 3, 2),
-  });
+  }));
 
   assert.equal(series[0].supplyEnd, COPM(500));
   assert.equal(series[1].supplyEnd, COPM(400));
 });
 
-test("events whose block has no timestamp are left out of the series", () => {
+test("approvals are added to their day, and days without any carry zero", () => {
   const transfers = [
-    ev(100, 0, ZERO_ADDRESS, A, COPM(500)),
-    ev(999, 0, ZERO_ADDRESS, A, COPM(7)),
+    ev(100, 0, ZERO_ADDRESS, A, COPM(5)),
+    ev(200, 0, A, B, COPM(1)),
   ];
-  const { series, timestamped } = buildDailySeries(transfers, { 100: day(2024, 3, 1) });
+  const { series } = buildDailySeries(
+    stamp(transfers, { 100: day(2024, 3, 1), 200: day(2024, 3, 3) }),
+    { "2024-03-01": 4, "2024-03-03": 1, "2024-02-01": 9, "2024-04-01": 9 }
+  );
 
-  assert.equal(timestamped, 1);
-  assert.equal(series[0].supplyEnd, COPM(500));
+  assert.deepEqual(series.map((d) => [d.day, d.approvals]), [
+    ["2024-03-01", 4],
+    ["2024-03-02", 0],
+    ["2024-03-03", 1],
+  ]);
+});
+
+test("without an approvals map every day has zero approvals", () => {
+  const { series } = buildDailySeries(stamp([ev(100, 0, A, B, COPM(1))], { 100: day(2024, 3, 1) }));
+  assert.equal(series[0].approvals, 0);
 });
 
 // summarize() and dailyCsv() were extracted alongside buildDailySeries; their
@@ -171,11 +185,11 @@ test("summarize reports totals, averages and peaks in COPM and USD", () => {
     ev(101, 0, A, B, COPM(1000)),
     ev(200, 0, A, ZERO_ADDRESS, COPM(400)),
   ];
-  const { series, totals } = buildDailySeries(transfers, {
+  const { series, totals } = buildDailySeries(stamp(transfers, {
     100: day(2024, 3, 1),
     101: day(2024, 3, 1, 13),
     200: day(2024, 3, 2),
-  });
+  }));
   const summary = summarize({
     manifest: { chain: "celo", chainLabel: "Celo", address: "0xabc", decimals: 18 },
     chainKey: "celo",
@@ -199,10 +213,13 @@ test("summarize reports totals, averages and peaks in COPM and USD", () => {
   assert.equal(summary.peaks.maxSupplyEndOfDay.copm, 4000);
 });
 
-test("dailyCsv writes a header, one row per day and no trailing newline", () => {
+test("dailyCsv writes a header, one row per day, approvals last, and no trailing newline", () => {
   const { series } = buildDailySeries(
-    [ev(100, 0, ZERO_ADDRESS, A, COPM(2)), ev(101, 0, A, B, COPM(1))],
-    { 100: day(2024, 3, 1), 101: day(2024, 3, 1, 13) }
+    stamp([ev(100, 0, ZERO_ADDRESS, A, COPM(2)), ev(101, 0, A, B, COPM(1))], {
+      100: day(2024, 3, 1),
+      101: day(2024, 3, 1, 13),
+    }),
+    { "2024-03-01": 7 }
   );
   const csv = dailyCsv(series);
 
@@ -210,7 +227,7 @@ test("dailyCsv writes a header, one row per day and no trailing newline", () => 
     csv,
     [
       CSV_HEADER,
-      "2024-03-01,2,2,2,3,3,1,2,0,1,0",
+      "2024-03-01,2,2,2,3,3,1,2,0,1,0,7",
     ].join("\n")
   );
 });

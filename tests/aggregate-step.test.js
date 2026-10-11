@@ -1,0 +1,57 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { createStore } from "../pipeline/adapters/store.js";
+import { buildAggregate } from "../pipeline/steps/aggregate.js";
+import { ZERO_ADDRESS } from "../pipeline/domain/units.js";
+
+const COPM = (n) => BigInt(n) * 10n ** 18n;
+const A = "0xaaaa000000000000000000000000000000000001";
+const manifest = { chain: "celo", chainLabel: "Celo", address: "0xabc", decimals: 18 };
+const emptyStore = () => createStore(pathToFileURL(`${mkdtempSync(join(tmpdir(), "copm-agg-"))}/`));
+const row = (b, i, ts, f, r, v) => ({ b, ts, t: `0xtx${b}`, i, f, r, v: v.toString() });
+const at = (day, hour = 12) => Date.UTC(2024, 2, day, hour) / 1000;
+
+test("builds the daily series from every partition, with approvals from approvals.json", () => {
+  const store = emptyStore();
+  store.writePartition("2024-02", [row(1, 0, Date.UTC(2024, 1, 29, 12) / 1000, ZERO_ADDRESS, A, COPM(10))]);
+  store.writePartition("2024-03", [
+    row(2, 0, at(1), A, ZERO_ADDRESS, COPM(4)),
+    row(3, 0, at(2), ZERO_ADDRESS, A, COPM(1)),
+  ]);
+  store.writeApprovals({ block: 3, daily: { "2024-03-01": 5 }, spenders: {} });
+
+  const { series, summary, csv } = buildAggregate({
+    store,
+    manifest,
+    chainKey: "celo",
+    copPerUsd: 4000,
+  });
+
+  assert.deepEqual(series.map((d) => [d.day, d.approvals]), [
+    ["2024-02-29", 0],
+    ["2024-03-01", 5],
+    ["2024-03-02", 0],
+  ]);
+  assert.equal(summary.totals.transferEvents, 3);
+  assert.equal(summary.totals.currentSupplyCOPM, 7);
+  assert.match(csv.split("\n")[0], /,approvals$/);
+  assert.match(csv.split("\n")[2], /,5$/);
+});
+
+test("fails with a clear message when the chain has no partitions yet", () => {
+  assert.throws(
+    () => buildAggregate({ store: emptyStore(), manifest, chainKey: "celo", copPerUsd: 4000 }),
+    /no transfer partitions for celo.*run "scan --chain celo" first/s
+  );
+});
+
+test("a chain without approvals.json still aggregates, with zero approvals", () => {
+  const store = emptyStore();
+  store.writePartition("2024-03", [row(2, 0, at(1), ZERO_ADDRESS, A, COPM(1))]);
+  const { series } = buildAggregate({ store, manifest, chainKey: "celo", copPerUsd: 4000 });
+  assert.equal(series[0].approvals, 0);
+});

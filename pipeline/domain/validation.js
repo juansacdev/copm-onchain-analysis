@@ -3,11 +3,11 @@
 // records, so keep them stable.
 const check = (name, ok, detail) => ({ name, ok, detail });
 
-export function checkEventCount(transfers, progress) {
+export function checkEventCount(transfers, state) {
   return check(
-    "event count matches scan progress",
-    transfers.length === progress.totalEvents,
-    `jsonl=${transfers.length} scan=${progress.totalEvents}`
+    "event count matches checkpoint",
+    transfers.length === state.transfers,
+    `partitions=${transfers.length} checkpoint=${state.transfers}`
   );
 }
 
@@ -22,45 +22,56 @@ export function checkNoDuplicates(transfers) {
   return check("no duplicate (tx, logIndex) pairs", dupes === 0, `duplicates=${dupes}`);
 }
 
-export function checkBlockRange(transfers, manifest) {
+export function checkBlockRange(transfers, manifest, state) {
   const deployBlock = Number(manifest.deployBlock);
-  const latestBlock = Number(manifest.latestBlockAtRun);
-  const outOfRange = transfers.filter((t) => t.b < deployBlock || t.b > latestBlock).length;
+  const outOfRange = transfers.filter((t) => t.b < deployBlock || t.b > state.lastBlock).length;
   return check(
     "all events inside scanned block range",
     outOfRange === 0,
-    `outOfRange=${outOfRange} (range ${deployBlock} → ${latestBlock})`
+    `outOfRange=${outOfRange} (range ${deployBlock} → ${state.lastBlock})`
   );
 }
 
-export function checkScanCompleted(progress) {
+// The scan only advances its checkpoint after this holds; re-checking it here
+// catches a hand-edited or truncated state.json.
+export function checkCheckpointSupply(state) {
+  const derived = BigInt(state.minted) - BigInt(state.burned);
   return check(
-    "scan completed (all slices reached their end)",
-    progress.slices.every((s) => BigInt(s.cursor) > BigInt(s.end)),
-    progress.completedAt ? `completedAt=${progress.completedAt}` : "no completedAt marker"
+    "checkpoint supply reconciles exactly (minted − burned = totalSupply)",
+    derived === BigInt(state.totalSupply),
+    `minted−burned=${derived} totalSupply=${state.totalSupply}`
   );
 }
 
-export function checkTimestampCoverage(transfers, tsCache) {
-  const uniqueBlocks = new Set(transfers.map((t) => t.b));
-  const missingTs = [...uniqueBlocks].filter((b) => !(b in tsCache)).length;
+// Rows arrive in block order, and block time never goes back.
+export function checkTimestampCoverage(transfers) {
+  let missing = 0;
+  let outOfOrder = 0;
+  let previous = 0;
+  for (const t of transfers) {
+    if (!t.ts) {
+      missing++;
+      continue;
+    }
+    if (t.ts < previous) outOfOrder++;
+    previous = t.ts;
+  }
   return check(
-    "every event block has a timestamp",
-    missingTs === 0,
-    `uniqueBlocks=${uniqueBlocks.size} missing=${missingTs}`
+    "every event has an exact, non-decreasing timestamp",
+    missing === 0 && outOfOrder === 0,
+    `events=${transfers.length} missing=${missing} outOfOrder=${outOfOrder}`
   );
 }
 
-export function checkTimestampWindow(tsCache, manifest, toleranceSeconds = 120) {
+export function checkTimestampWindow(transfers, manifest, state, toleranceSeconds = 120) {
   const deployTs = Date.parse(manifest.deployTimestamp) / 1000;
-  const latestTs = Date.parse(manifest.latestBlockTimestamp) / 1000;
-  const badTs = Object.values(tsCache).filter(
-    (ts) => ts < deployTs - toleranceSeconds || ts > latestTs + toleranceSeconds
+  const outside = transfers.filter(
+    (t) => t.ts < deployTs - toleranceSeconds || t.ts > state.lastBlockTime + toleranceSeconds
   ).length;
   return check(
-    "timestamps inside deploy → latest window",
-    badTs === 0,
-    `outside=${badTs} of ${Object.keys(tsCache).length}`
+    "timestamps inside deploy → checkpoint window",
+    outside === 0,
+    `outside=${outside} of ${transfers.length}`
   );
 }
 
@@ -121,14 +132,14 @@ export function checkLiveSupply(summary, onChainSupply) {
 }
 
 // The checks that only need files on disk, in report order.
-export function offlineChecks({ transfers, manifest, progress, tsCache, csvRows, summary }) {
+export function offlineChecks({ transfers, manifest, state, csvRows, summary }) {
   return [
-    checkEventCount(transfers, progress),
+    checkEventCount(transfers, state),
     checkNoDuplicates(transfers),
-    checkBlockRange(transfers, manifest),
-    checkScanCompleted(progress),
-    checkTimestampCoverage(transfers, tsCache),
-    checkTimestampWindow(tsCache, manifest),
+    checkBlockRange(transfers, manifest, state),
+    checkCheckpointSupply(state),
+    checkTimestampCoverage(transfers),
+    checkTimestampWindow(transfers, manifest, state),
     checkSeriesLength(csvRows, summary),
     checkSeriesContinuity(csvRows),
     checkCsvTransferTotal(csvRows, summary),

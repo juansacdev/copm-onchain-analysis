@@ -9,6 +9,7 @@ test("parses a command with an explicit chain", () => {
     command: "aggregate",
     chain: "celo",
     fresh: false,
+    overrides: {},
   });
 });
 
@@ -32,7 +33,6 @@ test("accepts every documented command", () => {
   assert.deepEqual(COMMANDS, [
     "discover",
     "scan",
-    "timestamps",
     "aggregate",
     "charts",
     "charts:combined",
@@ -41,9 +41,23 @@ test("accepts every documented command", () => {
   for (const command of COMMANDS) assert.equal(parseArgs([command], {}).command, command);
 });
 
-test("rejects a missing or unknown command", () => {
+test("rejects a missing or unknown command, including the removed timestamps step", () => {
   assert.throws(() => parseArgs([], {}), UsageError);
   assert.throws(() => parseArgs(["nope"], {}), /unknown command "nope"/);
+  assert.throws(() => parseArgs(["timestamps"], {}), /unknown command "timestamps"/);
+});
+
+test("scan tuning flags become numeric-string overrides under their setting names", () => {
+  const { overrides } = parseArgs(
+    ["scan", "--workers", "3", "--max-log-range", "2000", "--empty-confirmations", "4"],
+    {}
+  );
+  assert.deepEqual(overrides, { workers: "3", maxLogRange: "2000", emptyConfirmations: "4" });
+});
+
+test("a tuning flag without a value is a usage error", () => {
+  assert.throws(() => parseArgs(["scan", "--workers"], {}), /--workers requires a value/);
+  assert.throws(() => parseArgs(["scan", "--workers", "--fresh"], {}), /--workers requires a value/);
 });
 
 test("rejects an unknown chain, from the flag or from the env", () => {
@@ -61,6 +75,8 @@ test("usage lists the commands and chains", () => {
   assert.match(text, /node pipeline\/cli\.js <command>/);
   assert.match(text, /charts:combined/);
   assert.match(text, /polygon\|celo/);
+  assert.match(text, /--workers/);
+  assert.doesNotMatch(text, /timestamps/);
 });
 
 test("the CLI prints usage and exits 1 on bad input, without needing an RPC URL", () => {
@@ -77,4 +93,17 @@ test("the CLI prints usage and exits 1 on bad input, without needing an RPC URL"
   });
   assert.equal(unknownChain.status, 1);
   assert.match(unknownChain.stderr, /unknown chain "nope"/);
+});
+
+test("a step failure prints its message without a stack trace and exits 1", () => {
+  const cli = fileURLToPath(new URL("../pipeline/cli.js", import.meta.url));
+  const env = { PATH: process.env.PATH };
+
+  const result = spawnSync(process.execPath, [cli, "scan", "--chain", "polygon"], {
+    env,
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /missing POLYGON_RPC_URL/);
+  assert.doesNotMatch(result.stderr, /\n\s+at /);
 });

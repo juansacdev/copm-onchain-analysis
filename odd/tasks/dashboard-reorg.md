@@ -87,7 +87,7 @@ Route and trigger evidence are recorded per task. Lines are forecast authored ad
 - [x] **T0 — Repository hygiene.** Commit the tooling ignore rules and the installed design skill. Route: inline (one mechanical commit). ~5 lines.
 - [x] **T1 — Pipeline layout and test harness.** Move the root scripts into `pipeline/` per the target layout with no behavior change, extract pure functions to `domain/`, remove import-time side effects from config, add `npm test`, move long-form docs to `docs/`. Route: delegated writer (9 non-trivial files). ~450 lines.
   - Acceptance: `npm test` green; `node pipeline/cli.js aggregate --chain celo` reproduces the committed `data/celo/daily.csv` byte for byte; README commands updated.
-- [ ] **T2 — Verified incremental scan.** All-topics scan from the checkpoint to a pinned block, canary and head check per batch, confirmation of empty ranges, 5,000-block ranges configurable per chain, exact timestamps, month-partitioned transfers, admin events, approval counts, checkpoint written only after reconciliation. Route: delegated writer. ~750 lines.
+- [x] **T2 — Verified incremental scan.** All-topics scan from the checkpoint to a pinned block, canary and head check per batch, confirmation of empty ranges, 5,000-block ranges configurable per chain, exact timestamps, month-partitioned transfers, admin events, approval counts, checkpoint written only after reconciliation. Route: delegated writer. ~750 lines.
   - Acceptance: tests cover range planning, batch integrity (empty backend, lagging backend, wrong canary), an empty answer followed by a non-empty one for the same range, idempotent re-run, resume after failure, reconciliation failure leaves the checkpoint untouched.
 - [ ] **T3 — Holders snapshot and strict validation.** `holders.csv` and `holders.json` at the pinned block, every balance checked with `balanceOf`; validation requires supply difference 0 and no negative balance. Route: delegated writer. ~300 lines.
 - [ ] **T4 — Report figures from data.** Markers in the Markdown reports filled from `summary.json`, so no figure is typed by hand. Route: delegated writer (10 Markdown files plus generator). ~350 lines.
@@ -126,8 +126,8 @@ T5 lands in slice 2, right after T3, because T2 changes the on-disk format: the 
 | Task | Status | Commit | Checks | Review |
 |---|---|---|---|---|
 | T0 | done | `af6b973` | structural readback | granted → approved and acknowledged (lineage `review-564fae3ee8ac0900`, 1 non-blocking suggestion on the vendored skill); boundary is now `af6b973` |
-| T1 | done | see `git log` (`refactor(pipeline): …`) | `npm test`: 47 pass, 0 fail. `aggregate`, `charts`, `charts:combined` for both chains: `git status data/ charts/` clean (byte-for-byte). Unknown command and unknown chain exit 1. No stale references to the old script names. `site` build: 2 pages built. Network steps not run. Writer report never arrived; all checks re-run by the parent. | assessed after commit |
-| T2 | pending | | | |
+| T1 | done | `075c7da` | `npm test`: 47 pass, 0 fail. `aggregate`, `charts`, `charts:combined` for both chains: `git status data/ charts/` clean (byte-for-byte). Unknown command and unknown chain exit 1. No stale references to the old script names. `site` build: 2 pages built. Network steps not run. Writer report never arrived; all checks re-run by the parent. | assessed `high` (`process_boundary` in `tests/cli.test.js`); consent declined by the user; the provider refused its own decline invocation (`invalid_request`: untracked files appeared after the envelope was issued), so no review record exists. Tier `high` without review → independent verifier on a detached worktree at `075c7da` (running). Boundary stays `af6b973` for assessment purposes until slice 1 is delivered. |
+| T2 | done | `feat(scan): …` on `feat/verified-scan` | `npm test`: 130 pass, 0 fail. `scan` without RPC URL: clear error, exit 1, no network. `timestamps`: unknown command, exit 1. `aggregate` without partitions: clear error, non-zero, `data/` untouched. Raw amounts never pass through `Number` (hits are block numbers, timestamps, a `uint8`, and display conversions after BigInt division). Live smoke run on Polygon: first 12 stages reconciled to the wei against `totalSupply` at each stage end. Writer report never arrived; checks re-run and `scan.js` read in full by the parent. | assessed after commit |
 | T3 | pending | | | |
 | T4 | pending | | | |
 | T5 | pending | | | |
@@ -139,4 +139,4 @@ T5 lands in slice 2, right after T3, because T2 changes the on-disk format: the 
 
 ## Next step
 
-T2 on `feat/verified-scan`.
+T3 on `feat/verified-scan`; full rescans running for T5.
