@@ -72,6 +72,10 @@ Public endpoints sit behind load balancers, and a backend that lacks part of the
 - **Exact timestamps.** Every transfer carries the timestamp of its block (from the log, or from the block header when the node returns `0x0`), so day buckets are not interpolated.
 - **Idempotent and resumable.** Writes are atomic; `data/<chain>/state.json` is written last, and a re-run after a crash drops anything above the checkpoint.
 
+**What these checks do not prove.** The canary is a filter, not a proof: the items of one batch can be answered by different backends. Reconciliation proves the balance ledger, but a dropped range whose mint, payment and burn cancel out would leave supply and balances intact; only the repeated confirmation of empty ranges guards against that. On an endpoint that fails often, raise `emptyConfirmations`.
+
+**Provenance of the Celo history.** On 2026-10-11 the public Celo endpoint (`forno.celo.org`) returned empty answers for 11 % to 75 % of non-empty ranges and almost never passed the deployment-block canary, so a full-history scan could not finish there. The history up to block 79,856,063 was assembled from the union of seven scans plus the earlier dataset, loaded into this format, and then certified by the same checks: supply equal to `totalSupply()` to the wei and every one of 3,123 balances equal to `balanceOf`. Transfers are covered by that proof; the Celo approval counters are a lower bound. Daily runs continue from that checkpoint, where the canary is recent and the endpoint answers well. `scan --fresh --chain celo` against an archive endpoint rebuilds it from the deploy block.
+
 ### The holders snapshot
 
 `holders` reads the transfers `scan` stored and the chain at the same block, `state.lastBlock`, never at the live head. It writes nothing unless three things hold, to the wei:
@@ -98,8 +102,8 @@ cd copm-onchain-analysis
 cp .env.example .env   # configure your RPCs (the public Celo one is preset)
 npm install
 
-npm run audit:polygon  # Polygon only (~15 min on a paid RPC)
-npm run audit:celo     # Celo only (~25 min on the public RPC)
+npm run audit:polygon  # Polygon only (~10 min from the deploy block on a paid RPC)
+npm run audit:celo     # Celo only (seconds from the committed checkpoint)
 npm run audit:all      # both + combined charts
 ```
 

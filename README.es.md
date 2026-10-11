@@ -72,6 +72,10 @@ Los endpoints públicos están detrás de balanceadores de carga, y un backend a
 - **Timestamps exactos.** Cada transferencia lleva el timestamp de su bloque (del log, o del header del bloque cuando el nodo devuelve `0x0`), así que los días no se interpolan.
 - **Idempotente y reanudable.** Las escrituras son atómicas; `data/<chain>/state.json` se escribe al final, y una nueva corrida tras una caída descarta todo lo que esté por encima del checkpoint.
 
+**Lo que estas verificaciones no prueban.** El canario es un filtro, no una prueba: los elementos de un mismo lote pueden ser respondidos por backends distintos. La reconciliación prueba el libro de saldos, pero un rango perdido cuyo mint, pago y burn se cancelen dejaría intactos la oferta y los saldos; contra eso solo protege la confirmación repetida de los rangos vacíos. En un endpoint que falla seguido, sube `emptyConfirmations`.
+
+**Procedencia del historial de Celo.** El 2026-10-11 el endpoint público de Celo (`forno.celo.org`) devolvió respuestas vacías para entre el 11 % y el 75 % de los rangos con eventos y casi nunca pasó el canario del bloque de despliegue, así que un scan del historial completo no pudo terminar ahí. El historial hasta el bloque 79.856.063 se armó con la unión de siete scans más el dataset anterior, se cargó a este formato y luego se certificó con las mismas verificaciones: oferta igual a `totalSupply()` al wei y cada uno de los 3.123 saldos igual a `balanceOf`. Las transferencias quedan cubiertas por esa prueba; los contadores de approvals de Celo son una cota inferior. Las corridas diarias continúan desde ese checkpoint, donde el canario es reciente y el endpoint responde bien. `scan --fresh --chain celo` contra un endpoint de archivo lo reconstruye desde el deploy block.
+
 ### El snapshot de holders
 
 `holders` lee las transferencias que guardó `scan` y la chain en el mismo bloque, `state.lastBlock`, nunca en el head actual. No escribe nada salvo que se cumplan tres cosas, al wei:
@@ -98,8 +102,8 @@ cd copm-onchain-analysis
 cp .env.example .env   # configura tus RPCs (el de Celo público ya viene puesto)
 npm install
 
-npm run audit:polygon  # solo Polygon (~15 min con RPC de pago)
-npm run audit:celo     # solo Celo (~25 min con el RPC público)
+npm run audit:polygon  # solo Polygon (~10 min desde el deploy block con RPC de pago)
+npm run audit:celo     # solo Celo (segundos desde el checkpoint versionado)
 npm run audit:all      # ambas + charts combinados
 ```
 

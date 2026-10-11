@@ -1,0 +1,291 @@
+{
+  "block": 79861762,
+  "blockTime": "2026-10-11T23:48:40.000Z",
+  "totalSupply": "418585134.628110192879069442",
+  "holders": 998,
+  "addressesEverSeen": 3123,
+  "contracts": 98,
+  "frozen": [
+    "0x1ca33cff95e7eef86b080ab13851034cd3e9e457"
+  ],
+  "concentration": {
+    "top1Pct": 76.2294,
+    "top5Pct": 96.1334,
+    "top10Pct": 98.8167,
+    "top50Pct": 99.9069
+  },
+  "buckets": [
+    {
+      "label": ">= 100M",
+      "min": "100000000",
+      "holders": 1,
+      "copm": "319085097.354760972371367262"
+    },
+    {
+      "label": "10M – 100M",
+      "min": "10000000",
+      "holders": 3,
+      "copm": "77964153.964020940811648385"
+    },
+    {
+      "label": "1M – 10M",
+      "min": "1000000",
+      "holders": 5,
+      "copm": "15971496.347562255515677494"
+    },
+    {
+      "label": "100k – 1M",
+      "min": "100000",
+      "holders": 15,
+      "copm": "3645284.62133798284000552"
+    },
+    {
+      "label": "10k – 100k",
+      "min": "10000",
+      "holders": 41,
+      "copm": "1822970.204357197747008532"
+    },
+    {
+      "label": "1k – 10k",
+      "min": "1000",
+      "holders": 22,
+      "copm": "92893.383767816731869855"
+    },
+    {
+      "label": "1 – 1k",
+      "min": "1",
+      "holders": 31,
+      "copm": "2800.838585814900874973"
+    },
+    {
+      "label": "< 1",
+      "min": "0",
+      "holders": 880,
+      "copm": "437.913717211960617421"
+    }
+  ],
+  "roles": {
+    "DEFAULT_ADMIN_ROLE": [
+      "0x0155b191ec52728d26b1cd82f6a412d5d6897c04"
+    ],
+    "PAUSER_ROLE": [
+      "0x0155b191ec52728d26b1cd82f6a412d5d6897c04"
+    ],
+    "MINTER_ROLE": [
+      "0x0155b191ec52728d26b1cd82f6a412d5d6897c04"
+    ],
+    "UPGRADER_ROLE": [
+      "0x0155b191ec52728d26b1cd82f6a412d5d6897c04"
+    ],
+    "FREEZER_ROLE": [
+      "0x0155b191ec52728d26b1cd82f6a412d5d6897c04"
+    ],
+    "RESCUER_ROLE": [
+      "0x0155b191ec52728d26b1cd82f6a412d5d6897c04"
+    ]
+  },
+  "paused": false,
+  "implementation": "0xbb0cf77caaf21dced4f06d3cb987dcb65f15b1c7",
+  "top": [
+    {
+      "rank": 1,
+      "address": "0x5bd35ee3c1975b2d735d2023bd4f38e3b0cfc122",
+      "balance": "319085097.354760972371367262",
+      "sharePct": "76.2294",
+      "kind": "wallet",
+      "frozen": false
+    },
+    {
+      "rank": 2,
+      "address": "0xeaf297815ec765eecda15e3fd3509d5b2acaa272",
+      "balance": "35919075.8126",
+      "sharePct": "8.5811",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 3,
+      "address": "0x4495f525c4ecacf9713a51ec3e8d1e81d7dff870",
+      "balance": "25468428.151420940811648385",
+      "sharePct": "6.0844",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 4,
+      "address": "0xbb6cb4e3fc7ab30ac0f2bb2aeb10b35b180eb0a6",
+      "balance": "16576650",
+      "sharePct": "3.9602",
+      "kind": "wallet",
+      "frozen": false
+    },
+    {
+      "rank": 5,
+      "address": "0x288dc841a52fca2707c6947b3a777c5e56cd87bc",
+      "balance": "5351024.952739523665218968",
+      "sharePct": "1.2784",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 6,
+      "address": "0x6ed48aa99c318939f64bca7aa7bb463b71ae8630",
+      "balance": "5131118.615540637450199204",
+      "sharePct": "1.2258",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 7,
+      "address": "0x054ca5a947551bd62ab82acb344780c7da24acbe",
+      "balance": "2487982.1",
+      "sharePct": "0.5944",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 8,
+      "address": "0x8ff7dd8fae37da2b8454c8e76bb1dc4f5ca5ad81",
+      "balance": "1681370.679282094400259322",
+      "sharePct": "0.4017",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 9,
+      "address": "0xe856e3c47c41ba67e3847aefdbd7c26b2eb91ab6",
+      "balance": "1320000",
+      "sharePct": "0.3153",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 10,
+      "address": "0x3c634c5935986b1ae21a79dba7001dffb0922937",
+      "balance": "611452.300597609561752989",
+      "sharePct": "0.1461",
+      "kind": "wallet",
+      "frozen": false
+    },
+    {
+      "rank": 11,
+      "address": "0x83203cfb749590d107c815a6e7fcb1343d127b3b",
+      "balance": "548173.508",
+      "sharePct": "0.1310",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 12,
+      "address": "0xbbf2f0c8e4b0a237b0887268c694aa31a2193bea",
+      "balance": "405000",
+      "sharePct": "0.0968",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 13,
+      "address": "0xe6d55b5fc8f715b3f3e8afaa3f7a259be967a7ec",
+      "balance": "392302.9351",
+      "sharePct": "0.0937",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 14,
+      "address": "0x8c7f945b86f920c081c2d3106ee42ba3c0a95764",
+      "balance": "217295.5112",
+      "sharePct": "0.0519",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 15,
+      "address": "0x88780ba02322dd3874cc209279e2257f81762c21",
+      "balance": "202028.8464",
+      "sharePct": "0.0483",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 16,
+      "address": "0xa51e4cbc4cf4ae30ea1233bfd19b8dc8e29a7f06",
+      "balance": "178720.96",
+      "sharePct": "0.0427",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 17,
+      "address": "0xe2606e9f3b35a527aa1cce94f74f7b8d3b24e728",
+      "balance": "174024.413639639965774256",
+      "sharePct": "0.0416",
+      "kind": "wallet",
+      "frozen": false
+    },
+    {
+      "rank": 18,
+      "address": "0xdd5699837890cd48892d023db1d916271925be84",
+      "balance": "169613.6",
+      "sharePct": "0.0405",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 19,
+      "address": "0xd647263e6e913ab88c5aec9a84fbb4c833386232",
+      "balance": "150000",
+      "sharePct": "0.0358",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 20,
+      "address": "0x4110746b96416ebf7094484b6bd1b1f8c345566f",
+      "balance": "149515.8884",
+      "sharePct": "0.0357",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 21,
+      "address": "0xd96199b1c8f0bb409992811f3282e027f17cffff",
+      "balance": "136160.8456",
+      "sharePct": "0.0325",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 22,
+      "address": "0x59aa2b9b6b08562bb01152913ee0cc52eba24737",
+      "balance": "110531.573",
+      "sharePct": "0.0264",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 23,
+      "address": "0x3dfaddacfd9b74c4c22c023e7e3af7955d3ead3c",
+      "balance": "100464.174348207171314742",
+      "sharePct": "0.0240",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 24,
+      "address": "0xd3a111a010a2a4e373358c32966660131cc7ce63",
+      "balance": "100000.065052526141163533",
+      "sharePct": "0.0239",
+      "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 25,
+      "address": "0x2cd06cdda4a48e954d6d26f4bce28880b951971a",
+      "balance": "99172.52",
+      "sharePct": "0.0237",
+      "kind": "contract",
+      "frozen": false
+    }
+  ]
+}

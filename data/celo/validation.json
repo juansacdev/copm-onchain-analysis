@@ -1,68 +1,94 @@
 {
   "chain": "celo",
-  "validatedAt": "2026-06-12T01:44:51.909Z",
+  "block": 79861762,
+  "validatedAt": "2026-10-11T23:50:23.725Z",
   "checks": [
     {
-      "name": "event count matches scan progress",
+      "id": "event-count",
       "ok": true,
-      "detail": "jsonl=120900 scan=120900"
+      "detail": "partitions=132944 checkpoint=132944"
     },
     {
-      "name": "no duplicate (tx, logIndex) pairs",
+      "id": "supply-exact",
       "ok": true,
-      "detail": "duplicates=0"
+      "detail": "minted-burned=418585134628110192879069442 totalSupply=418585134628110192879069442 diff 0"
     },
     {
-      "name": "all events inside scanned block range",
+      "id": "ledger-matches-state",
       "ok": true,
-      "detail": "outOfRange=0 (range 27680993 → 69326020)"
+      "detail": "partitions minted=5281673083219653188086304764 burned=4863087948591542995207235322 transfers=132944; checkpoint minted=5281673083219653188086304764 burned=4863087948591542995207235322 transfers=132944"
     },
     {
-      "name": "scan completed (all slices reached their end)",
+      "id": "no-negative-balance",
       "ok": true,
-      "detail": "completedAt=2026-06-12T01:42:18.898Z"
+      "detail": "negative=0"
     },
     {
-      "name": "every event block has a timestamp",
+      "id": "holders-sum-exact",
       "ok": true,
-      "detail": "uniqueBlocks=77103 missing=0"
+      "detail": "sum=418585134628110192879069442 totalSupply=418585134628110192879069442 holders.json block=79861762 checkpoint=79861762"
     },
     {
-      "name": "timestamps inside deploy → latest window",
+      "id": "partitions-ordered-unique",
       "ok": true,
-      "detail": "outside=0 of 77103"
+      "detail": "outOfOrderOrDuplicate=0"
     },
     {
-      "name": "daily series length matches summary range",
+      "id": "partition-month-matches-ts",
       "ok": true,
-      "detail": "csv=634 summary=634"
+      "detail": "misplaced=0"
     },
     {
-      "name": "daily series is continuous (no missing days)",
+      "id": "no-row-above-checkpoint",
+      "ok": true,
+      "detail": "above=0 checkpoint=79861762"
+    },
+    {
+      "id": "no-row-before-deploy",
+      "ok": true,
+      "detail": "before=0 deployBlock=27680993"
+    },
+    {
+      "id": "timestamps-exact",
+      "ok": true,
+      "detail": "events=132944 missing=0 outOfOrder=0"
+    },
+    {
+      "id": "timestamps-in-window",
+      "ok": true,
+      "detail": "outside=0 of 132944"
+    },
+    {
+      "id": "admin-events-ordered",
+      "ok": true,
+      "detail": "outOfOrderOrDuplicate=0 aboveCheckpoint=0"
+    },
+    {
+      "id": "admin-events-count",
+      "ok": true,
+      "detail": "stored=12 checkpoint=12"
+    },
+    {
+      "id": "daily-matches-ledger",
+      "ok": true,
+      "detail": "rows=754 lastSupply=418585134.62811 totalSupply=418585134.62811"
+    },
+    {
+      "id": "series-length",
+      "ok": true,
+      "detail": "csv=754 summary=754"
+    },
+    {
+      "id": "series-continuous",
       "ok": true,
       "detail": "gaps=0"
     },
     {
-      "name": "csv transfer total equals summary total",
+      "id": "csv-transfer-total",
       "ok": true,
-      "detail": "csv=120900 summary=120900"
-    },
-    {
-      "name": "mints − burns equals derived supply",
-      "ok": true,
-      "detail": "mints−burns=1028163109.63 derived=1028163109.63"
-    },
-    {
-      "name": "derived supply within 25% of live totalSupply()",
-      "ok": true,
-      "detail": "derived=1028163110 onChain=1028163110 deviation=0.0%"
-    },
-    {
-      "name": "random transfers re-verified against the live chain",
-      "ok": true,
-      "detail": "viaReceipt=6 viaLogs=6 mismatched=0 (sampled every 10075th event)"
+      "detail": "csv=132944 summary=132944"
     }
   ],
-  "passed": 12,
+  "passed": 17,
   "failed": 0
 }

@@ -1,68 +1,94 @@
 {
   "chain": "polygon",
-  "validatedAt": "2026-06-12T01:44:54.352Z",
+  "block": 95370448,
+  "validatedAt": "2026-10-11T23:50:23.226Z",
   "checks": [
     {
-      "name": "event count matches scan progress",
+      "id": "event-count",
       "ok": true,
-      "detail": "jsonl=196796 scan=196796"
+      "detail": "partitions=241858 checkpoint=241858"
     },
     {
-      "name": "no duplicate (tx, logIndex) pairs",
+      "id": "supply-exact",
       "ok": true,
-      "detail": "duplicates=0"
+      "detail": "minted-burned=4482231674754852048213337676 totalSupply=4482231674754852048213337676 diff 0"
     },
     {
-      "name": "all events inside scanned block range",
+      "id": "ledger-matches-state",
       "ok": true,
-      "detail": "outOfRange=0 (range 47747145 → 88347879)"
+      "detail": "partitions minted=1250644898317000000000000000000 burned=1246162666642245147951786662324 transfers=241858; checkpoint minted=1250644898317000000000000000000 burned=1246162666642245147951786662324 transfers=241858"
     },
     {
-      "name": "scan completed (all slices reached their end)",
+      "id": "no-negative-balance",
       "ok": true,
-      "detail": "completedAt=2026-06-12T01:23:35.540Z"
+      "detail": "negative=0"
     },
     {
-      "name": "every event block has a timestamp",
+      "id": "holders-sum-exact",
       "ok": true,
-      "detail": "uniqueBlocks=136082 missing=0"
+      "detail": "sum=4482231674754852048213337676 totalSupply=4482231674754852048213337676 holders.json block=95370448 checkpoint=95370448"
     },
     {
-      "name": "timestamps inside deploy → latest window",
+      "id": "partitions-ordered-unique",
       "ok": true,
-      "detail": "outside=0 of 136082"
+      "detail": "outOfOrderOrDuplicate=0"
     },
     {
-      "name": "daily series length matches summary range",
+      "id": "partition-month-matches-ts",
       "ok": true,
-      "detail": "csv=996 summary=996"
+      "detail": "misplaced=0"
     },
     {
-      "name": "daily series is continuous (no missing days)",
+      "id": "no-row-above-checkpoint",
+      "ok": true,
+      "detail": "above=0 checkpoint=95370448"
+    },
+    {
+      "id": "no-row-before-deploy",
+      "ok": true,
+      "detail": "before=0 deployBlock=47747145"
+    },
+    {
+      "id": "timestamps-exact",
+      "ok": true,
+      "detail": "events=241858 missing=0 outOfOrder=0"
+    },
+    {
+      "id": "timestamps-in-window",
+      "ok": true,
+      "detail": "outside=0 of 241858"
+    },
+    {
+      "id": "admin-events-ordered",
+      "ok": true,
+      "detail": "outOfOrderOrDuplicate=0 aboveCheckpoint=0"
+    },
+    {
+      "id": "admin-events-count",
+      "ok": true,
+      "detail": "stored=11 checkpoint=11"
+    },
+    {
+      "id": "daily-matches-ledger",
+      "ok": true,
+      "detail": "rows=1117 lastSupply=4482231674.754852 totalSupply=4482231674.754852"
+    },
+    {
+      "id": "series-length",
+      "ok": true,
+      "detail": "csv=1117 summary=1117"
+    },
+    {
+      "id": "series-continuous",
       "ok": true,
       "detail": "gaps=0"
     },
     {
-      "name": "csv transfer total equals summary total",
+      "id": "csv-transfer-total",
       "ok": true,
-      "detail": "csv=196796 summary=196796"
-    },
-    {
-      "name": "mints − burns equals derived supply",
-      "ok": true,
-      "detail": "mints−burns=7633653032.75 derived=7633653032.75"
-    },
-    {
-      "name": "derived supply within 25% of live totalSupply()",
-      "ok": true,
-      "detail": "derived=7633653033 onChain=6322997918 deviation=20.7%"
-    },
-    {
-      "name": "random transfers re-verified against the live chain",
-      "ok": true,
-      "detail": "viaReceipt=12 viaLogs=0 mismatched=0 (sampled every 16399th event)"
+      "detail": "csv=241858 summary=241858"
     }
   ],
-  "passed": 12,
+  "passed": 17,
   "failed": 0
 }

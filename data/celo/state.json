@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "chain": "celo",
+  "address": "0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606",
+  "lastBlock": 79861762,
+  "lastBlockTime": 1791762520,
+  "minted": "5281673083219653188086304764",
+  "burned": "4863087948591542995207235322",
+  "totalSupply": "418585134628110192879069442",
+  "transfers": 132944,
+  "approvals": 82623,
+  "adminEvents": 12,
+  "canary": {
+    "block": 79746323,
+    "logs": 2
+  },
+  "updatedAt": "2026-10-11T23:49:14.239Z"
+}
