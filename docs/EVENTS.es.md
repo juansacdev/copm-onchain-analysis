@@ -4,7 +4,7 @@
 >
 > 🇬🇧 [English version](./EVENTS.md) · 📖 [Glosario](./GLOSSARY.es.md) · 📊 [Auditoría unificada](./AUDIT.es.md)
 
-El scan guarda todos los eventos que emite el contrato de COPM, en ambas chains. Esta página dice cuáles vale la pena leer y qué te cuenta cada uno. Los conteos salen de `data/<chain>/` hasta el bloque <!-- copm:polygon.checkpointBlock -->95.370.448<!-- /copm --> de Polygon y el bloque <!-- copm:celo.checkpointBlock -->79.861.762<!-- /copm --> de Celo (<!-- copm:polygon.checkpointDate -->2026-10-11<!-- /copm -->), y los completa `npm run reports`.
+El scan guarda todos los eventos que emite el contrato de COPM, en ambas chains. Esta página dice cuáles vale la pena leer y qué te cuenta cada uno. Los conteos salen de `data/<chain>/` hasta el bloque <!-- copm:polygon.checkpointBlock -->95.378.468<!-- /copm --> de Polygon y el bloque <!-- copm:celo.checkpointBlock -->79.872.373<!-- /copm --> de Celo (<!-- copm:polygon.checkpointDate -->2026-10-12<!-- /copm -->), y los completa `npm run reports`.
 
 ## El contrato
 
@@ -21,8 +21,8 @@ COPM es un proxy ERC-1967 UUPS en ambas chains: la dirección que usa la gente n
 
 | Evento | Se emite cuando | Qué te cuenta | Polygon | Celo |
 | :--- | :--- | :--- | ---: | ---: |
-| `Transfer(from, to, value)` | cualquier cambio de saldo | el libro completo: emisión, redención y cada pago | <!-- copm:polygon.events.Transfer -->241.858<!-- /copm --> | <!-- copm:celo.events.Transfer -->132.944<!-- /copm --> |
-| `Approval(owner, spender, value)` | `approve` o `permit` | qué contratos están autorizados a gastar; no mueve valor | <!-- copm:polygon.events.Approval -->122.239<!-- /copm --> | <!-- copm:celo.events.Approval -->82.623<!-- /copm --> (cota inferior) |
+| `Transfer(from, to, value)` | cualquier cambio de saldo | el libro completo: emisión, redención y cada pago | <!-- copm:polygon.events.Transfer -->241.876<!-- /copm --> | <!-- copm:celo.events.Transfer -->132.944<!-- /copm --> |
+| `Approval(owner, spender, value)` | `approve` o `permit` | qué contratos están autorizados a gastar; no mueve valor | <!-- copm:polygon.events.Approval -->122.241<!-- /copm --> | <!-- copm:celo.events.Approval -->82.623<!-- /copm --> (cota inferior) |
 | `Frozen(account)` | el `FREEZER_ROLE` bloquea una dirección | una acción de cumplimiento: la dirección no puede enviar ni recibir | <!-- copm:polygon.events.Frozen -->0<!-- /copm --> | <!-- copm:celo.events.Frozen -->2<!-- /copm --> |
 | `Thawed(account)` | el `FREEZER_ROLE` desbloquea una dirección | se levantó el bloqueo (también forma parte de un burn de cuenta congelada) | <!-- copm:polygon.events.Thawed -->0<!-- /copm --> | <!-- copm:celo.events.Thawed -->1<!-- /copm --> |
 | `BurnedFrozen(account, amount)` | el emisor destruye un saldo congelado | la acción de cumplimiento más fuerte | <!-- copm:polygon.events.BurnedFrozen -->0<!-- /copm --> | <!-- copm:celo.events.BurnedFrozen -->1<!-- /copm --> |

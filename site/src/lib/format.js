@@ -5,15 +5,17 @@
 
 import {
   assertLocale,
+  formatCopmCompact,
   formatCopmExact,
   formatDecimal,
   formatInt,
   formatUsd,
   formatUsdFull,
+  rangeLabels,
 } from "../../../pipeline/domain/format.js";
 
 // Numbers and money come from the module shared with the Markdown reports.
-export { formatCopmExact, formatDecimal, formatInt, formatUsd, formatUsdFull };
+export { formatCopmCompact, formatCopmExact, formatDecimal, formatInt, formatUsd, formatUsdFull, rangeLabels };
 
 const MONTHS = {
   en: [

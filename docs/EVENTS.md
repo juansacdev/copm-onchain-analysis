@@ -4,7 +4,7 @@
 >
 > 🇪🇸 [Versión en español](./EVENTS.es.md) · 📖 [Glossary](./GLOSSARY.md) · 📊 [Unified audit](./AUDIT.md)
 
-The scan stores every event the COPM contract emits, on both chains. This page says which of them are worth reading and what each one tells you. Counts come from `data/<chain>/` up to Polygon block <!-- copm:polygon.checkpointBlock -->95,370,448<!-- /copm --> and Celo block <!-- copm:celo.checkpointBlock -->79,861,762<!-- /copm --> (<!-- copm:polygon.checkpointDate -->2026-10-11<!-- /copm -->), filled by `npm run reports`.
+The scan stores every event the COPM contract emits, on both chains. This page says which of them are worth reading and what each one tells you. Counts come from `data/<chain>/` up to Polygon block <!-- copm:polygon.checkpointBlock -->95,378,468<!-- /copm --> and Celo block <!-- copm:celo.checkpointBlock -->79,872,373<!-- /copm --> (<!-- copm:polygon.checkpointDate -->2026-10-12<!-- /copm -->), filled by `npm run reports`.
 
 ## The contract
 
@@ -21,8 +21,8 @@ COPM is an ERC-1967 UUPS proxy on both chains: the address people use never chan
 
 | Event | Emitted when | What it tells you | Polygon | Celo |
 | :--- | :--- | :--- | ---: | ---: |
-| `Transfer(from, to, value)` | any balance change | the complete ledger: issuance, redemption and every payment | <!-- copm:polygon.events.Transfer -->241,858<!-- /copm --> | <!-- copm:celo.events.Transfer -->132,944<!-- /copm --> |
-| `Approval(owner, spender, value)` | `approve` or `permit` | which contracts are being authorized to spend; moves no value | <!-- copm:polygon.events.Approval -->122,239<!-- /copm --> | <!-- copm:celo.events.Approval -->82,623<!-- /copm --> (lower bound) |
+| `Transfer(from, to, value)` | any balance change | the complete ledger: issuance, redemption and every payment | <!-- copm:polygon.events.Transfer -->241,876<!-- /copm --> | <!-- copm:celo.events.Transfer -->132,944<!-- /copm --> |
+| `Approval(owner, spender, value)` | `approve` or `permit` | which contracts are being authorized to spend; moves no value | <!-- copm:polygon.events.Approval -->122,241<!-- /copm --> | <!-- copm:celo.events.Approval -->82,623<!-- /copm --> (lower bound) |
 | `Frozen(account)` | `FREEZER_ROLE` blocks an address | a compliance action: the address can neither send nor receive | <!-- copm:polygon.events.Frozen -->0<!-- /copm --> | <!-- copm:celo.events.Frozen -->2<!-- /copm --> |
 | `Thawed(account)` | `FREEZER_ROLE` unblocks an address | the block was lifted (also part of a frozen burn) | <!-- copm:polygon.events.Thawed -->0<!-- /copm --> | <!-- copm:celo.events.Thawed -->1<!-- /copm --> |
 | `BurnedFrozen(account, amount)` | the issuer destroys a frozen balance | the strongest compliance action | <!-- copm:polygon.events.BurnedFrozen -->0<!-- /copm --> | <!-- copm:celo.events.BurnedFrozen -->1<!-- /copm --> |

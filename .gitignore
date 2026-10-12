@@ -9,3 +9,6 @@ block-samples.json
 
 .atl/
 .codegraph
+
+# browser automation artifacts
+.playwright-mcp/

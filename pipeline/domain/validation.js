@@ -3,11 +3,11 @@
 // are what validation.json records, so keep them stable. There is no
 // tolerance anywhere: amounts are compared to the wei.
 import { buildDailySeries, dailyCsv } from "./aggregate.js";
+import { buildDashboard } from "./dashboard.js";
 import { parseHoldersCsv, formatUnits } from "./holders.js";
 import { createLedger, foldTransfers, negativeBalances } from "./ledger.js";
 import { monthKey } from "./partition.js";
 import { reconcileSupply } from "./reconcile.js";
-import { toCOPM } from "./units.js";
 
 const check = (id, ok, detail) => ({ id, ok, detail });
 
@@ -170,6 +170,21 @@ export function checkAdminEventsCount(adminEvents, state) {
   );
 }
 
+// Approvals are counted, never stored one by one, so nothing else audits them:
+// daily.csv is rebuilt from approvals.daily, which proves nothing about it. The
+// three tallies of one number must agree, and none may come from a stage the
+// checkpoint does not cover.
+export function checkApprovalsConsistent(approvals, state) {
+  const sum = (counts) => Object.values(counts).reduce((total, n) => total + n, 0);
+  const daily = sum(approvals.daily);
+  const spenders = sum(approvals.spenders);
+  return check(
+    "approvals-consistent",
+    approvals.block <= state.lastBlock && state.approvals === daily && state.approvals === spenders,
+    `block=${approvals.block} checkpoint=${state.lastBlock} state=${state.approvals} daily=${daily} spenders=${spenders}`
+  );
+}
+
 // daily.csv is a pure function of the transfers and the approval counts, so
 // the file must be byte for byte what they produce now. That also pins its
 // supply column to the ledger, and the last row to totalSupply.
@@ -186,12 +201,15 @@ export function checkDailyMatchesLedger({ transfers, approvals, csvText, state }
     const where = line >= 0 ? `line ${line + 1}` : `length (${actual.length} lines, expected ${expected.length})`;
     return check("daily-matches-ledger", false, `daily.csv differs from the transfers at ${where}`);
   }
-  const lastSupply = actual.at(-1)?.split(",")[1];
-  const wanted = String(toCOPM(BigInt(state.totalSupply)));
+  // The csv prints 6 decimals, so comparing its last cell with totalSupply
+  // would let up to 1e12 wei through. The exact part is the ledger's own
+  // cumulative supply at the last day against the checkpoint's totalSupply.
+  const ledgerSupply = series.at(-1)?.supplyEnd ?? 0n;
+  const totalSupply = BigInt(state.totalSupply);
   return check(
     "daily-matches-ledger",
-    lastSupply === wanted,
-    `rows=${actual.length - 1} lastSupply=${lastSupply} totalSupply=${wanted}`
+    ledgerSupply === totalSupply,
+    `rows=${actual.length - 1} lastSupply=${actual.at(-1)?.split(",")[1]} ledgerSupply=${ledgerSupply} totalSupply=${totalSupply}`
   );
 }
 
@@ -229,6 +247,36 @@ export function checkCsvTransferTotal(csvRows, summary) {
   );
 }
 
+// dashboard.json is a pure function of the transfers, the admin events, the
+// approval counts and the holders snapshot, so the stored file must be exactly
+// what those produce now. Rebuilding it pins every figure the page shows (not
+// only the totals) to the ledger the other rules verified, and the page can
+// never show numbers the audit did not check.
+export function checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders }) {
+  if (!dashboard) {
+    return check("dashboard-matches-ledger", false, `dashboard.json missing: run "dashboard --chain ${state.chain}"`);
+  }
+  if (!holders?.json) {
+    return check("dashboard-matches-ledger", false, `cannot rebuild the dashboard without holders.json: run "holders --chain ${state.chain}"`);
+  }
+  let expected;
+  try {
+    expected = buildDashboard({ chainKey: state.chain, state, transfers, adminEvents, approvals, holders: holders.json });
+  } catch (err) {
+    return check("dashboard-matches-ledger", false, `cannot rebuild the dashboard: ${err.message}`);
+  }
+  // The stored file went through JSON, so compare the same way.
+  const wanted = JSON.parse(JSON.stringify(expected));
+  const sections = [...new Set([...Object.keys(wanted), ...Object.keys(dashboard)])];
+  const wrong = sections.filter((name) => JSON.stringify(wanted[name]) !== JSON.stringify(dashboard[name]));
+  return check(
+    "dashboard-matches-ledger",
+    wrong.length === 0,
+    `block=${dashboard.checkpoint?.block} checkpoint=${state.lastBlock} sections=${sections.length}` +
+      (wrong.length ? `; differs: ${wrong.join(", ")}` : ""),
+  );
+}
+
 // Every rule, in report order. `partitions` is [{ key, rows }] in month order.
 export function strictChecks({
   deployBlock,
@@ -240,6 +288,7 @@ export function strictChecks({
   csvText,
   summary,
   holders,
+  dashboard,
 }) {
   const transfers = partitions.flatMap((p) => p.rows);
   const ledger = foldTransfers(createLedger(), transfers);
@@ -258,9 +307,11 @@ export function strictChecks({
     checkTimestampWindow(transfers, manifest, state),
     checkAdminEventsOrdered(adminEvents, state),
     checkAdminEventsCount(adminEvents, state),
+    checkApprovalsConsistent(approvals, state),
     checkDailyMatchesLedger({ transfers, approvals, csvText, state }),
     checkSeriesLength(csvRows, summary),
     checkSeriesContinuous(csvRows),
     checkCsvTransferTotal(csvRows, summary),
+    checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders }),
   ];
 }

@@ -190,3 +190,39 @@ export function formatCopmCompact(value, locale) {
   const { sign, body } = compact(Number(value), COPM_UNITS[locale], locale, true);
   return sign + body;
 }
+
+/* Range labels ------------------------------------------------------------- */
+
+// A bound of a range (whole COPM, a power of ten from 1 up). Spanish has no
+// word for 10^9 that matches the English "B": it is "mil millones", and
+// "billón" is 10^12, so the English letters are never used there.
+function boundLabel(value, locale) {
+  const n = (x) => formatDecimal(x, 0, locale);
+  if (locale === "en") {
+    if (value >= 1e12) return `${n(value / 1e12)}T`;
+    if (value >= 1e9) return `${n(value / 1e9)}B`;
+    if (value >= 1e6) return `${n(value / 1e6)}M`;
+    if (value >= 1e3) return `${n(value / 1e3)}k`;
+    return n(value);
+  }
+  if (value >= 1e12) return value === 1e12 ? "1 billón" : `${n(value / 1e12)} billones`;
+  if (value >= 1e9) return value === 1e9 ? "mil millones" : `${n(value / 1e9)} mil millones`;
+  if (value >= 1e6) return value === 1e6 ? "1 millón" : `${n(value / 1e6)} millones`;
+  if (value >= 1e3) return `${n(value / 1e3)} mil`;
+  return n(value);
+}
+
+// Labels for bins that are told apart only by their lower bound in COPM (the
+// data keeps that number, never a text). Each bin ends where the next higher
+// one begins; the lowest reads "< next" and the highest "≥ min". The result is
+// aligned with `mins`, in whatever order they come.
+export function rangeLabels(mins, locale) {
+  assertLocale(locale);
+  const sorted = [...new Set(mins)].sort((a, b) => a - b);
+  return mins.map((min) => {
+    const next = sorted[sorted.indexOf(min) + 1];
+    if (next === undefined) return `≥ ${boundLabel(min, locale)}`;
+    if (min <= 0) return `< ${boundLabel(next, locale)}`;
+    return `${boundLabel(min, locale)} – ${boundLabel(next, locale)}`;
+  });
+}

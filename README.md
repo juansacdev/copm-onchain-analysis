@@ -6,7 +6,7 @@
 
 | | |
 | :--- | :--- |
-| 📖 **[The story as a website](https://copm.juansac.dev/en/)** | The storytelling version for every audience — bilingual (ES/EN) Astro site, source in [`site/`](./site) |
+| 📖 **[The dashboard and the story](https://copm.juansac.dev/en/)** | The site is bilingual (ES/EN), Astro, source in [`site/`](./site): the dashboard of verified figures lives at `/en/` (`/` in Spanish) and the long-form analysis at `/en/analysis/` (`/analisis/`) |
 | 📊 **[Unified audit (Polygon + Celo)](./docs/AUDIT.md)** | The consolidated, side-by-side view |
 | 🟣 **[Polygon audit](./docs/audit/polygon.md)** | <!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> moved in <!-- copm:polygon.years -->3.1<!-- /copm --> years |
 | 🟢 **[Celo audit](./docs/audit/celo.md)** | <!-- copm:celo.transfers -->132,944<!-- /copm --> transfers at a <!-- copm:celo.avgTicketUsd -->$98<!-- /copm --> average ticket |
@@ -23,20 +23,20 @@ And here comes the classic problem: almost none of it can be shown. The code bel
 
 But there's one giant exception: **the blockchain is public by definition.** Every mint, every burn, every COPM transfer was recorded on Polygon and Celo, verifiable by anyone, forever. It's not the company's internal information, not its codebase, not its IP — it's the public record of what the system did.
 
-So instead of asking you to take my word for it, I audited it: **<!-- copm:combined.transfers -->374,802<!-- /copm --> `Transfer` events, ~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> in volume, two chains, <!-- copm:combined.checksPassed -->34<!-- /copm --> validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
+So instead of asking you to take my word for it, I audited it: **<!-- copm:combined.transfers -->374,820<!-- /copm --> `Transfer` events, ~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> in volume, two chains, <!-- copm:combined.checksPassed -->38<!-- /copm --> validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
 
 ## The headlines
 
 | Metric | Value |
 | :--- | :--- |
 | Total gross volume (both chains) | **~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> USD** |
-| Audited `Transfer` events | **<!-- copm:combined.transfers -->374,802<!-- /copm -->** |
+| Audited `Transfer` events | **<!-- copm:combined.transfers -->374,820<!-- /copm -->** |
 | Peak month (Polygon) | **<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** (<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->) |
 | Peak volume day (Polygon) | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | Busiest day (Polygon) | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transfers** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
-| Supply turnover (Polygon, last 30 days) | **~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm -->x per month** |
+| Supply turnover (Polygon, last 30 days) | **~<!-- copm:polygon.turnoverMonthly -->13.8<!-- /copm -->x per month** |
 | Supply reconciliation | **Exact on both chains**: minted − burned equals `totalSupply()` to the wei |
-| Validation | **<!-- copm:combined.checksPassed -->34<!-- /copm -->/<!-- copm:combined.checksTotal -->34<!-- /copm --> strict checks** — offline, no tolerance, every balance checked against `balanceOf` |
+| Validation | **<!-- copm:combined.checksPassed -->38<!-- /copm -->/<!-- copm:combined.checksTotal -->38<!-- /copm --> strict checks** — offline, no tolerance, every balance checked against `balanceOf` |
 
 → The detail, the charts, and the full story live in the **[unified audit](./docs/AUDIT.md)**.
 
@@ -55,6 +55,8 @@ scan              → verified incremental scan of every contract event (eth_get
 holders           → holders snapshot at the checkpoint block, every balance checked
                      against balanceOf (holders.csv, holders.json)
 aggregate         → daily series: volume, mints, burns, derived supply, approvals
+dashboard         → the one compact file the site reads (dashboard.json), derived from
+                     the transfers, admin events and holders snapshot; deterministic
 charts            → self-contained SVGs (no canvas, no headless browser)
 charts:combined   → Polygon + Celo charts on shared axes
 validate          → strict rules per chain, offline, no tolerance; exit 1 on any failure
@@ -70,6 +72,7 @@ Each step is a command of one CLI: `node pipeline/cli.js <command> [--chain poly
 Public endpoints sit behind load balancers, and a backend that lacks part of the log index answers `eth_getLogs` with an empty array and no error. A plain scan stores those holes. This one does not advance until the events it holds add up to the contract:
 
 - **Canary and head check in every batch.** A batch is `[eth_blockNumber, one block whose log count is known, ...ranges]`; it is discarded unless the canary returns exactly that count and the head covers the ranges.
+- **Logs must belong to their range.** A log outside the range it came back for, flagged `removed`, or two different logs under the same block and log index reject the whole batch; an exact repeat is dropped, so every counter comes from the unique set.
 - **Empty ranges are confirmed.** A non-empty answer is final; an empty one must be repeated `emptyConfirmations` times (2 on Polygon, 6 on Celo) in independent batches.
 - **Exact reconciliation before the checkpoint moves.** Minted − burned must equal `totalSupply()` at the stage's last block, to the wei (a pinned `eth_call` sent on its own). On a mismatch the run fails and writes nothing for that stage.
 - **Exact timestamps.** Every transfer carries the timestamp of its block (from the log, or from the block header when the node returns `0x0`), so day buckets are not interpolated.
@@ -93,11 +96,11 @@ It writes `data/<chain>/holders.csv` (one row per address with a positive balanc
 
 ### The figures in these documents
 
-No number in the reports is typed by hand. A figure is written as `<!-- copm:polygon.transfers -->241,858<!-- /copm -->`, invisible when rendered, and `npm run reports` rewrites its content from `data/<chain>/*` (English or Spanish formatting by file name: `*.es.md` is Spanish). `npm run reports:check` writes nothing and exits 1 if any figure is out of date; `audit:all` ends with `reports`. Keys are built in [`pipeline/domain/report.js`](./pipeline/domain/report.js). Numbers that are not derived from the data (years, addresses, block-explorer links) stay plain text.
+No number in the reports is typed by hand. A figure is written as `<!-- copm:polygon.transfers -->241,876<!-- /copm -->`, invisible when rendered, and `npm run reports` rewrites its content from `data/<chain>/*` (English or Spanish formatting by file name: `*.es.md` is Spanish). `npm run reports:check` writes nothing and exits 1 if any figure is out of date; `audit:all` ends with `reports`. Keys are built in [`pipeline/domain/report.js`](./pipeline/domain/report.js). Numbers that are not derived from the data (years, addresses, block-explorer links) stay plain text.
 
 ### Validation
 
-`validate` is strict and offline: it reads only the files written by `scan`, `holders` and `aggregate`, so CI can run it on every push. Among its <!-- copm:polygon.checksTotal -->17<!-- /copm --> rules: minted − burned equals `totalSupply` to the wei, folding the stored transfers reproduces the checkpoint, no negative balance, `holders.csv` adds up to `totalSupply` at the checkpoint block, partitions are strictly ordered and each row sits in its UTC month, nothing lies above the checkpoint, and `daily.csv` is exactly what the transfers produce. Results go to `data/<chain>/validation.json`.
+`validate` is strict and offline: it reads only the files written by `scan`, `holders`, `aggregate` and `dashboard`, so CI can run it on every push. Among its <!-- copm:polygon.checksTotal -->19<!-- /copm --> rules: minted − burned equals `totalSupply` to the wei, folding the stored transfers reproduces the checkpoint, no negative balance, `holders.csv` adds up to `totalSupply` at the checkpoint block, partitions are strictly ordered and each row sits in its UTC month, nothing lies above the checkpoint, the approval counters in `state.json`, `approvals.daily` and `approvals.spenders` agree, `daily.csv` is exactly what the transfers produce, and `dashboard.json` is exactly what is recomputed from the transfers, the admin events, the approval counts and the holders snapshot. Results go to `data/<chain>/validation.json`.
 
 Tuning, all optional: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (or the matching `SCAN_*` variables). Defaults are per chain in `pipeline/config/chains.js`. `scan --fresh` discards the chain's scan output and starts over.
 
@@ -120,7 +123,7 @@ The first `scan` walks the whole history from the deploy block; later runs only 
 
 Two GitHub Actions workflows keep the data current and checked:
 
-- **`.github/workflows/daily-scan.yml`** runs every day at 09:17 UTC (04:17 in Colombia) and on demand. For each chain it runs `scan`, `holders`, `aggregate` and `validate`, then commits `data/`. The scan only covers the blocks added since the committed checkpoint, so a run takes a couple of minutes. If supply does not reconcile, a balance differs from `balanceOf`, or any validation rule fails, the job fails and commits nothing.
+- **`.github/workflows/daily-scan.yml`** runs every day at 09:17 UTC (04:17 in Colombia) and on demand. For each chain it runs `scan`, `holders`, `aggregate`, `dashboard` and `validate`, then commits `data/`. The scan only covers the blocks added since the committed checkpoint, so a run takes a couple of minutes. If supply does not reconcile, a balance differs from `balanceOf`, or any validation rule fails, the job fails and commits nothing.
 - **`.github/workflows/ci.yml`** runs on every pull request and on pushes to `main` made by people: unit tests, the strict validation of the committed data, and the site build. It needs no RPC endpoint. Pushes made with the repository token do not trigger other workflows, so the daily data commits are not checked by `ci.yml`; the daily job checks them itself before committing, with the unit tests and the strict validation.
 
 Charts and the figures in these documents are regenerated on the first day of each month (or when the workflow is started by hand with `month_close`), so the reports are a coherent monthly cut while the data and the dashboard move daily.
@@ -133,6 +136,24 @@ gh secret set CELO_RPC_URL      # optional: without it the public endpoint is us
 ```
 
 The workflow pushes to the default branch with the repository token, so that branch must accept pushes from GitHub Actions. On a public repository standard runners are free. GitHub disables scheduled workflows after 60 days without repository activity; the daily commit counts as activity.
+
+## Deployment
+
+The site at [copm.juansac.dev](https://copm.juansac.dev) is a static Astro build served through Cloudflare. This repository holds no deployment configuration, so the publishing step lives in the Cloudflare project.
+
+| Setting | Value |
+| :--- | :--- |
+| Root directory | `site` |
+| Build command | `npm run build` |
+| Output directory | `dist` (that is, `site/dist`) |
+| Node.js | 22 (`site/.node-version`) |
+
+Two things to know:
+
+- **The build reads `data/` and `charts/` from the repository root.** The checkout must contain the whole repository, not only `site/`.
+- **The daily commit publishes only if the Cloudflare project is connected to this repository** and builds on pushes to the production branch. A project deployed by direct upload does not rebuild on its own; in that case add a deploy step at the end of `daily-scan.yml`. To check, open the project in the Cloudflare dashboard and look in its settings for a connected Git repository.
+
+Every route ends with a slash (`/`, `/analisis/`, `/en/`, `/en/analysis/`), matching the files the build writes. After the first deployment, open `/analisis` without the slash: if the host does not redirect it, add a redirect rule.
 
 ## Repository layout
 
@@ -159,6 +180,7 @@ The workflow pushes to the default branch with the repository token, so that bra
 │   ├── state.json                # scan checkpoint (written only after reconciliation)
 │   ├── holders.csv / holders.json # holders snapshot at the checkpoint block
 │   ├── daily.csv                 # aggregated daily series
+│   ├── dashboard.json            # everything the dashboard shows, one file per chain
 │   ├── summary.json              # totals, averages, peaks
 │   ├── manifest.json             # static contract metadata
 │   └── validation.json           # the strict rules' results

@@ -9,6 +9,7 @@ const STEPS = {
   scan: "./steps/scan.js",
   holders: "./steps/holders.js",
   aggregate: "./steps/aggregate.js",
+  dashboard: "./steps/dashboard.js",
   charts: "./steps/charts.js",
   "charts:combined": "./steps/combined-charts.js",
   validate: "./steps/validate.js",

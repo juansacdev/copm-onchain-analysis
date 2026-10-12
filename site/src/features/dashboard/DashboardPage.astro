@@ -1,0 +1,541 @@
+---
+// The dashboard, rendered in Spanish at / and in English at /en/. Everything
+// that is text, a tile or a table is rendered here, on the server, from the
+// data the pipeline wrote (data/<chain>/dashboard.json); the charts are drawn
+// in the browser (charts.js) from one JSON payload embedded in the page.
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import Base from '../../layouts/Base.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import ChartBlock from './ChartBlock.astro';
+import '../../styles/dashboard.css';
+import { dashboardDictionaries } from '../../i18n/index.js';
+import { interpolate } from '../../lib/template.js';
+import { routePath } from '../../lib/routes.js';
+import { clientPayload, loadDashboardData } from '../../lib/dashboard-data.js';
+import { buildInsights } from '../../lib/dashboard-insights.js';
+import { CHAIN_CHOICES, DEFAULT_STATE, PERIOD_CHOICES, UNIT_CHOICES } from '../../lib/dashboard-filters.js';
+import { PERIOD_DAYS, granularityFor, largestRows, tilesFor } from '../../lib/dashboard-view.js';
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
+import { formatDate, formatDecimal, formatInt, formatMonthShort, rangeLabels } from '../../lib/format.js';
+import { formatSerialBlock } from '../../lib/serial.js';
+import {
+  REPO_URL,
+  eventsDocUrl,
+  explorerAddressUrl,
+  explorerTxUrl,
+  holdersCsvUrl,
+  middleEllipsis,
+  readmeUrl,
+} from '../../lib/links.js';
+
+interface Props {
+  lang: 'es' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = dashboardDictionaries[lang];
+
+// `astro build` runs from site/; the data lives one level up.
+const dataDir = fileURLToPath(new URL('../data', pathToFileURL(`${process.cwd()}/`)));
+const rate = Number(process.env.COP_PER_USD ?? 4000);
+const data = loadDashboardData({ dataDir, copPerUsd: rate });
+const payload = clientPayload(data);
+const keys = Object.keys(data.chains);
+const chainLabel = (key: string) => data.chains[key].label;
+
+const state = DEFAULT_STATE;
+const granularity = granularityFor(state.period);
+const resolveBucket = (template: string) => interpolate(template, { bucket: t.charts.bucket[granularity] });
+const periodLabel = (choice: string) => {
+  const days = PERIOD_DAYS[choice as keyof typeof PERIOD_DAYS];
+  if (choice === '30d') return interpolate(t.filters.period.d30, { n: days });
+  if (choice === '90d') return interpolate(t.filters.period.d90, { n: days });
+  return choice === '1y' ? t.filters.period.y1 : t.filters.period.all;
+};
+
+// The sentences: every one is built from the data and only exists while the
+// data supports it.
+const names = { polygon: chainLabel('polygon'), celo: chainLabel('celo'), all: t.names.all };
+const insights = buildInsights({
+  chains: Object.fromEntries(keys.map((k) => [k, data.chains[k].dashboard])),
+  validations: Object.fromEntries(keys.map((k) => [k, data.chains[k].validation])),
+  copPerUsd: rate,
+  lang,
+  names,
+  notAvailable: t.insights.na,
+  render: (key: string, vars: Record<string, string>) => interpolate(t.insights[key as keyof typeof t.insights] as string, vars),
+});
+const insightsFor = (section: string) => insights.filter((i) => i.section === section);
+
+// Initial tiles, by the same functions the browser uses when a filter changes.
+const tiles = tilesFor(payload.chains, state);
+const deltaText = (change: number | null, key: 'vsPeriod' | 'vsStart') => {
+  const text = changeText(change, lang);
+  if (text === null) return t.tiles.noBase;
+  return `${arrowFor(change)} ${interpolate(t.tiles[key], { change: text, n: tiles.window.days ?? '' })}`;
+};
+const serial = tiles.blocks.map((b) => `${b.chain === 'polygon' ? 'POL' : 'CELO'} ${formatSerialBlock(b.block)}`).join(' · ');
+const latestTime = Math.max(...tiles.blocks.map((b) => b.time));
+const notes = tileNotes({ tiles, t, lang });
+const tileList = [
+  { id: 'supply', k: t.tiles.supply.k, v: amountCompact(tiles.supply.value, state.unit, lang, rate), d: deltaText(tiles.supply.changePct, 'vsStart'), n: notes.supply },
+  { id: 'volume', k: t.tiles.volume.k, v: amountCompact(tiles.volume.current, state.unit, lang, rate), d: deltaText(tiles.volume.changePct, 'vsPeriod'), n: notes.volume },
+  { id: 'transfers', k: t.tiles.transfers.k, v: formatInt(tiles.transfers.current, lang), d: deltaText(tiles.transfers.changePct, 'vsPeriod'), n: notes.transfers },
+  { id: 'holders', k: t.tiles.holders.k, v: formatInt(tiles.holders, lang), d: '', n: notes.holders },
+  { id: 'block', k: t.tiles.block.k, v: serial, d: utcDateTime(latestTime), n: notes.block },
+];
+
+// What every reader needs to read the figures, in the HTML whatever the
+// filters do: the fixed rate and where each chain's periods end.
+const basisItems = keys
+  .map((k) => {
+    const d = data.chains[k].dashboard;
+    return interpolate(t.basis.item, {
+      chain: chainLabel(k),
+      day: formatDate(d.activity.endDay, lang),
+      block: formatInt(d.checkpoint.block, lang),
+      time: utcDateTime(d.checkpoint.time),
+    });
+  })
+  .join('; ');
+
+// Tables the no-JavaScript reader gets for the charts that do not depend on a
+// period: transfer sizes and the top holders.
+const sizeLabels = rangeLabels(data.chains[keys[0]].dashboard.sizes.map((s: any) => s.min), lang);
+const sizeRows = sizeLabels.map((label: string, k: number) => ({
+  label,
+  counts: keys.map((key) => formatInt(data.chains[key].dashboard.sizes[k].count, lang)),
+}));
+const topRows = keys.flatMap((key) =>
+  data.chains[key].dashboard.holders.top.slice(0, 10).map((h: any) => ({ chain: key, ...h })),
+);
+const pct = (n: number, digits = 2) => `${formatDecimal(n, digits, lang)}${lang === 'es' ? ' %' : '%'}`;
+
+// Monthly figures for the no-JavaScript reader.
+const monthlyRows = keys.flatMap((key) => {
+  const m = data.chains[key].dashboard.monthly;
+  return m.month.map((month: string, i: number) => ({
+    chain: key,
+    month: formatMonthShort(month, lang),
+    supply: amountCompact(m.supply[i], 'copm', lang, rate),
+    minted: amountCompact(m.mint[i], 'copm', lang, rate),
+    burned: amountCompact(m.burn[i], 'copm', lang, rate),
+    transfers: formatInt(m.transfers[i], lang),
+    gross: amountCompact(m.volume[i], 'copm', lang, rate),
+  }));
+});
+
+const largest = largestRows(payload.chains, state);
+const holderBuckets = keys.map((k) => {
+  const buckets = data.chains[k].dashboard.holders.buckets;
+  const labels = rangeLabels(buckets.map((b: any) => b.min), lang);
+  return { key: k, buckets: buckets.map((b: any, i: number) => ({ ...b, label: labels[i] })), total: data.chains[k].dashboard.checkpoint.totalSupply };
+});
+const roleRows = keys.flatMap((k) =>
+  Object.entries(data.chains[k].dashboard.governance.roles as Record<string, string[]>).map(([role, members]) => ({ chain: k, role, members })),
+);
+const eventRows = keys.flatMap((k) =>
+  data.chains[k].dashboard.governance.events.map((e: any) => ({ ...e, chain: k })),
+);
+const meaningOf = (name: string) => (t.control.eventMeaning as Record<string, string>)[name] ?? t.control.eventMeaning.other;
+const roleMeaningOf = (role: string) => (t.control.roleMeaning as Record<string, string>)[role] ?? '';
+const ruleLabelOf = (id: string) => (t.trust.ruleLabel as Record<string, string>)[id] ?? id;
+const isAddress = (value: unknown): value is string => typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value);
+
+const footerLinks = [
+  { href: REPO_URL, text: t.footer.repo },
+  { href: routePath('analysis', lang), text: t.footer.analysis },
+  { href: eventsDocUrl(lang), text: t.footer.events },
+];
+
+// Only what the browser needs to draw, re-filter and re-label.
+const clientText = {
+  lang,
+  tiles: t.tiles,
+  filters: { window: t.filters.window },
+  charts: t.charts,
+  legend: t.legend,
+  chartUi: t.chartUi,
+  columns: t.columns,
+  who: { largestEmpty: t.who.largestEmpty },
+  names: { polygon: names.polygon, celo: names.celo },
+  bucket: t.charts.bucket,
+};
+const clientData = { ...payload, t: clientText };
+---
+
+<Base lang={lang} page="dashboard" title={t.meta.title} description={t.meta.description}>
+  <main id="main" class="dash" data-dashboard data-lang={lang} data-rate={rate}>
+    <section class="dash-head" aria-labelledby="dash-title">
+      <p class="dash-eyebrow">{t.header.eyebrow}</p>
+      <h1 id="dash-title">{t.header.title}</h1>
+      <p class="dash-lead">{t.header.lead}</p>
+      <p class="dash-link"><a href={routePath('analysis', lang)}>{t.header.analysis} →</a></p>
+      <noscript><p class="note-inline">{t.header.noscript}</p></noscript>
+    </section>
+
+    <div class="dash-basis" data-basis>
+      <p>{interpolate(t.basis.rate, { rate: formatInt(rate, lang) })}</p>
+      <p>{interpolate(t.basis.complete, { items: basisItems })}</p>
+    </div>
+
+    <form class="filters" data-filters hidden aria-label={t.filters.label} onsubmit="return false">
+      <div class="filter" role="group" aria-label={t.filters.chain.label} data-filter="chain">
+        <span class="filter-k">{t.filters.chain.label}</span>
+        {CHAIN_CHOICES.map((c) => (
+          <button type="button" class="seg" data-value={c} aria-pressed={c === state.chain ? 'true' : 'false'}>
+            {t.filters.chain[c as 'both']}
+          </button>
+        ))}
+      </div>
+      <div class="filter" role="group" aria-label={t.filters.period.label} data-filter="period">
+        <span class="filter-k">{t.filters.period.label}</span>
+        {PERIOD_CHOICES.map((p) => (
+          <button type="button" class="seg" data-value={p} aria-pressed={p === state.period ? 'true' : 'false'}>
+            {periodLabel(p)}
+          </button>
+        ))}
+      </div>
+      <div class="filter" role="group" aria-label={t.filters.unit.label} data-filter="unit">
+        <span class="filter-k">{t.filters.unit.label}</span>
+        {UNIT_CHOICES.map((u) => (
+          <button type="button" class="seg" data-value={u} aria-pressed={u === state.unit ? 'true' : 'false'}>
+            {t.filters.unit[u as 'copm']}
+          </button>
+        ))}
+      </div>
+      <p class="filter-note">{t.filters.scope}</p>
+      <p class="filter-note" data-window>
+        {interpolate(t.filters.window, { from: formatDate(tiles.window.fromDay, lang), to: formatDate(tiles.window.toDay, lang) })}
+      </p>
+    </form>
+
+    <ul class="dtiles" aria-label={t.header.eyebrow}>
+      {tileList.map((tile) => (
+        <li class="dtile" data-tile={tile.id}>
+          <p class="k">{tile.k}</p>
+          <p class="v" data-v>{tile.v}</p>
+          <p class="d" data-d>{tile.d}</p>
+          <p class="n" data-n hidden={!tile.n}>{tile.n}</p>
+        </li>
+      ))}
+    </ul>
+
+    {/* 1. How much is there? */}
+    <section class="dsection" id="supply" aria-labelledby="supply-title">
+      <p class="eyebrow-line">{t.sections.supply.eyebrow}</p>
+      <h2 id="supply-title">{t.sections.supply.title}</h2>
+      <p class="intro">{t.sections.supply.intro}</p>
+      <ul class="insights" data-insights>
+        {insightsFor('supply').map((i) => <li data-show={i.show.join(' ')}>{i.text}</li>)}
+      </ul>
+      <ChartBlock id="supply" title={t.charts.supply.title} titleTemplate={t.charts.supply.title} aid={t.charts.supply.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+      <ChartBlock id="mintBurn" title={resolveBucket(t.charts.mintBurn.title)} titleTemplate={t.charts.mintBurn.title} aid={t.charts.mintBurn.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+      <ChartBlock id="flows" title={t.charts.flows.title} titleTemplate={t.charts.flows.title} aid={t.charts.flows.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+      <p class="turnover-line" data-turnover hidden></p>
+      <details class="monthly">
+        <summary>{t.monthly.summary}</summary>
+        <div class="table-scroll" role="region" tabindex="0" aria-label={t.monthly.caption}>
+          <table class="tbl">
+            <caption class="visually-hidden">{t.monthly.caption}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{t.columns.chain}</th><th scope="col">{t.columns.period}</th><th scope="col">{t.columns.supply}</th>
+                <th scope="col">{t.columns.minted}</th><th scope="col">{t.columns.burned}</th><th scope="col">{t.columns.transfers}</th><th scope="col">{t.columns.gross}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyRows.map((r) => (
+                <tr data-chains={r.chain}>
+                  <th scope="row">{chainLabel(r.chain)}</th><td>{r.month}</td>
+                  <td class="num">{r.supply}</td><td class="num">{r.minted}</td><td class="num">{r.burned}</td><td class="num">{r.transfers}</td><td class="num">{r.gross}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    {/* 2. How much moves? */}
+    <section class="dsection" id="move" aria-labelledby="move-title">
+      <p class="eyebrow-line">{t.sections.move.eyebrow}</p>
+      <h2 id="move-title">{t.sections.move.title}</h2>
+      <p class="intro">{t.sections.move.intro}</p>
+      <ul class="insights" data-insights>
+        {insightsFor('move').map((i) => <li data-show={i.show.join(' ')}>{i.text}</li>)}
+      </ul>
+      <ChartBlock id="transfers" title={resolveBucket(t.charts.transfers.title)} titleTemplate={t.charts.transfers.title} aid={t.charts.transfers.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+      <ChartBlock id="volume" title={resolveBucket(t.charts.volume.title)} titleTemplate={t.charts.volume.title} aid={t.charts.volume.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+      <ChartBlock id="calendar" title={t.charts.calendar.title} titleTemplate={t.charts.calendar.title} aid={t.charts.calendar.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+      <ChartBlock id="daily" title={t.charts.daily.title} titleTemplate={t.charts.daily.title} aid={t.charts.daily.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+    </section>
+
+    {/* 3. Who moves it? */}
+    <section class="dsection" id="who" aria-labelledby="who-title">
+      <p class="eyebrow-line">{t.sections.who.eyebrow}</p>
+      <h2 id="who-title">{t.sections.who.title}</h2>
+      <p class="intro">{t.sections.who.intro}</p>
+      <ul class="insights" data-insights>
+        {insightsFor('who').map((i) => <li data-show={i.show.join(' ')}>{i.text}</li>)}
+      </ul>
+      <ChartBlock id="sizes" title={t.charts.sizes.title} titleTemplate={t.charts.sizes.title} aid={t.charts.sizes.aid} noscript={t.chartUi.noscriptTable} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading}>
+        <div slot="fallback" class="table-scroll">
+          <table class="tbl">
+            <caption class="visually-hidden">{t.charts.sizes.title}</caption>
+            <thead>
+              <tr><th scope="col">{t.columns.bucket}</th>{keys.map((k) => <th scope="col" class="num">{chainLabel(k)} · {t.columns.transfers}</th>)}</tr>
+            </thead>
+            <tbody>
+              {sizeRows.map((r) => (
+                <tr><th scope="row">{r.label}</th>{r.counts.map((c) => <td class="num">{c}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ChartBlock>
+      <ChartBlock id="holders" title={t.charts.holders.title} titleTemplate={t.charts.holders.title} aid={t.charts.holders.aid} noscript={t.chartUi.noscriptTable} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading}>
+        <div slot="fallback" class="table-scroll">
+          <table class="tbl mixed">
+            <caption class="visually-hidden">{t.charts.holders.title}</caption>
+            <thead>
+              <tr><th scope="col">{t.columns.chain} · {t.columns.rank}</th><th scope="col">{t.columns.holder}</th><th scope="col" class="num">{t.columns.balance}</th><th scope="col" class="num">{t.columns.share}</th></tr>
+            </thead>
+            <tbody>
+              {topRows.map((h) => (
+                <tr>
+                  <th scope="row">{chainLabel(h.chain)} · {h.rank}</th>
+                  <td><a class="addr" href={explorerAddressUrl(h.chain, h.address)} title={h.address} target="_blank" rel="noopener noreferrer">{middleEllipsis(h.address, 6, 4)}</a></td>
+                  <td class="num">{amountFull(h.balance, 'copm', lang, rate)}</td>
+                  <td class="num">{pct(h.share, 1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ChartBlock>
+
+      <h3 class="sub">{t.who.concentration}</h3>
+      <div class="conc-grid">
+        {keys.map((k) => {
+          const h = data.chains[k].dashboard.holders;
+          return (
+            <div class="conc" data-chains={k}>
+              <p class="conc-chain"><span class={`dot ${k}`} aria-hidden="true"></span>{chainLabel(k)}</p>
+              <dl>
+                <div><dt>{t.who.top1}</dt><dd class="num">{formatDecimal(h.top1Pct, 1, lang)}{lang === 'es' ? ' %' : '%'}</dd></div>
+                <div><dt>{t.who.top10}</dt><dd class="num">{formatDecimal(h.top10Pct, 1, lang)}{lang === 'es' ? ' %' : '%'}</dd></div>
+                <div><dt>{t.who.holders}</dt><dd class="num">{formatInt(h.count, lang)}</dd></div>
+                <div><dt>{t.who.contracts}</dt><dd class="num">{formatInt(h.contracts, lang)}</dd></div>
+                <div><dt>{t.who.below1}</dt><dd class="num">{formatInt(h.below1, lang)}</dd></div>
+              </dl>
+            </div>
+          );
+        })}
+      </div>
+
+      <h3 class="sub">{t.who.buckets}</h3>
+      <div class="table-scroll" role="region" tabindex="0" aria-label={t.who.bucketsCaption}>
+        <table class="tbl">
+          <caption class="visually-hidden">{t.who.bucketsCaption}</caption>
+          <thead><tr><th scope="col">{t.columns.chain} · {t.columns.bucket}</th><th scope="col">{t.columns.holders}</th><th scope="col">{t.columns.share}</th></tr></thead>
+          <tbody>
+            {holderBuckets.flatMap((c) =>
+              c.buckets.map((b: any) => (
+                <tr data-chains={c.key}>
+                  <th scope="row">{chainLabel(c.key)} · {b.label}</th>
+                  <td class="num">{formatInt(b.holders, lang)}</td>
+                  <td class="num">{formatDecimal((b.copm / c.total) * 100, 2, lang)}{lang === 'es' ? ' %' : '%'}</td>
+                </tr>
+              )),
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">{t.who.largest}</h3>
+      <p class="muted small">{t.who.largestCaption} {t.who.kindNote}</p>
+      <div class="table-scroll" role="region" tabindex="0" aria-label={t.who.largestCaption}>
+        <table class="tbl mixed largest" data-largest>
+          <caption class="visually-hidden">{t.who.largest}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t.columns.day}</th><th scope="col">{t.columns.chain}</th><th scope="col">{t.columns.kind}</th><th scope="col" class="num">{t.columns.amount}</th>
+              <th scope="col">{t.columns.from}</th><th scope="col">{t.columns.to}</th><th scope="col">{t.columns.tx}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {largest.map((r) => (
+              <tr>
+                <th scope="row">{formatDate(r.day, lang)}</th>
+                <td>{chainLabel(r.chain)}</td>
+                <td>{t.columns.kindValue[r.kind as 'mint']}</td>
+                <td class="num">{amountFull(r.amount, state.unit, lang, rate)}</td>
+                <td><a class="addr" href={explorerAddressUrl(r.chain, r.from)} title={r.from} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.from, 6, 4)}</a></td>
+                <td><a class="addr" href={explorerAddressUrl(r.chain, r.to)} title={r.to} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.to, 6, 4)}</a></td>
+                <td><a class="addr" href={explorerTxUrl(r.chain, r.tx)} title={r.tx} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.tx, 8, 6)}</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="csv-links" data-csv>
+        {keys.map((k) => (
+          <a data-chains={k} href={holdersCsvUrl(k)} target="_blank" rel="noopener noreferrer">{t.who.csv} · {chainLabel(k)}</a>
+        ))}
+      </p>
+    </section>
+
+    {/* 4. Who controls it? */}
+    <section class="dsection" id="control" aria-labelledby="control-title">
+      <p class="eyebrow-line">{t.sections.control.eyebrow}</p>
+      <h2 id="control-title">{t.sections.control.title}</h2>
+      <p class="intro">{t.sections.control.intro}</p>
+      <ul class="insights" data-insights>
+        {insightsFor('control').map((i) => <li data-show={i.show.join(' ')}>{i.text}</li>)}
+      </ul>
+
+      <h3 class="sub">{t.control.state}</h3>
+      <div class="state-grid">
+        {keys.map((k) => {
+          const g = data.chains[k].dashboard.governance;
+          return (
+            <div class="conc" data-chains={k}>
+              <p class="conc-chain"><span class={`dot ${k}`} aria-hidden="true"></span>{chainLabel(k)}</p>
+              <dl>
+                <div><dt>{t.control.paused}</dt><dd>{g.paused ? t.control.pausedYes : t.control.pausedNo}</dd></div>
+                <div><dt>{t.control.implementation}</dt><dd><a class="addr" href={explorerAddressUrl(k, g.implementation)} title={g.implementation} target="_blank" rel="noopener noreferrer">{middleEllipsis(g.implementation, 6, 4)}</a></dd></div>
+                <div>
+                  <dt>{t.control.frozen}</dt>
+                  <dd>
+                    {g.frozen.length === 0
+                      ? t.control.frozenNone
+                      : g.frozen.map((a: string) => <a class="addr" href={explorerAddressUrl(k, a)} title={a} target="_blank" rel="noopener noreferrer">{middleEllipsis(a, 6, 4)}</a>)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          );
+        })}
+      </div>
+
+      <h3 class="sub">{t.control.roles}</h3>
+      <div class="table-scroll" role="region" tabindex="0" aria-label={t.control.rolesCaption}>
+        <table class="tbl mixed roles">
+          <caption class="visually-hidden">{t.control.rolesCaption}</caption>
+          <thead><tr><th scope="col">{t.columns.chain} · {t.columns.role}</th><th scope="col">{t.columns.meaning}</th><th scope="col">{t.columns.members}</th></tr></thead>
+          <tbody>
+            {roleRows.map((r) => (
+              <tr data-chains={r.chain}>
+                <th scope="row"><span class="mono">{r.role}</span><span class="muted"> · {chainLabel(r.chain)}</span></th>
+                <td>{roleMeaningOf(r.role)}</td>
+                <td>
+                  {r.members.length === 0
+                    ? '—'
+                    : r.members.map((a) => <a class="addr" href={explorerAddressUrl(r.chain, a)} title={a} target="_blank" rel="noopener noreferrer">{middleEllipsis(a, 6, 4)}</a>)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">{t.control.events}</h3>
+      <div class="table-scroll" role="region" tabindex="0" aria-label={t.control.eventsCaption}>
+        <table class="tbl mixed events">
+          <caption class="visually-hidden">{t.control.eventsCaption}</caption>
+          <thead>
+            <tr><th scope="col">{t.columns.day}</th><th scope="col">{t.columns.chain}</th><th scope="col">{t.columns.event}</th><th scope="col">{t.columns.what}</th><th scope="col">{t.columns.detail}</th><th scope="col">{t.columns.tx}</th></tr>
+          </thead>
+          <tbody>
+            {eventRows.map((e) => (
+              <tr data-chains={e.chain}>
+                <th scope="row">{formatDate(e.day, lang)}</th>
+                <td>{chainLabel(e.chain)}</td>
+                <td class="mono">{e.name}</td>
+                <td>{meaningOf(e.name)}</td>
+                <td class="args">
+                  {Object.entries(e.args ?? {}).map(([name, value]) => (
+                    <span class="arg">
+                      <span class="muted">{name}</span>{' '}
+                      {isAddress(value)
+                        ? <a class="addr" href={explorerAddressUrl(e.chain, value)} title={value} target="_blank" rel="noopener noreferrer">{middleEllipsis(value, 6, 4)}</a>
+                        : <span class="mono">{eventArgText(e.name, name, value, lang)}</span>}
+                    </span>
+                  ))}
+                </td>
+                <td><a class="addr" href={explorerTxUrl(e.chain, e.tx)} title={e.tx} target="_blank" rel="noopener noreferrer">{middleEllipsis(e.tx, 8, 6)}</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p><a href={eventsDocUrl(lang)} target="_blank" rel="noopener noreferrer">{t.control.docs} →</a></p>
+    </section>
+
+    {/* 5. Can it be trusted? */}
+    <section class="dsection" id="trust" aria-labelledby="trust-title">
+      <p class="eyebrow-line">{t.sections.trust.eyebrow}</p>
+      <h2 id="trust-title">{t.sections.trust.title}</h2>
+      <p class="intro">{t.sections.trust.intro}</p>
+      <ul class="insights" data-insights>
+        {insightsFor('trust').map((i) => <li data-show={i.show.join(' ')}>{i.text}</li>)}
+      </ul>
+
+      <h3 class="sub">{t.trust.checkpoint}</h3>
+      <p class="muted small">{t.trust.checkpointNote}</p>
+      <div class="table-scroll" role="region" tabindex="0" aria-label={t.trust.checkpoint}>
+        <table class="tbl">
+          <caption class="visually-hidden">{t.trust.checkpoint}</caption>
+          <thead><tr><th scope="col">{t.columns.chain}</th><th scope="col">{t.trust.block}</th><th scope="col">{t.trust.blockTime}</th><th scope="col">{t.trust.validated}</th></tr></thead>
+          <tbody>
+            {keys.map((k) => (
+              <tr data-chains={k}>
+                <th scope="row">{chainLabel(k)}</th>
+                <td class="num">{formatInt(data.chains[k].dashboard.checkpoint.block, lang)}</td>
+                <td class="num">{utcDateTime(data.chains[k].dashboard.checkpoint.time)}</td>
+                <td class="num">{formatDate(data.chains[k].validation.validatedAt.slice(0, 10), lang)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">{t.trust.rules}</h3>
+      <div class="table-scroll" role="region" tabindex="0" aria-label={t.trust.rulesCaption}>
+        <table class="tbl mixed rules">
+          <caption class="visually-hidden">{t.trust.rulesCaption}</caption>
+          <thead><tr><th scope="col">{t.columns.status}</th><th scope="col">{t.columns.rule}</th><th scope="col">{t.columns.detail}</th></tr></thead>
+          <tbody>
+            {keys.flatMap((k) =>
+              data.chains[k].validation.checks.map((c: any) => (
+                <tr data-chains={k}>
+                  <th scope="row">
+                    <span class={`status ${c.ok ? 'pass' : 'fail'}`}>
+                      <span aria-hidden="true">{c.ok ? '✓' : '✕'}</span> {c.ok ? t.trust.pass : t.trust.fail}
+                    </span>
+                  </th>
+                  <td>
+                    <span>{ruleLabelOf(c.id)}</span>
+                    <span class="muted rule-id"> {chainLabel(k)} · <span class="mono">{c.id}</span></span>
+                  </td>
+                  <td class="mono detail">{c.detail}</td>
+                </tr>
+              )),
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p>{t.trust.method}</p>
+      <p><a href={readmeUrl(lang)} target="_blank" rel="noopener noreferrer">{t.trust.readme} →</a></p>
+    </section>
+  </main>
+
+  <SiteFooter navLabel={t.footer.repo} links={footerLinks} credit={t.footer.credit} />
+
+  <script id="dashboard-data" type="application/json" set:html={JSON.stringify(clientData).replace(/</g, '\\u003c')} />
+  <script>
+    import { mountDashboard } from './client.js';
+    mountDashboard(document);
+  </script>
+</Base>

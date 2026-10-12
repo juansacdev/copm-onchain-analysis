@@ -4,6 +4,7 @@ import {
   formatCopmCompact,
   formatCopmExact,
   formatDecimal,
+  rangeLabels,
   formatInt,
   formatUsd,
   formatUsdFull,
@@ -114,4 +115,25 @@ test("NaN, Infinity and non-numeric input throw a clear error", () => {
 
 test("an unknown locale throws", () => {
   assert.throws(() => formatUsd(1, "fr"), /unknown locale "fr"/);
+});
+
+test("range labels: Spanish writes 10^9 as 'mil millones', never as 'B'", () => {
+  const mins = [0, 1e3, 1e6, 1e8, 1e9, 1e10, 1e11];
+  assert.deepEqual(rangeLabels(mins, "es"), [
+    "< 1 mil",
+    "1 mil – 1 millón",
+    "1 millón – 100 millones",
+    "100 millones – mil millones",
+    "mil millones – 10 mil millones",
+    "10 mil millones – 100 mil millones",
+    "≥ 100 mil millones",
+  ]);
+});
+
+test("range labels: English keeps k, M and B for thousands, millions and billions", () => {
+  assert.deepEqual(rangeLabels([0, 1e3, 1e8, 1e9], "en"), ["< 1k", "1k – 100M", "100M – 1B", "≥ 1B"]);
+});
+
+test("range labels: the order of the minimums does not matter and a minimum of 1 closes '< 1'", () => {
+  assert.deepEqual(rangeLabels([1e6, 0, 1], "en"), ["≥ 1M", "< 1", "1 – 1M"]);
 });

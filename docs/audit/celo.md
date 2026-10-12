@@ -4,7 +4,7 @@
 >
 > 🇪🇸 [Versión en español](./celo.es.md) · 📖 [Glossary](../GLOSSARY.md) · 🔔 [Contract events](../EVENTS.md) · 🔗 [Unified Polygon + Celo audit](../AUDIT.md)
 
-If COPM's story on [Polygon](./polygon.md) is that of an institutional rail, the Celo story is a completely different one — and seeing them side by side is where it gets interesting. Same stablecoin, two roles. Every figure below is filled from `data/celo/` by `npm run reports`; the checkpoint is block <!-- copm:celo.checkpointBlock -->79,861,762<!-- /copm --> (<!-- copm:celo.checkpointDate -->2026-10-11<!-- /copm -->).
+If COPM's story on [Polygon](./polygon.md) is that of an institutional rail, the Celo story is a completely different one — and seeing them side by side is where it gets interesting. Same stablecoin, two roles. Every figure below is filled from `data/celo/` by `npm run reports`; the checkpoint is block <!-- copm:celo.checkpointBlock -->79,872,373<!-- /copm --> (<!-- copm:celo.checkpointDate -->2026-10-12<!-- /copm -->).
 
 ## Executive summary
 
@@ -50,7 +50,7 @@ The explanation is textbook: by the time COPM reached Celo, the operation, the p
 
 ### The volume is small; the activity is not.
 
-<!-- copm:celo.grossVolumeUsd -->$13M<!-- /copm --> gross over <!-- copm:celo.years -->2.1<!-- /copm --> years sounds tiny next to Polygon's <!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> — and it is. But the surprising number is a different one: **the average daily transfer count is of the same order on both chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/day on Celo vs ~<!-- copm:polygon.avgDailyTransfers -->217<!-- /copm -->/day on Polygon). Celo processes a steady flow of small operations: there was activity on <!-- copm:celo.activeDays -->688<!-- /copm --> of the <!-- copm:celo.totalDays -->754<!-- /copm --> audited days (<!-- copm:celo.activeDaysPct -->91%<!-- /copm -->).
+<!-- copm:celo.grossVolumeUsd -->$13M<!-- /copm --> gross over <!-- copm:celo.years -->2.1<!-- /copm --> years sounds tiny next to Polygon's <!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> — and it is. But the surprising number is a different one: **the average daily transfer count is of the same order on both chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/day on Celo vs ~<!-- copm:polygon.avgDailyTransfers -->216<!-- /copm -->/day on Polygon). Celo processes a steady flow of small operations: there was activity on <!-- copm:celo.activeDays -->688<!-- /copm --> of the <!-- copm:celo.totalDays -->754<!-- /copm --> audited days (<!-- copm:celo.activeDaysPct -->91%<!-- /copm -->).
 
 Activity comes in waves, though. Recent months are quiet: <!-- copm:celo.month.2026-09.transfers -->448<!-- /copm --> transfers in September 2026 against <!-- copm:celo.month.2026-06.transfers -->9,135<!-- /copm --> in June 2026 and <!-- copm:celo.peakTxMonthCount -->18,491<!-- /copm --> in <!-- copm:celo.peakTxMonth -->January 2025<!-- /copm -->.
 
@@ -120,7 +120,7 @@ The `FREEZER_ROLE` can block an address; the contract emitted <!-- copm:celo.eve
 
 ## Validation
 
-The same <!-- copm:celo.checksTotal -->17<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->17<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+The same <!-- copm:celo.checksTotal -->19<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->19<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Rule | Result |
 | :--- | :--- | :--- |

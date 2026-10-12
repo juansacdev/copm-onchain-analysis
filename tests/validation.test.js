@@ -22,10 +22,12 @@ test("a consistent dataset passes every rule, in report order", () => {
     "timestamps-in-window",
     "admin-events-ordered",
     "admin-events-count",
+    "approvals-consistent",
     "daily-matches-ledger",
     "series-length",
     "series-continuous",
     "csv-transfer-total",
+    "dashboard-matches-ledger",
   ]);
   assert.deepEqual(failing(fixture()), []);
 });
@@ -204,6 +206,21 @@ test("daily-matches-ledger: daily.csv must be exactly what the transfers and app
   assert.ok(failing(short).includes("daily-matches-ledger"));
 });
 
+test("daily-matches-ledger: the last day's supply is tied to totalSupply to the wei", () => {
+  const exact = fixture();
+  assert.equal(results(exact)["daily-matches-ledger"].ok, true);
+  assert.match(results(exact)["daily-matches-ledger"].detail, /ledgerSupply=\d+ totalSupply=\d+/);
+
+  // A difference far below the 6 decimals daily.csv prints must still fail.
+  for (const delta of [1n, -1n]) {
+    const off = fixture();
+    off.state.totalSupply = (BigInt(off.state.totalSupply) + delta).toString();
+    const r = results(off)["daily-matches-ledger"];
+    assert.equal(r.ok, false, `delta ${delta}`);
+    assert.match(r.detail, /ledgerSupply=\d+ totalSupply=\d+/);
+  }
+});
+
 test("series rules compare daily.csv with summary.json: length, continuity and the transfer total", () => {
   const length = fixture();
   length.summary.range.totalDays += 1;
@@ -226,4 +243,101 @@ test("no rule has a tolerance: one wei of supply difference fails even when the 
   const bad = failing(fx);
   assert.ok(bad.includes("supply-exact"));
   assert.ok(bad.includes("ledger-matches-state"));
+});
+
+test("dashboard-matches-ledger: dashboard.json at the checkpoint with the ledger's totals passes", () => {
+  const r = results(fixture())["dashboard-matches-ledger"];
+  assert.equal(r.ok, true);
+  assert.match(r.detail, /block=\d+/);
+});
+
+test("dashboard-matches-ledger: a dashboard from another block fails", () => {
+  const fx = fixture();
+  fx.dashboard.checkpoint.block -= 1;
+  assert.ok(failing(fx).includes("dashboard-matches-ledger"));
+});
+
+test("dashboard-matches-ledger: minted, burned and supply must equal the ledger's", () => {
+  for (const edit of [
+    (d) => (d.flows.minted += 1),
+    (d) => (d.flows.burned += 1),
+    (d) => (d.checkpoint.totalSupply += 1),
+    (d) => (d.daily.supply[d.daily.supply.length - 1] += 1),
+    (d) => (d.daily.transfers[0] += 1),
+  ]) {
+    const fx = fixture();
+    edit(fx.dashboard);
+    assert.deepEqual(failing(fx), ["dashboard-matches-ledger"]);
+  }
+});
+
+test("dashboard-matches-ledger: a missing dashboard.json fails and says how to make it", () => {
+  const fx = fixture();
+  fx.dashboard = null;
+  const r = results(fx)["dashboard-matches-ledger"];
+  assert.equal(r.ok, false);
+  assert.match(r.detail, /dashboard --chain celo/);
+});
+
+test("dashboard-matches-ledger: every other field of dashboard.json is checked too", () => {
+  for (const [name, edit] of Object.entries({
+    gross: (d) => (d.flows.gross += 1),
+    turnover: (d) => (d.flows.turnover += 1),
+    supplyPeak: (d) => (d.supplyPeak.copm += 1),
+    activityTransfers: (d) => (d.activity.transfers.current += 1),
+    activityVolume: (d) => (d.activity.volume.previous += 1),
+    sizes: (d) => (d.sizes[0].count += 1),
+    largest: (d) => (d.largest.all[0].amount += 1),
+    issuance: (d) => (d.issuance.mint.topSharePct = 1),
+    holders: (d) => (d.holders.count += 1),
+    monthly: (d) => (d.monthly.volume[0] += 1),
+    governance: (d) => (d.governance.paused = !d.governance.paused),
+    extraField: (d) => (d.invented = true),
+  })) {
+    const fx = fixture();
+    edit(fx.dashboard);
+    const r = results(fx)["dashboard-matches-ledger"];
+    assert.equal(r.ok, false, name);
+    assert.deepEqual(failing(fx), ["dashboard-matches-ledger"], name);
+  }
+});
+
+test("dashboard-matches-ledger: the detail names the sections that differ", () => {
+  const fx = fixture();
+  fx.dashboard.sizes[0].count += 1;
+  assert.match(results(fx)["dashboard-matches-ledger"].detail, /differs: sizes/);
+});
+
+test("dashboard-matches-ledger: without the holders snapshot it cannot rebuild and fails", () => {
+  const fx = fixture();
+  fx.holders = { csv: null, json: null };
+  assert.equal(results(fx)["dashboard-matches-ledger"].ok, false);
+});
+
+test("approvals-consistent: the checkpoint's count, the daily counts and the spender counts must agree", () => {
+  const fx = fixture();
+  assert.equal(results(fx)["approvals-consistent"].ok, true);
+  assert.equal(
+    results(fx)["approvals-consistent"].detail,
+    `block=${fx.approvals.block} checkpoint=${fx.state.lastBlock} state=2 daily=2 spenders=2`
+  );
+});
+
+test("approvals-consistent: fails when state.approvals differs from the daily counts", () => {
+  const fx = fixture();
+  fx.state.approvals += 1;
+  assert.ok(failing(fx).includes("approvals-consistent"));
+});
+
+test("approvals-consistent: fails when the spender counts differ from the daily counts", () => {
+  const fx = fixture();
+  fx.approvals.spenders[A] += 1;
+  assert.ok(failing(fx).includes("approvals-consistent"));
+  assert.match(results(fx)["approvals-consistent"].detail, /daily=2 spenders=3/);
+});
+
+test("approvals-consistent: fails when approvals.json is ahead of the checkpoint", () => {
+  const fx = fixture();
+  fx.approvals.block = fx.state.lastBlock + 1;
+  assert.ok(failing(fx).includes("approvals-consistent"));
 });

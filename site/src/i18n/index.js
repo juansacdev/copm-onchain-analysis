@@ -1,8 +1,14 @@
 import { es } from "./es.js";
 import { en } from "./en.js";
+import { dashboardEs } from "./dashboard-es.js";
+import { dashboardEn } from "./dashboard-en.js";
 import { interpolate } from "../lib/template.js";
 
 export const dictionaries = { es, en };
+
+// The dashboard keeps its own pair: the analysis page renders its whole
+// dictionary against its own variables, so the two must not share a file.
+export const dashboardDictionaries = { es: dashboardEs, en: dashboardEn };
 
 // { a: { b: "x" }, list: ["y"] } -> { "a.b": "x", "list.0": "y" }
 export function flattenDictionary(node, prefix = "") {

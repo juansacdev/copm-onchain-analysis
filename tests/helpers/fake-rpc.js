@@ -67,10 +67,13 @@ export function createFakeChain({
   zeroTimestamps = false,
   contract = {},
 }) {
+  let supplyCalls = 0;
   const chain = {
     head,
     logs: [...logs],
-    // hooks: getLogs, head, header, headerNumber, supply, callError, and `read`, called for
+    // hooks: getLogs, head, header, headerNumber, supply, supplyRaw (a string
+    // returned as is for the totalSupply() call, `attempt` counting those calls
+    // from 1), callError, and `read`, called for
     // every eth_call / eth_getCode / eth_getStorageAt with
     // { method, selector, data, block, attempt } and answering an Error (the
     // item fails), a string (the forced result) or nothing (the real answer).
@@ -211,6 +214,9 @@ export function createFakeChain({
         const [{ data }, blockTag] = params;
         if (data !== SUPPLY_SELECTOR) throw new Error("unexpected call data");
         const block = Number(blockTag);
+        supplyCalls++;
+        const raw = chain.faults.supplyRaw?.({ attempt: supplyCalls });
+        if (raw !== undefined) return raw;
         const forced = chain.faults.supply?.(block);
         return word(forced ?? supplyAt(block));
       }

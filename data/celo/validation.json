@@ -1,7 +1,7 @@
 {
   "chain": "celo",
-  "block": 79861762,
-  "validatedAt": "2026-10-12T00:12:57.678Z",
+  "block": 79872373,
+  "validatedAt": "2026-10-12T03:14:03.223Z",
   "checks": [
     {
       "id": "event-count",
@@ -26,7 +26,7 @@
     {
       "id": "holders-sum-exact",
       "ok": true,
-      "detail": "sum=418585134628110192879069442 totalSupply=418585134628110192879069442 holders.json block=79861762 checkpoint=79861762"
+      "detail": "sum=418585134628110192879069442 totalSupply=418585134628110192879069442 holders.json block=79872373 checkpoint=79872373"
     },
     {
       "id": "partitions-ordered-unique",
@@ -41,7 +41,7 @@
     {
       "id": "no-row-above-checkpoint",
       "ok": true,
-      "detail": "above=0 checkpoint=79861762"
+      "detail": "above=0 checkpoint=79872373"
     },
     {
       "id": "no-row-before-deploy",
@@ -69,9 +69,14 @@
       "detail": "stored=12 checkpoint=12"
     },
     {
+      "id": "approvals-consistent",
+      "ok": true,
+      "detail": "block=79293429 checkpoint=79872373 state=82623 daily=82623 spenders=82623"
+    },
+    {
       "id": "daily-matches-ledger",
       "ok": true,
-      "detail": "rows=754 lastSupply=418585134.62811 totalSupply=418585134.62811"
+      "detail": "rows=754 lastSupply=418585134.62811 ledgerSupply=418585134628110192879069442 totalSupply=418585134628110192879069442"
     },
     {
       "id": "series-length",
@@ -87,8 +92,13 @@
       "id": "csv-transfer-total",
       "ok": true,
       "detail": "csv=132944 summary=132944"
+    },
+    {
+      "id": "dashboard-matches-ledger",
+      "ok": true,
+      "detail": "block=79872373 checkpoint=79872373 sections=14"
     }
   ],
-  "passed": 17,
+  "passed": 19,
   "failed": 0
 }

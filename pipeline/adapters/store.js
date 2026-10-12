@@ -1,5 +1,8 @@
 import {
+  closeSync,
+  fsyncSync,
   mkdirSync,
+  openSync,
   readFileSync,
   readdirSync,
   renameSync,
@@ -27,11 +30,36 @@ export const readJsonl = (url) =>
     .map((line) => JSON.parse(line));
 
 // Temp file plus rename: a crash leaves either the old file or the new one,
-// never half of each.
+// never half of each. The temp file is flushed before the rename, because a
+// rename that reaches the disk ahead of the data would, after a power loss,
+// leave an empty or truncated file under the final name. The directory is
+// flushed after it so the rename itself survives too.
 function writeAtomic(url, text) {
   const tmp = new URL(`${url.href}.tmp`);
-  writeFileSync(tmp, text);
+  const fd = openSync(tmp, "w");
+  try {
+    writeFileSync(fd, text);
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
   renameSync(tmp, url);
+  syncDirectory(new URL("./", url));
+}
+
+// Best effort: Windows cannot open a directory for reading, and some
+// filesystems refuse fsync on one. There the rename stays as durable as the
+// platform makes it, which is no worse than before.
+function syncDirectory(dirUrl) {
+  let fd;
+  try {
+    fd = openSync(dirUrl, "r");
+    fsyncSync(fd);
+  } catch {
+    // not supported here; see above
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
 }
 
 const toJsonl = (rows) => rows.map((row) => `${JSON.stringify(row)}\n`).join("");
@@ -62,8 +90,10 @@ export function createStore(dirUrl) {
   const readPartition = (key) =>
     existsSync(partitionUrl(key)) ? readJsonl(partitionUrl(key)) : [];
 
+  const readState = () => readJsonIfExists(stateUrl, null);
+
   return {
-    readState: () => readJsonIfExists(stateUrl, null),
+    readState,
     writeState(state) {
       ensureDir(dirUrl);
       writeAtomic(stateUrl, `${JSON.stringify(state, null, 2)}\n`);
@@ -79,7 +109,19 @@ export function createStore(dirUrl) {
       ensureDir(transfersDir);
       writeAtomic(partitionUrl(key), toJsonl(rows));
     },
+    // Raw partitions, leftovers included: only validate's no-row-above-checkpoint
+    // rule reads them this way, so it can report them.
     readTransfers: () => listPartitions().flatMap(readPartition),
+    // What every other reader works from. A scan that crashed between the
+    // partition write and the state write leaves rows above the checkpoint;
+    // they belong to a stage that was never verified against totalSupply.
+    readTransfersAtCheckpoint() {
+      const state = readState();
+      if (!state) throw new Error("no state.json: run scan first");
+      return listPartitions()
+        .flatMap(readPartition)
+        .filter((row) => row.b <= state.lastBlock);
+    },
 
     readAdminEvents: () => (existsSync(adminUrl) ? readJsonl(adminUrl) : []),
     writeAdminEvents(rows) {

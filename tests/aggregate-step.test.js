@@ -22,6 +22,7 @@ test("builds the daily series from every partition, with approvals from approval
     row(2, 0, at(1), A, ZERO_ADDRESS, COPM(4)),
     row(3, 0, at(2), ZERO_ADDRESS, A, COPM(1)),
   ]);
+  store.writeState({ lastBlock: 3 });
   store.writeApprovals({ block: 3, daily: { "2024-03-01": 5 }, spenders: {} });
 
   const { series, summary, csv } = buildAggregate({
@@ -52,6 +53,20 @@ test("fails with a clear message when the chain has no partitions yet", () => {
 test("a chain without approvals.json still aggregates, with zero approvals", () => {
   const store = emptyStore();
   store.writePartition("2024-03", [row(2, 0, at(1), ZERO_ADDRESS, A, COPM(1))]);
+  store.writeState({ lastBlock: 2 });
   const { series } = buildAggregate({ store, manifest, chainKey: "celo", copPerUsd: 4000 });
   assert.equal(series[0].approvals, 0);
+});
+
+test("rows above the checkpoint are not aggregated", () => {
+  const store = emptyStore();
+  store.writePartition("2024-03", [
+    row(2, 0, at(1), ZERO_ADDRESS, A, COPM(1)),
+    row(9, 0, at(2), ZERO_ADDRESS, A, COPM(100)),
+  ]);
+  store.writeState({ lastBlock: 5 });
+  const { summary, series } = buildAggregate({ store, manifest, chainKey: "celo", copPerUsd: 4000 });
+  assert.equal(summary.totals.transferEvents, 1);
+  assert.equal(summary.totals.currentSupplyCOPM, 1);
+  assert.equal(series.length, 1);
 });

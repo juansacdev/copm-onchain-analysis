@@ -4,26 +4,26 @@
 >
 > 🇬🇧 [English version](./polygon.md) · 📖 [Glosario](../GLOSSARY.es.md) · 🔔 [Eventos del contrato](../EVENTS.es.md) · 🔗 [Auditoría unificada Polygon + Celo](../AUDIT.es.md)
 
-Los datos de este documento no salen de un dashboard ni de un tercero. Salen de la blockchain, evento por evento, con scripts que están en este mismo repositorio. Cualquiera puede reproducir cada número. Cada cifra de abajo se completa desde `data/polygon/` con `npm run reports`; el checkpoint es el bloque <!-- copm:polygon.checkpointBlock -->95.370.448<!-- /copm --> (<!-- copm:polygon.checkpointDate -->2026-10-11<!-- /copm -->).
+Los datos de este documento no salen de un dashboard ni de un tercero. Salen de la blockchain, evento por evento, con scripts que están en este mismo repositorio. Cualquiera puede reproducir cada número. Cada cifra de abajo se completa desde `data/polygon/` con `npm run reports`; el checkpoint es el bloque <!-- copm:polygon.checkpointBlock -->95.378.468<!-- /copm --> (<!-- copm:polygon.checkpointDate -->2026-10-12<!-- /copm -->).
 
 ## Resumen ejecutivo
 
 | Métrica | Valor |
 | :--- | :--- |
-| **Período auditado** | <!-- copm:polygon.firstDay -->2023-09-21<!-- /copm --> → <!-- copm:polygon.lastDay -->2026-10-11<!-- /copm --> (<!-- copm:polygon.totalDays -->1.117<!-- /copm --> días, ~<!-- copm:polygon.years -->3,1<!-- /copm --> años) |
-| **Eventos `Transfer`** | **<!-- copm:polygon.transfers -->241.858<!-- /copm -->** |
+| **Período auditado** | <!-- copm:polygon.firstDay -->2023-09-21<!-- /copm --> → <!-- copm:polygon.lastDay -->2026-10-12<!-- /copm --> (<!-- copm:polygon.totalDays -->1.118<!-- /copm --> días, ~<!-- copm:polygon.years -->3,1<!-- /copm --> años) |
+| **Eventos `Transfer`** | **<!-- copm:polygon.transfers -->241.876<!-- /copm -->** |
 | **Volumen bruto movido** | <!-- copm:polygon.grossVolumeCopm -->8,661 billones<!-- /copm --> COPM ≈ **<!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm -->** |
 | **Volumen neto** (sin mints/burns) | <!-- copm:polygon.netVolumeCopm -->6,164 billones<!-- /copm --> COPM ≈ **<!-- copm:polygon.netVolumeUsd -->US$1.541 millones<!-- /copm -->** |
 | **Total emitido (mints)** | <!-- copm:polygon.minted -->1,251 billones<!-- /copm --> COPM ≈ <!-- copm:polygon.mintedUsd -->US$312,7 millones<!-- /copm --> |
 | **Total redimido (burns)** | <!-- copm:polygon.burned -->1,246 billones<!-- /copm --> COPM ≈ <!-- copm:polygon.burnedUsd -->US$311,5 millones<!-- /copm --> |
-| **Promedio diario** | <!-- copm:polygon.avgDailyTransfers -->217<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->US$1,9 millones<!-- /copm --> |
+| **Promedio diario** | <!-- copm:polygon.avgDailyTransfers -->216<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->US$1,9 millones<!-- /copm --> |
 | **Ticket promedio por transfer** | ~<!-- copm:polygon.avgTicketUsd -->US$8.952<!-- /copm --> |
 | **Pico de transferencias en un día** | **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | **Pico de volumen en un día** | **<!-- copm:polygon.peakVolumeUsd -->US$38,6 millones<!-- /copm -->** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | **Mes pico** | **<!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->: <!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm -->** |
 | **Pico de supply** | <!-- copm:polygon.peakSupplyCopm -->11.363 millones<!-- /copm --> COPM ≈ <!-- copm:polygon.peakSupplyUsd -->US$2,8 millones<!-- /copm --> (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->) |
-| **Supply actual** | <!-- copm:polygon.supply -->4.482.231.674,75<!-- /copm --> COPM ≈ <!-- copm:polygon.supplyUsd -->US$1,1 millones<!-- /copm --> |
-| **Holders con saldo** | <!-- copm:polygon.holders -->582<!-- /copm --> (el mayor tiene <!-- copm:polygon.top1Pct -->65,6 %<!-- /copm -->, los 10 mayores tienen <!-- copm:polygon.top10Pct -->95,5 %<!-- /copm -->) |
+| **Supply actual** | <!-- copm:polygon.supply -->4.478.360.707,75<!-- /copm --> COPM ≈ <!-- copm:polygon.supplyUsd -->US$1,1 millones<!-- /copm --> |
+| **Holders con saldo** | <!-- copm:polygon.holders -->582<!-- /copm --> (el mayor tiene <!-- copm:polygon.top1Pct -->65,7 %<!-- /copm -->, los 10 mayores tienen <!-- copm:polygon.top10Pct -->95,6 %<!-- /copm -->) |
 
 > **Tasa de cambio:** 1 USD = <!-- copm:fx.copPerUsd -->4.000<!-- /copm --> COP, constante. La tasa real se movió durante el período, así que las cifras en USD cargan un margen de ±5%. Configurable al reproducir.
 
@@ -35,7 +35,7 @@ Los datos de este documento no salen de un dashboard ni de un tercero. Salen de 
 
 ### Más de <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> movidos. Ninguna pausa, nunca.
 
-<!-- copm:polygon.grossVolumeCopm -->8,661 billones<!-- /copm --> de COPM cambiaron de manos en <!-- copm:polygon.totalDays -->1.117<!-- /copm --> días: **~<!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm -->** brutos, **<!-- copm:polygon.netVolumeUsd -->US$1.541 millones<!-- /copm -->** netos entre wallets. El `PAUSER_ROLE` puede detener todas las transferencias; su evento `Paused` se emitió <!-- copm:polygon.events.Paused -->0<!-- /copm --> veces. Hubo actividad en <!-- copm:polygon.activeDays -->910<!-- /copm --> de los <!-- copm:polygon.totalDays -->1.117<!-- /copm --> días auditados (<!-- copm:polygon.activeDaysPct -->81 %<!-- /copm -->).
+<!-- copm:polygon.grossVolumeCopm -->8,661 billones<!-- /copm --> de COPM cambiaron de manos en <!-- copm:polygon.totalDays -->1.118<!-- /copm --> días: **~<!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm -->** brutos, **<!-- copm:polygon.netVolumeUsd -->US$1.541 millones<!-- /copm -->** netos entre wallets. El `PAUSER_ROLE` puede detener todas las transferencias; su evento `Paused` se emitió <!-- copm:polygon.events.Paused -->0<!-- /copm --> veces. Hubo actividad en <!-- copm:polygon.activeDays -->911<!-- /copm --> de los <!-- copm:polygon.totalDays -->1.118<!-- /copm --> días auditados (<!-- copm:polygon.activeDaysPct -->81 %<!-- /copm -->).
 
 ![Volumen bruto diario USD](../../charts/polygon/02-daily-volume-usd.svg)
 
@@ -72,23 +72,23 @@ Volumen bruto mensual, desde el pico:
 | Julio 2026 | <!-- copm:polygon.month.2026-07.usd -->US$34,3 millones<!-- /copm --> | <!-- copm:polygon.month.2026-07.transfers -->12.717<!-- /copm --> |
 | Agosto 2026 | <!-- copm:polygon.month.2026-08.usd -->US$26,1 millones<!-- /copm --> | <!-- copm:polygon.month.2026-08.transfers -->9.913<!-- /copm --> |
 | Septiembre 2026 | <!-- copm:polygon.month.2026-09.usd -->US$22,3 millones<!-- /copm --> | <!-- copm:polygon.month.2026-09.transfers -->9.118<!-- /copm --> |
-| Octubre 2026 (hasta <!-- copm:polygon.lastDay -->2026-10-11<!-- /copm -->) | <!-- copm:polygon.month.2026-10.usd -->US$6 millones<!-- /copm --> | <!-- copm:polygon.month.2026-10.transfers -->3.023<!-- /copm --> |
+| Octubre 2026 (hasta <!-- copm:polygon.lastDay -->2026-10-12<!-- /copm -->) | <!-- copm:polygon.month.2026-10.usd -->US$6 millones<!-- /copm --> | <!-- copm:polygon.month.2026-10.transfers -->3.041<!-- /copm --> |
 
-El volumen se asentó entre diciembre y abril, saltó en mayo de 2026 y ha bajado cada mes desde entonces. El segundo día de mayor volumen de la historia del token, **<!-- copm:polygon.topVol.2.day -->2026-05-05<!-- /copm -->** (<!-- copm:polygon.topVol.2.usd -->US$31,5 millones<!-- /copm -->), pertenece a ese rebote. El supply acompañó: tuvo su máximo en <!-- copm:polygon.peakSupplyCopm -->11.363 millones<!-- /copm --> COPM el <!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm --> y está en <!-- copm:polygon.supplyCompact -->4.482 millones<!-- /copm --> COPM en el checkpoint.
+El volumen se asentó entre diciembre y abril, saltó en mayo de 2026 y ha bajado cada mes desde entonces. El segundo día de mayor volumen de la historia del token, **<!-- copm:polygon.topVol.2.day -->2026-05-05<!-- /copm -->** (<!-- copm:polygon.topVol.2.usd -->US$31,5 millones<!-- /copm -->), pertenece a ese rebote. El supply acompañó: tuvo su máximo en <!-- copm:polygon.peakSupplyCopm -->11.363 millones<!-- /copm --> COPM el <!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm --> y está en <!-- copm:polygon.supplyCompact -->4.478 millones<!-- /copm --> COPM en el checkpoint.
 
 | Ventana | Volumen bruto |
 | :--- | :--- |
 | <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm --> (mes pico) | <!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm --> |
-| Últimos 90 días | <!-- copm:polygon.last90GrossUsd -->US$76,1 millones<!-- /copm --> |
+| Últimos 90 días | <!-- copm:polygon.last90GrossUsd -->US$74,5 millones<!-- /copm --> |
 | Últimos 30 días | <!-- copm:polygon.last30GrossUsd -->US$21,2 millones<!-- /copm --> |
 
-### El supply rota ~<!-- copm:polygon.turnoverMonthly -->13,7<!-- /copm --> veces al mes. Eso es un rail de pagos, no una bóveda.
+### El supply rota ~<!-- copm:polygon.turnoverMonthly -->13,8<!-- /copm --> veces al mes. Eso es un rail de pagos, no una bóveda.
 
-- Supply promedio (últimos 30 días): ~<!-- copm:polygon.last30AvgSupply -->6.209 millones<!-- /copm --> COPM
-- Volumen bruto (últimos 30 días): ~<!-- copm:polygon.last30GrossUsd -->US$21,2 millones<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.925 millones<!-- /copm --> COPM
-- **Rotación implícita: ~<!-- copm:polygon.turnoverMonthly -->13,7<!-- /copm -->x al mes, ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm -->x al año**
+- Supply promedio (últimos 30 días): ~<!-- copm:polygon.last30AvgSupply -->6.145 millones<!-- /copm --> COPM
+- Volumen bruto (últimos 30 días): ~<!-- copm:polygon.last30GrossUsd -->US$21,2 millones<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.751 millones<!-- /copm --> COPM
+- **Rotación implícita: ~<!-- copm:polygon.turnoverMonthly -->13,8<!-- /copm -->x al mes, ~<!-- copm:polygon.turnoverYearly -->168<!-- /copm -->x al año**
 
-Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota su supply aproximadamente un orden de magnitud más rápido que ese rango. La lectura es directa: nadie acumula COPM por mucho tiempo — el COPM promedio cambia de manos ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm --> veces al año. Es el comportamiento de un *settlement rail*, no de una reserva de valor.
+Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota su supply aproximadamente un orden de magnitud más rápido que ese rango. La lectura es directa: nadie acumula COPM por mucho tiempo — el COPM promedio cambia de manos ~<!-- copm:polygon.turnoverYearly -->168<!-- /copm --> veces al año. Es el comportamiento de un *settlement rail*, no de una reserva de valor.
 
 ![Supply circulante](../../charts/polygon/03-supply-over-time.svg)
 
@@ -96,7 +96,7 @@ Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota 
 
 - Total emitido en <!-- copm:polygon.years -->3,1<!-- /copm --> años: **<!-- copm:polygon.minted -->1,251 billones<!-- /copm --> COPM**
 - Total redimido: **<!-- copm:polygon.burned -->1,246 billones<!-- /copm --> COPM** (<!-- copm:polygon.burnedPct -->99,6 %<!-- /copm --> de lo emitido)
-- Diferencia: <!-- copm:polygon.supplyCompact -->4.482 millones<!-- /copm --> COPM = exactamente el supply actual, al wei ✓
+- Diferencia: <!-- copm:polygon.supplyCompact -->4.478 millones<!-- /copm --> COPM = exactamente el supply actual, al wei ✓
 
 ¿Por qué importa? Porque un burn es alguien convirtiendo COPM de vuelta a pesos. Si los burns fueran mucho menores que los mints, sería una bandera roja: tokens que se emiten pero no se pueden redimir. El balance casi 1:1 sostenido durante años es la evidencia on-chain de un peg con operación bidireccional fluida.
 
@@ -104,7 +104,7 @@ Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota 
 
 ### Quién lo tiene: un puñado de direcciones.
 
-En el checkpoint, <!-- copm:polygon.holders -->582<!-- /copm --> direcciones tienen saldo (de <!-- copm:polygon.addressesEverSeen -->2.555<!-- /copm --> que alguna vez tocaron el token). La mayor tiene el <!-- copm:polygon.top1Pct -->65,6 %<!-- /copm --> del supply y las 10 mayores tienen el <!-- copm:polygon.top10Pct -->95,5 %<!-- /copm -->. <!-- copm:polygon.contracts -->244<!-- /copm --> de los holders son contratos, no wallets. La tabla completa está en `data/polygon/holders.csv`.
+En el checkpoint, <!-- copm:polygon.holders -->582<!-- /copm --> direcciones tienen saldo (de <!-- copm:polygon.addressesEverSeen -->2.555<!-- /copm --> que alguna vez tocaron el token). La mayor tiene el <!-- copm:polygon.top1Pct -->65,7 %<!-- /copm --> del supply y las 10 mayores tienen el <!-- copm:polygon.top10Pct -->95,6 %<!-- /copm -->. <!-- copm:polygon.contracts -->244<!-- /copm --> de los holders son contratos, no wallets. La tabla completa está en `data/polygon/holders.csv`.
 
 ### Gobernanza: quién tiene los roles.
 
@@ -150,11 +150,11 @@ Los seis roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_RO
 
 ## Validación
 
-Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->17<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->17<!-- /copm --> pasaron (validado el <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
+Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->19<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->19<!-- /copm --> pasaron (validado el <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |
-| 1 | Conteo de eventos: las transferencias guardadas igualan el checkpoint | ✅ <!-- copm:polygon.transfers -->241.858<!-- /copm --> = <!-- copm:polygon.transfers -->241.858<!-- /copm --> |
+| 1 | Conteo de eventos: las transferencias guardadas igualan el checkpoint | ✅ <!-- copm:polygon.transfers -->241.876<!-- /copm --> = <!-- copm:polygon.transfers -->241.876<!-- /copm --> |
 | 2 | Supply: minted − burned es igual a `totalSupply()` en el bloque del checkpoint | ✅ diferencia de 0 wei |
 | 3 | Recorrer las transferencias guardadas reproduce el libro del checkpoint | ✅ |
 | 4 | Ningún balance negativo en el libro | ✅ |
@@ -163,12 +163,12 @@ Ningún número de esta auditoría se reporta sin verificarse. El paso de valida
 | 7 | Cada fila está en la partición de su mes UTC | ✅ |
 | 8 | Nada por encima del bloque del checkpoint | ✅ |
 | 9 | Nada antes del bloque de deploy | ✅ bloque <!-- copm:polygon.deployBlock -->47.747.145<!-- /copm --> |
-| 10 | Cada transferencia tiene el timestamp exacto de su bloque | ✅ <!-- copm:polygon.transfers -->241.858<!-- /copm --> eventos, 0 faltantes |
+| 10 | Cada transferencia tiene el timestamp exacto de su bloque | ✅ <!-- copm:polygon.transfers -->241.876<!-- /copm --> eventos, 0 faltantes |
 | 11 | Timestamps dentro de la ventana deploy → checkpoint | ✅ |
 | 12 | Eventos administrativos estrictamente ordenados, ninguno por encima del checkpoint | ✅ |
 | 13 | El conteo de eventos administrativos iguala el checkpoint | ✅ <!-- copm:polygon.adminEvents -->11<!-- /copm --> eventos |
 | 14 | `daily.csv` es igual a la serie reconstruida desde el libro y termina en `totalSupply()` | ✅ |
-| 15 | La serie diaria tiene el largo que anuncia `summary.json` | ✅ <!-- copm:polygon.totalDays -->1.117<!-- /copm --> días |
+| 15 | La serie diaria tiene el largo que anuncia `summary.json` | ✅ <!-- copm:polygon.totalDays -->1.118<!-- /copm --> días |
 | 16 | La serie diaria es continua (sin días faltantes) | ✅ 0 gaps |
 | 17 | El total de transferencias de `daily.csv` es igual al de `summary.json` | ✅ |
 
@@ -185,7 +185,7 @@ El pipeline son unos pocos pasos, cada uno un comando de `node pipeline/cli.js`,
 3. **Holders** — calcula cada balance desde el libro y contrasta cada uno con `balanceOf` en el bloque del checkpoint.
 4. **Aggregate** — reproduce los eventos en orden y construye la serie diaria: volumen, mints, burns, supply derivado.
 5. **Charts** — renderiza los SVG sin canvas ni headless browser.
-6. **Validate** — las <!-- copm:polygon.checksTotal -->17<!-- /copm --> reglas estrictas de arriba.
+6. **Validate** — las <!-- copm:polygon.checksTotal -->19<!-- /copm --> reglas estrictas de arriba.
 7. **Reports** — completa cada cifra de estos documentos desde los datos.
 
 **Fuente única: un endpoint RPC.** Sin indexers, sin APIs de terceros, sin exploradores. Sirve cualquier proveedor — uno de pago (más rápido) o uno público (gratis, con rate limits que el scanner maneja solo).
