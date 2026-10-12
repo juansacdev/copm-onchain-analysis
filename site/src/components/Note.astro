@@ -1,11 +1,13 @@
 ---
 interface Props {
-  variant?: 'green' | 'gold';
+  /** Chain the note belongs to; the mark beside the text takes its color. */
+  variant?: 'polygon' | 'celo';
 }
 
 const { variant } = Astro.props;
 ---
 
 <aside class:list={['note', variant]}>
+  <span class="mark" aria-hidden="true"></span>
   <p><slot /></p>
 </aside>

@@ -1,9 +1,11 @@
 ---
 import '../styles/global.css';
-import LangSwitch from '../components/LangSwitch.astro';
-import SiteNav from '../components/SiteNav.astro';
+import Masthead from '../components/Masthead.astro';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dictionaries } from '../i18n/index.js';
-import { alternatesFor, canonicalUrl, languageSwitch, navigation } from '../lib/routes.js';
+import { loadAnalysisData } from '../lib/analysis-data.js';
+import { alternatesFor, canonicalUrl, languageSwitch, navigation, routePath } from '../lib/routes.js';
+import { serialLine } from '../lib/serial.js';
 
 interface Props {
   lang: 'es' | 'en';
@@ -21,6 +23,11 @@ const canonical = canonicalUrl(page, lang, site);
 const alternates = alternatesFor(page, site);
 const switchItems = languageSwitch(page, lang);
 const navItems = navigation(lang, page).map((item) => ({ ...item, label: dict.nav[item.key] }));
+
+// `astro build` runs from site/; the data lives one level up.
+const dataDir = fileURLToPath(new URL('../data', pathToFileURL(`${process.cwd()}/`)));
+const data = loadAnalysisData({ dataDir, copPerUsd: Number(process.env.COP_PER_USD ?? 4000) });
+const serial = serialLine(Object.values(data.chains));
 ---
 
 <!doctype html>
@@ -28,41 +35,31 @@ const navItems = navigation(lang, page).map((item) => ({ ...item, label: dict.na
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     {alternates.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
+    />
+    <slot name="head" />
   </head>
   <body>
-    <div id="progress" role="presentation"></div>
-    <SiteNav label={dict.a11y.mainNavLabel} items={navItems} />
-    <LangSwitch label={dict.a11y.langLabel} items={switchItems} />
+    <a class="skip-link" href="#main">{dict.a11y.skip}</a>
+    <slot name="before-header" />
+    <Masthead
+      homeHref={routePath('dashboard', lang)}
+      navLabel={dict.a11y.mainNavLabel}
+      navItems={navItems}
+      langLabel={dict.a11y.langLabel}
+      langItems={switchItems}
+      serial={serial}
+      serialLabel={dict.a11y.serialLabel}
+    />
     <slot />
-
-    <script>
-      // barra de progreso de lectura
-      const bar = document.getElementById('progress')!;
-      function update() {
-        const h = document.documentElement;
-        const max = h.scrollHeight - h.clientHeight;
-        bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
-      }
-      addEventListener('scroll', update, { passive: true });
-      update();
-
-      // aparición progresiva de capítulos
-      const obs = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) {
-              e.target.classList.add('visible');
-              obs.unobserve(e.target);
-            }
-          });
-        },
-        { rootMargin: '0px 0px -10% 0px' }
-      );
-      document.querySelectorAll('.reveal').forEach((el) => obs.observe(el));
-    </script>
   </body>
 </html>

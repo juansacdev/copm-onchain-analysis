@@ -2,11 +2,13 @@
 // Every chart is a self-contained SVG with its own background, so it renders
 // identically on GitHub (light or dark theme), in editors, and in any browser.
 //
-// Two palettes, one per destination:
+// Three palettes, one per destination:
 //   dark  — charts embedded in the GitHub docs (README / AUDIT)
-//   light — charts embedded in the site (Data-Dense Pro theme)
-// Chain colors are the brands' own palettes; the light variants are darkened
-// to keep contrast on the light background.
+//   light — former site theme, kept as an alternative variant
+//   site  — charts embedded in the site ("Casa de moneda" identity): the page
+//           surface, the chain colors (Polygon, Celo) and mint / burn colors
+//           of the site tokens. Series never color text, so the badge text
+//           uses `badgeText`.
 export const PALETTES = {
   dark: {
     base: {
@@ -32,6 +34,20 @@ export const PALETTES = {
       combined: { primary: "#2a66c2", secondary: "#f54e00", label: "Polygon + Celo" },
     },
   },
+  site: {
+    base: {
+      bg: "#131209", panel: "#181818", grid: "#2c2c28", axis: "#a9a79b",
+      text: "#ede9dc", muted: "#9c9a8e", warn: "#e8943a", danger: "#e66767",
+      mint: "#3987e5", burn: "#e66767", badgeText: "#ede9dc",
+    },
+    // One color per chain on every chart: color identifies the entity, so the
+    // secondary color repeats the primary one.
+    chains: {
+      polygon: { primary: "#9085e9", secondary: "#9085e9", label: "Polygon" },
+      celo: { primary: "#199e70", secondary: "#199e70", label: "Celo" },
+      combined: { primary: "#c9a45c", secondary: "#c9a45c", label: "Polygon + Celo" },
+    },
+  },
 };
 
 // Active palette. setTheme() mutates these objects in place, so references
@@ -47,6 +63,9 @@ export const CHAIN_PALETTES = {
 export function setTheme(name) {
   const theme = PALETTES[name];
   if (!theme) throw new Error(`unknown theme "${name}". valid: ${Object.keys(PALETTES).join(", ")}`);
+  // Replace, not merge: keys only some palettes define (badgeText) must not
+  // survive a switch to another palette.
+  for (const key of Object.keys(BASE)) delete BASE[key];
   Object.assign(BASE, theme.base);
   for (const key of Object.keys(CHAIN_PALETTES)) Object.assign(CHAIN_PALETTES[key], theme.chains[key]);
 }
@@ -132,7 +151,7 @@ function svgDoc({ width, height, title, subtitle, badge, badgeColor, footer, bod
   ${
     badge
       ? `<rect x="${width - 28 - badgeW}" y="24" width="${badgeW}" height="22" rx="11" fill="${badgeColor}22" stroke="${badgeColor}" stroke-width="1"/>
-  <text x="${width - 28 - badgeW / 2}" y="39" class="badge" fill="${badgeColor}" text-anchor="middle">${badge}</text>`
+  <text x="${width - 28 - badgeW / 2}" y="39" class="badge" fill="${BASE.badgeText ?? badgeColor}" text-anchor="middle">${badge}</text>`
       : ""
   }
   <text x="28" y="59" class="subtitle">${subtitle}</text>

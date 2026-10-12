@@ -7,11 +7,8 @@ interface Props {
 const { label, items } = Astro.props;
 ---
 
-<nav id="langswitch" aria-label={label}>
-  {items.map((item, index) => (
-    <Fragment>
-      {index > 0 && <span class="sep" aria-hidden="true">·</span>}
-      <a href={item.href} aria-current={item.current ? 'true' : 'false'} lang={item.lang}>{item.lang.toUpperCase()}</a>
-    </Fragment>
+<nav class="langswitch" aria-label={label}>
+  {items.map((item) => (
+    <a href={item.href} aria-current={item.current ? 'true' : undefined} lang={item.lang}>{item.lang.toUpperCase()}</a>
   ))}
 </nav>

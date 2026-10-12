@@ -12,6 +12,8 @@ export const es = {
     mainNavLabel: "Navegación principal",
     chaptersLabel: "Capítulos",
     linksLabel: "Enlaces",
+    skip: "Saltar al contenido",
+    serialLabel: "Bloque verificado de cada cadena",
   },
   nav: {
     dashboard: "Dashboard",
@@ -30,6 +32,9 @@ export const es = {
       { value: "{chainCount}", label: "blockchains" },
       { value: "{polygonPeakMonthUsdShort}", label: "mes pico (Polygon)" },
     ],
+  },
+  tagline: {
+    text: "Cada peso emitido deja rastro en la cadena. Cada evento se lee, se suma y se compara con el suministro, hasta el último decimal.",
   },
   chapters: {
     problema: {

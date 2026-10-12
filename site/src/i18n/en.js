@@ -13,6 +13,8 @@ export const en = {
     mainNavLabel: "Main navigation",
     chaptersLabel: "Chapters",
     linksLabel: "Links",
+    skip: "Skip to content",
+    serialLabel: "Verified block of each chain",
   },
   nav: {
     dashboard: "Dashboard",
@@ -31,6 +33,9 @@ export const en = {
       { value: "{chainCount}", label: "blockchains" },
       { value: "{polygonPeakMonthUsdShort}", label: "peak month (Polygon)" },
     ],
+  },
+  tagline: {
+    text: "Every peso issued leaves a trace on the chain. Every event is read, summed and checked against the supply, down to the last decimal.",
   },
   chapters: {
     problema: {

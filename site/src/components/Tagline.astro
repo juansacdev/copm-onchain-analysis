@@ -1,0 +1,19 @@
+---
+// Tagline reveal: one large statement of the core benefit, set apart from the
+// hero. Each word is its own span; the page script lights the words one at a
+// time as they cross the trigger line. Without JavaScript every word is lit.
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+const words = text.split(/\s+/).filter(Boolean);
+---
+
+<section class="tagline" aria-label={text}>
+  <p aria-hidden="true">
+    {words.map((word, index) => (
+      <Fragment>{index > 0 && ' '}<span class="w">{word}</span></Fragment>
+    ))}
+  </p>
+</section>

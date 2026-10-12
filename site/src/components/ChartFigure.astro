@@ -1,7 +1,8 @@
 ---
 // Los SVG se generan con el pipeline (pipeline/steps/charts.js / combined-charts.js)
-// y viven en charts/ en la raíz del repo; las páginas los importan con `?raw`
-// y este componente los inyecta inline para que escalen con CSS.
+// y viven en charts/ en la raíz del repo; las páginas importan la variante
+// `site` con `?raw` y este componente la inyecta inline. El contenedor se
+// desplaza por su cuenta en pantallas estrechas, sin desbordar la página.
 interface Props {
   svg: string;
   caption: string;
@@ -11,6 +12,8 @@ const { svg, caption } = Astro.props;
 ---
 
 <figure class="chart">
-  <Fragment set:html={svg} />
+  <div class="chart-scroll" role="region" aria-label={caption} tabindex="0">
+    <Fragment set:html={svg} />
+  </div>
   <figcaption>{caption}</figcaption>
 </figure>
