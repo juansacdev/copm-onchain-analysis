@@ -8,8 +8,9 @@
 | :--- | :--- |
 | 📖 **[The story as a website](https://copm.juansac.dev/en/)** | The storytelling version for every audience — bilingual (ES/EN) Astro site, source in [`site/`](./site) |
 | 📊 **[Unified audit (Polygon + Celo)](./docs/AUDIT.md)** | The consolidated, side-by-side view |
-| 🟣 **[Polygon audit](./docs/audit/polygon.md)** | $2.03B moved in 2.7 years |
-| 🟢 **[Celo audit](./docs/audit/celo.md)** | 120,900 payments at a $96 average ticket |
+| 🟣 **[Polygon audit](./docs/audit/polygon.md)** | <!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> moved in <!-- copm:polygon.years -->3.1<!-- /copm --> years |
+| 🟢 **[Celo audit](./docs/audit/celo.md)** | <!-- copm:celo.transfers -->132,944<!-- /copm --> transfers at a <!-- copm:celo.avgTicketUsd -->$98<!-- /copm --> average ticket |
+| 🔔 **[Contract events](./docs/EVENTS.md)** | Which events matter and what each one tells you |
 | 📚 **[Glossary](./docs/GLOSSARY.md)** | Every term, in plain language |
 
 ---
@@ -22,25 +23,26 @@ And here comes the classic problem: almost none of it can be shown. The code bel
 
 But there's one giant exception: **the blockchain is public by definition.** Every mint, every burn, every COPM transfer was recorded on Polygon and Celo, verifiable by anyone, forever. It's not the company's internal information, not its codebase, not its IP — it's the public record of what the system did.
 
-So instead of asking you to take my word for it, I audited it: **317,696 events, ~$2.05 billion dollars in volume, two chains, 24 validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
+So instead of asking you to take my word for it, I audited it: **<!-- copm:combined.transfers -->374,802<!-- /copm --> `Transfer` events, ~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> in volume, two chains, <!-- copm:combined.checksPassed -->34<!-- /copm --> validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
 
 ## The headlines
 
 | Metric | Value |
 | :--- | :--- |
-| Total gross volume (both chains) | **~$2.05B USD** |
-| Audited `Transfer` events | **317,696** |
-| Peak month (Polygon) | **$318.4M USD** (November 2025) |
-| Peak day (Polygon) | **$38.6M USD · 2,597 transactions** (2025-11-24) |
-| Supply turnover (Polygon) | **~35x per month** (~25x faster than USDT/USDC) |
-| Supply reconciliation (Celo) | **Exact: 0.0% deviation** against `totalSupply()` |
-| Validation | **24/24 checks** — including transfer re-verification against the live chain |
+| Total gross volume (both chains) | **~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> USD** |
+| Audited `Transfer` events | **<!-- copm:combined.transfers -->374,802<!-- /copm -->** |
+| Peak month (Polygon) | **<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** (<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->) |
+| Peak volume day (Polygon) | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
+| Busiest day (Polygon) | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transactions** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
+| Supply turnover (Polygon, last 30 days) | **~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm -->x per month** |
+| Supply reconciliation | **Exact on both chains**: minted − burned equals `totalSupply()` to the wei |
+| Validation | **<!-- copm:combined.checksPassed -->34<!-- /copm -->/<!-- copm:combined.checksTotal -->34<!-- /copm --> strict checks** — offline, no tolerance, every balance checked against `balanceOf` |
 
 → The detail, the charts, and the full story live in the **[unified audit](./docs/AUDIT.md)**.
 
 ## In the press
 
-In September 2025, **La República** (Colombia's financial newspaper) covered Minteo's milestone of crossing **US$200 million monthly** in COPM transactions on Polygon: [*"Cómo hacer transacciones con stablecoins"*](https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338) (in Spanish). This audit confirms that milestone with public data — and shows that two months later the system reached **$318.4M** in a single month.
+In September 2025, **La República** (Colombia's financial newspaper) covered Minteo's milestone of crossing **US$200 million monthly** in COPM transactions on Polygon: [*"Cómo hacer transacciones con stablecoins"*](https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338) (in Spanish). This audit confirms that milestone with public data — and shows that two months later the system reached **<!-- copm:polygon.month.2025-11.usd -->$318.4M<!-- /copm -->** in a single month.
 
 ## How it works
 
@@ -55,7 +57,8 @@ holders           → holders snapshot at the checkpoint block, every balance ch
 aggregate         → daily series: volume, mints, burns, derived supply, approvals
 charts            → self-contained SVGs (no canvas, no headless browser)
 charts:combined   → Polygon + Celo charts on shared axes
-validate          → 17 strict rules per chain, offline, no tolerance; exit 1 on any failure
+validate          → strict rules per chain, offline, no tolerance; exit 1 on any failure
+reports           → fills every figure of the Markdown reports from the data files
 ```
 
 Each step is a command of one CLI: `node pipeline/cli.js <command> [--chain polygon|celo] [--fresh]`. `--chain` defaults to the `CHAIN` environment variable, then to `polygon`. The `npm run` scripts below wrap it.
@@ -74,7 +77,7 @@ Public endpoints sit behind load balancers, and a backend that lacks part of the
 
 **What these checks do not prove.** The canary is a filter, not a proof: the items of one batch can be answered by different backends. Reconciliation proves the balance ledger, but a dropped range whose mint, payment and burn cancel out would leave supply and balances intact; only the repeated confirmation of empty ranges guards against that. On an endpoint that fails often, raise `emptyConfirmations`.
 
-**Provenance of the Celo history.** On 2026-10-11 the public Celo endpoint (`forno.celo.org`) returned empty answers for 11 % to 75 % of non-empty ranges and almost never passed the deployment-block canary, so a full-history scan could not finish there. The history up to block 79,856,063 was assembled from the union of seven scans plus the earlier dataset, loaded into this format, and then certified by the same checks: supply equal to `totalSupply()` to the wei and every one of 3,123 balances equal to `balanceOf`. Transfers are covered by that proof; the Celo approval counters are a lower bound. Daily runs continue from that checkpoint, where the canary is recent and the endpoint answers well. `scan --fresh --chain celo` against an archive endpoint rebuilds it from the deploy block.
+**Provenance of the Celo history.** On 2026-10-11 the public Celo endpoint (`forno.celo.org`) returned empty answers for 11 % to 75 % of non-empty ranges and almost never passed the deployment-block canary, so a full-history scan could not finish there. The history up to block 79,856,063 was assembled from the union of seven scans plus the earlier dataset, loaded into this format, and then certified by the same checks: supply equal to `totalSupply()` to the wei and every one of <!-- copm:celo.addressesEverSeen -->3,123<!-- /copm --> balances equal to `balanceOf`. Transfers are covered by that proof; the Celo approval counters are a lower bound. Daily runs continue from that checkpoint, where the canary is recent and the endpoint answers well. `scan --fresh --chain celo` against an archive endpoint rebuilds it from the deploy block.
 
 ### The holders snapshot
 
@@ -88,9 +91,13 @@ Pinned `eth_call`s either error or are right, and the items of a batch can be se
 
 It writes `data/<chain>/holders.csv` (one row per address with a positive balance: `rank,address,balance_copm,share_pct,kind,frozen,received_copm,sent_copm,transfers_in,transfers_out,first_seen,last_seen`) and `data/<chain>/holders.json` (block, supply, holder count, concentration of the top 1/5/10/50, balance buckets, role members, pause state, implementation, top 25).
 
+### The figures in these documents
+
+No number in the reports is typed by hand. A figure is written as `<!-- copm:polygon.transfers -->241,858<!-- /copm -->`, invisible when rendered, and `npm run reports` rewrites its content from `data/<chain>/*` (English or Spanish formatting by file name: `*.es.md` is Spanish). `npm run reports:check` writes nothing and exits 1 if any figure is out of date; `audit:all` ends with `reports`. Keys are built in [`pipeline/domain/report.js`](./pipeline/domain/report.js). Numbers that are not derived from the data (years, addresses, block-explorer links) stay plain text.
+
 ### Validation
 
-`validate` is strict and offline: it reads only the files written by `scan`, `holders` and `aggregate`, so CI can run it on every push. Among its 17 rules: minted − burned equals `totalSupply` to the wei, folding the stored transfers reproduces the checkpoint, no negative balance, `holders.csv` adds up to `totalSupply` at the checkpoint block, partitions are strictly ordered and each row sits in its UTC month, nothing lies above the checkpoint, and `daily.csv` is exactly what the transfers produce. Results go to `data/<chain>/validation.json`.
+`validate` is strict and offline: it reads only the files written by `scan`, `holders` and `aggregate`, so CI can run it on every push. Among its <!-- copm:polygon.checksTotal -->17<!-- /copm --> rules: minted − burned equals `totalSupply` to the wei, folding the stored transfers reproduces the checkpoint, no negative balance, `holders.csv` adds up to `totalSupply` at the checkpoint block, partitions are strictly ordered and each row sits in its UTC month, nothing lies above the checkpoint, and `daily.csv` is exactly what the transfers produce. Results go to `data/<chain>/validation.json`.
 
 Tuning, all optional: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (or the matching `SCAN_*` variables). Defaults are per chain in `pipeline/config/chains.js`. `scan --fresh` discards the chain's scan output and starts over.
 
@@ -104,7 +111,7 @@ npm install
 
 npm run audit:polygon  # Polygon only (~10 min from the deploy block on a paid RPC)
 npm run audit:celo     # Celo only (seconds from the committed checkpoint)
-npm run audit:all      # both + combined charts
+npm run audit:all      # both + combined charts + report figures
 ```
 
 The first `scan` walks the whole history from the deploy block; later runs only scan the blocks added since the checkpoint. Requires Node.js 22+; `npm test` runs the unit tests (no network needed).
@@ -117,6 +124,7 @@ The first `scan` walks the whole history from the deploy block; later runs only 
 │   ├── audit/
 │   │   ├── polygon.md / polygon.es.md  # per-chain audits
 │   │   └── celo.md / celo.es.md
+│   ├── EVENTS.md / EVENTS.es.md        # which contract events matter
 │   └── GLOSSARY.md / GLOSSARY.es.md    # glossary
 ├── pipeline/
 │   ├── cli.js                    # entry point: node pipeline/cli.js <command>
@@ -135,7 +143,7 @@ The first `scan` walks the whole history from the deploy block; later runs only 
 │   ├── daily.csv                 # aggregated daily series
 │   ├── summary.json              # totals, averages, peaks
 │   ├── manifest.json             # static contract metadata
-│   └── validation.json           # the 17 rules' results
+│   └── validation.json           # the strict rules' results
 ├── charts/<chain>/               # 6 SVGs per chain
 ├── charts/combined/              # 4 comparative SVGs
 ├── site/                         # storytelling website (Astro, ES + EN)

@@ -82,6 +82,7 @@ const ROOT = new URL("../../", import.meta.url);
 
 // All pipeline artifacts for a chain live under data/<chain>/ and charts/<chain>/.
 // Callers create the directories they write to (see adapters/store.js).
+export const repoRoot = () => ROOT;
 export const dataDir = (key) => new URL(`data/${key}/`, ROOT);
 export const dataPath = (key, name) => new URL(name, dataDir(key));
 export const chartsDir = (key) => new URL(`charts/${key}/`, ROOT);

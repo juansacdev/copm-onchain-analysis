@@ -9,6 +9,7 @@ test("parses a command with an explicit chain", () => {
     command: "aggregate",
     chain: "celo",
     fresh: false,
+    check: false,
     overrides: {},
   });
 });
@@ -38,8 +39,15 @@ test("accepts every documented command", () => {
     "charts",
     "charts:combined",
     "validate",
+    "reports",
   ]);
   for (const command of COMMANDS) assert.equal(parseArgs([command], {}).command, command);
+});
+
+test("--check is a flag that only the reports command acts on", () => {
+  assert.equal(parseArgs(["reports", "--check"], {}).check, true);
+  assert.equal(parseArgs(["--check", "reports"], {}).check, true);
+  assert.equal(parseArgs(["reports"], {}).check, false);
 });
 
 test("rejects a missing or unknown command, including the removed timestamps step", () => {
@@ -77,6 +85,8 @@ test("usage lists the commands and chains", () => {
   assert.match(text, /charts:combined/);
   assert.match(text, /polygon\|celo/);
   assert.match(text, /--workers/);
+  assert.match(text, /reports/);
+  assert.match(text, /--check/);
   assert.doesNotMatch(text, /timestamps/);
 });
 

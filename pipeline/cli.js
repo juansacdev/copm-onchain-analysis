@@ -11,6 +11,7 @@ const STEPS = {
   charts: "./steps/charts.js",
   "charts:combined": "./steps/combined-charts.js",
   validate: "./steps/validate.js",
+  reports: "./steps/reports.js",
 };
 
 export const COMMANDS = Object.keys(STEPS);
@@ -23,12 +24,13 @@ const TUNING_FLAGS = new Map(SCAN_SETTING_KEYS.map((name) => [`--${kebab(name)}`
 
 export function usage() {
   return [
-    "usage: node pipeline/cli.js <command> [--chain polygon|celo] [--fresh]",
+    "usage: node pipeline/cli.js <command> [--chain polygon|celo] [--fresh] [--check]",
     "",
     `commands: ${COMMANDS.join(", ")}`,
     `chains:   ${CHAIN_KEYS.join(", ")} (default: $CHAIN, then polygon)`,
     "",
     "  --fresh   scan only: discard previous output and start over",
+    "  --check   reports only: write nothing, exit 1 if a figure is out of date",
     "",
     "scan tuning (defaults are per chain; env SCAN_* also works, flags win):",
     `  ${[...TUNING_FLAGS.keys()].join(" <n>  ")} <n>`,
@@ -39,6 +41,7 @@ export function parseArgs(argv, env = process.env) {
   let command;
   let chain;
   let fresh = false;
+  let check = false;
   const overrides = {};
 
   for (let i = 0; i < argv.length; i++) {
@@ -48,6 +51,8 @@ export function parseArgs(argv, env = process.env) {
       if (!chain || chain.startsWith("--")) throw new UsageError("--chain requires a value");
     } else if (arg === "--fresh") {
       fresh = true;
+    } else if (arg === "--check") {
+      check = true;
     } else if (TUNING_FLAGS.has(arg)) {
       const value = argv[++i];
       if (value === undefined || value.startsWith("--")) {
@@ -71,7 +76,7 @@ export function parseArgs(argv, env = process.env) {
     throw new UsageError(`unknown chain "${chain}". valid values: ${CHAIN_KEYS.join(", ")}`);
   }
 
-  return { command, chain, fresh, overrides };
+  return { command, chain, fresh, check, overrides };
 }
 
 export async function main(argv, env = process.env) {
@@ -92,6 +97,7 @@ export async function main(argv, env = process.env) {
     const result = await run({
       chainKey: args.chain,
       fresh: args.fresh,
+      check: args.check,
       overrides: args.overrides,
       env,
     });

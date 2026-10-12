@@ -27,7 +27,11 @@
 | **Turnover / velocity** | How many times the supply moves in a period: `volume ÷ supply`. A velocity of 400x/year means each token changed hands ~400 times a year — the signature of a payment rail, not a store of value. |
 | **Settlement layer / rail** | Infrastructure whose job is moving value between parties, rather than holding it. High velocity + balanced mints/burns is what a settlement rail looks like on-chain. |
 | **On-ramp / off-ramp** | The bridges between fiat money and tokens: pesos → COPM (on-ramp, a mint) and COPM → pesos (off-ramp, a burn). |
-| **Proxy contract** | A contract pattern where the address users interact with delegates its logic to an upgradeable implementation. COPM uses one — relevant when interpreting low-level events. |
+| **Proxy contract** | A contract pattern where the address users interact with delegates its logic to an upgradeable implementation. COPM uses one (ERC-1967, UUPS): every change of implementation emits an `Upgraded` event. |
 | **Decimals (18)** | ERC-20 amounts are stored as integers. With 18 decimals, `1 COPM` is stored as `1000000000000000000`. All values in the raw data are in this unit. |
-| **Block timestamp interpolation** | Instead of querying the timestamp of every one of ~100K+ blocks, we fetch a few hundred samples and linearly interpolate the rest. Max error: seconds — irrelevant for daily aggregates. |
-| **Spot check** | Picking random events from the dataset and re-fetching their transaction receipts live from the chain, verifying that block, log index and amount match. Part of the validation step. |
+| **Block timestamp** | The time a block was produced. Every transfer in the dataset carries the exact timestamp of its block, taken from the log or from the block header, so a day bucket is never an estimate. |
+| **Reconciliation** | Checking that two independent readings of the same fact agree. Here: minted − burned, summed from the events, must equal the contract's `totalSupply()` at the same block, to the wei; and every holder's balance must equal `balanceOf`. |
+| **Checkpoint** | The last block the scan has fully verified. It is written only after reconciliation, so a run that stops halfway resumes from it and anything above it is discarded. |
+| **Canary** | A block whose number of logs is already known, added to every RPC batch. If the endpoint does not return exactly that count, the whole batch is discarded: it is the signal that the backend lacks part of the log index. |
+| **Wei** | The smallest unit of an 18-decimal token: 1 COPM is 10¹⁸ wei. "To the wei" means without any rounding or tolerance. |
+| **Contract event (log)** | A record a contract emits when something happens: a transfer, an approval, a freeze, a role change, an upgrade. [Which ones matter](./EVENTS.md). |
