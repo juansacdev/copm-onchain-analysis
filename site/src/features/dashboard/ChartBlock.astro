@@ -1,6 +1,6 @@
 ---
-// The frame every chart shares: a title that states the question, a one-line
-// reading aid, a legend slot, the plot and a "view as table" twin. The plot
+// The frame every chart shares: a title that states the question, an optional
+// one-line reading aid, a headline-figure slot, a legend slot, the plot and a "view as table" twin. The plot
 // and the table are filled in the browser (charts.js); without JavaScript the
 // block shows a note and, when the chart's figures do not depend on a filter,
 // the table itself in the `fallback` slot.
@@ -10,13 +10,16 @@ interface Props {
   title: string;
   /** The raw template, so the browser can re-resolve it when the bucket changes. */
   titleTemplate: string;
-  aid: string;
+  /** One short line; omitted when the chart reads on its own. */
+  aid?: string;
+  /** Marks the block as the one that holds a headline figure (filled in the browser). */
+  stat?: string;
   noscript: string;
   viewTable: string;
   loading: string;
 }
 
-const { id, title, titleTemplate, aid, noscript, viewTable, loading } = Astro.props;
+const { id, title, titleTemplate, aid, stat, noscript, viewTable, loading } = Astro.props;
 ---
 
 <figure class="dchart" data-chart={id}>
@@ -24,7 +27,8 @@ const { id, title, titleTemplate, aid, noscript, viewTable, loading } = Astro.pr
     <h3 data-title={titleTemplate}>{title}</h3>
     <button type="button" class="btn btn-small" data-toggle hidden>{viewTable}</button>
   </div>
-  <p class="aid">{aid}</p>
+  {aid && <p class="aid">{aid}</p>}
+  {stat && <div class="flow-stats" data-stat={stat}><slot name="stat" /></div>}
   <div class="dchart-legend" data-legend></div>
   <div class="dchart-body" data-plot aria-live="polite"><p class="muted dchart-note" data-loading hidden>{loading}</p></div>
   <div class="dchart-table" data-table hidden></div>

@@ -12,21 +12,21 @@ Si la historia de COPM en [Polygon](./polygon.es.md) es la de un rail institucio
 | :--- | :--- |
 | **Período auditado** | <!-- copm:celo.firstDay -->2024-09-17<!-- /copm --> → <!-- copm:celo.lastDay -->2026-10-10<!-- /copm --> (<!-- copm:celo.totalDays -->754<!-- /copm --> días, ~<!-- copm:celo.years -->2,1<!-- /copm --> años) |
 | **Eventos `Transfer`** | **<!-- copm:celo.transfers -->132.944<!-- /copm -->** |
-| **Volumen bruto movido** | <!-- copm:celo.grossVolumeCopm -->52.116 millones<!-- /copm --> COPM ≈ **<!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm -->** |
-| **Volumen neto** (sin mints/burns) | <!-- copm:celo.netVolumeCopm -->41.971 millones<!-- /copm --> COPM ≈ **<!-- copm:celo.netVolumeUsd -->US$10,5 millones<!-- /copm -->** |
+| **Volumen bruto movido** | <!-- copm:celo.grossVolumeCopm -->52.116 millones<!-- /copm --> COPM ≈ **<!-- copm:celo.grossVolumeUsd -->US$13,4 millones<!-- /copm -->** |
+| **Volumen neto** (sin mints/burns) | <!-- copm:celo.netVolumeCopm -->41.971 millones<!-- /copm --> COPM ≈ **<!-- copm:celo.netVolumeUsd -->US$10,8 millones<!-- /copm -->** |
 | **Total emitido (mints)** | <!-- copm:celo.minted -->5.282 millones<!-- /copm --> COPM ≈ <!-- copm:celo.mintedUsd -->US$1,3 millones<!-- /copm --> |
-| **Total redimido (burns)** | <!-- copm:celo.burned -->4.863 millones<!-- /copm --> COPM ≈ <!-- copm:celo.burnedUsd -->US$1,2 millones<!-- /copm --> |
-| **Ticket promedio por transfer** | **~<!-- copm:celo.avgTicketUsd -->US$98<!-- /copm -->** |
-| **Promedio diario** | <!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> transfers · <!-- copm:celo.avgDailyGrossUsd -->US$17,3 mil<!-- /copm --> |
+| **Total redimido (burns)** | <!-- copm:celo.burned -->4.863 millones<!-- /copm --> COPM ≈ <!-- copm:celo.burnedUsd -->US$1,3 millones<!-- /copm --> |
+| **Ticket promedio por transfer** | **~<!-- copm:celo.avgTicketUsd -->US$101<!-- /copm -->** |
+| **Promedio diario** | <!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> transfers · <!-- copm:celo.avgDailyGrossUsd -->US$17,8 mil<!-- /copm --> |
 | **Pico de transferencias en un día** | **<!-- copm:celo.peakTxCount -->1.919<!-- /copm -->** (<!-- copm:celo.peakTxDay -->2025-01-19<!-- /copm -->) |
-| **Pico de volumen en un día** | **<!-- copm:celo.peakVolumeUsd -->US$737 mil<!-- /copm -->** (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) |
-| **Mes pico (volumen)** | <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->: <!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> |
+| **Pico de volumen en un día** | **<!-- copm:celo.peakVolumeUsd -->US$726 mil<!-- /copm -->** (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) |
+| **Mes pico (volumen)** | <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->: <!-- copm:celo.peakMonthUsd -->US$2,1 millones<!-- /copm --> |
 | **Mes pico (transferencias)** | <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->: <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> |
-| **Pico de supply** | <!-- copm:celo.peakSupplyCopm -->1.145 millones<!-- /copm --> COPM ≈ <!-- copm:celo.peakSupplyUsd -->US$286 mil<!-- /copm --> (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->) |
-| **Supply actual** | <!-- copm:celo.supply -->418.585.134,63<!-- /copm --> COPM ≈ <!-- copm:celo.supplyUsd -->US$105 mil<!-- /copm --> |
+| **Pico de supply** | <!-- copm:celo.peakSupplyCopm -->1.145 millones<!-- /copm --> COPM (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->); en dólares, <!-- copm:celo.peakSupplyUsd -->US$340 mil<!-- /copm --> (<!-- copm:celo.peakSupplyUsdDay -->2026-07-11<!-- /copm -->) |
+| **Supply actual** | <!-- copm:celo.supply -->418.585.134,63<!-- /copm --> COPM ≈ <!-- copm:celo.supplyUsd -->US$131 mil<!-- /copm --> |
 | **Holders con saldo** | <!-- copm:celo.holders -->998<!-- /copm --> (el mayor tiene <!-- copm:celo.top1Pct -->76,2 %<!-- /copm -->, los 10 mayores tienen <!-- copm:celo.top10Pct -->98,8 %<!-- /copm -->) |
 
-> **Tasa de cambio:** 1 USD = <!-- copm:fx.copPerUsd -->4.000<!-- /copm --> COP, constante. Margen de ±5% según el día. Configurable al reproducir.
+> **Tasa de cambio:** Las cifras en USD valoran cada día a la TRM de ese día (la tasa oficial diaria de la Superintendencia Financiera de Colombia, leída de datos.gov.co): la última es <!-- copm:fx.latestRate -->3.194,44<!-- /copm --> COP por USD (<!-- copm:fx.latestDate -->2026-10-12<!-- /copm -->) y se movió entre <!-- copm:fx.minRate -->3.048,12<!-- /copm --> y <!-- copm:fx.maxRate -->4.478,21<!-- /copm --> durante la vida del token.
 
 ¿Algún término no te suena? Está en el [glosario](../GLOSSARY.es.md).
 
@@ -34,9 +34,9 @@ Si la historia de COPM en [Polygon](./polygon.es.md) es la de un rail institucio
 
 ## La historia que cuenta la chain
 
-### Mismo token, otra película: aquí el ticket promedio es de <!-- copm:celo.avgTicketUsd -->US$98<!-- /copm -->.
+### Mismo token, otra película: aquí el ticket promedio es de <!-- copm:celo.avgTicketUsd -->US$101<!-- /copm -->.
 
-En Polygon, el transfer promedio de COPM mueve **~<!-- copm:polygon.avgTicketUsd -->US$8.952<!-- /copm -->**. En Celo mueve **~<!-- copm:celo.avgTicketUsd -->US$98<!-- /copm -->**. Unos dos órdenes de magnitud de diferencia.
+En Polygon, el transfer promedio de COPM mueve **~<!-- copm:polygon.avgTicketUsd -->US$9.368<!-- /copm -->**. En Celo mueve **~<!-- copm:celo.avgTicketUsd -->US$101<!-- /copm -->**. Unos dos órdenes de magnitud de diferencia.
 
 La lectura: Polygon carga el settlement institucional — montos grandes, partners B2B. Celo carga pagos pequeños y frecuentes — el perfil de remesas, micropagos y billeteras de usuario final. Que ambas convivan bajo el mismo token es justamente el diseño multi-chain funcionando: cada red atiende el caso de uso donde es más fuerte.
 
@@ -50,7 +50,7 @@ La explicación es de manual: cuando COPM llegó a Celo, ya existía la operaci�
 
 ### El volumen es chico; la actividad no.
 
-<!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm --> brutos en <!-- copm:celo.years -->2,1<!-- /copm --> años suena pequeño al lado de los <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> de Polygon — y lo es. Pero el dato que sorprende es otro: **el promedio diario de transferencias es del mismo orden en las dos chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/día en Celo vs ~<!-- copm:polygon.avgDailyTransfers -->216<!-- /copm -->/día en Polygon). Celo procesa un flujo constante de operaciones pequeñas: hubo actividad en <!-- copm:celo.activeDays -->688<!-- /copm --> de los <!-- copm:celo.totalDays -->754<!-- /copm --> días auditados (<!-- copm:celo.activeDaysPct -->91 %<!-- /copm -->).
+<!-- copm:celo.grossVolumeUsd -->US$13,4 millones<!-- /copm --> brutos en <!-- copm:celo.years -->2,1<!-- /copm --> años suena pequeño al lado de los <!-- copm:polygon.grossVolumeUsd -->US$2.266 millones<!-- /copm --> de Polygon — y lo es. Pero el dato que sorprende es otro: **el promedio diario de transferencias es del mismo orden en las dos chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/día en Celo vs ~<!-- copm:polygon.avgDailyTransfers -->216<!-- /copm -->/día en Polygon). Celo procesa un flujo constante de operaciones pequeñas: hubo actividad en <!-- copm:celo.activeDays -->688<!-- /copm --> de los <!-- copm:celo.totalDays -->754<!-- /copm --> días auditados (<!-- copm:celo.activeDaysPct -->91 %<!-- /copm -->).
 
 La actividad llega en oleadas, eso sí. Los últimos meses son tranquilos: <!-- copm:celo.month.2026-09.transfers -->448<!-- /copm --> transfers en septiembre de 2026 frente a <!-- copm:celo.month.2026-06.transfers -->9.135<!-- /copm --> en junio de 2026 y <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->.
 
@@ -58,7 +58,7 @@ La actividad llega en oleadas, eso sí. Los últimos meses son tranquilos: <!-- 
 
 ### <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->: el pico de volumen.
 
-**<!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> en un mes**, con el <!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm --> moviendo **<!-- copm:celo.peakVolumeUsd -->US$737 mil<!-- /copm --> en un solo día** — el récord histórico de la chain. A diferencia de Polygon, donde el mes de mayor actividad y el de mayor volumen son <!-- copm:polygon.peakTxMonth -->noviembre 2025<!-- /copm --> y <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->, en Celo los picos van por separado: el de transferencias fue en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->, el de volumen en <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->. Otra señal de que los flujos aquí responden a dinámicas distintas.
+**<!-- copm:celo.peakMonthUsd -->US$2,1 millones<!-- /copm --> en un mes**, con el <!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm --> moviendo **<!-- copm:celo.peakVolumeUsd -->US$726 mil<!-- /copm --> en un solo día** — el récord histórico de la chain. A diferencia de Polygon, donde el mes de mayor actividad y el de mayor volumen son <!-- copm:polygon.peakTxMonth -->noviembre 2025<!-- /copm --> y <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->, en Celo los picos van por separado: el de transferencias fue en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->, el de volumen en <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->. Otra señal de que los flujos aquí responden a dinámicas distintas.
 
 ### El supply cuadra exacto. Al wei.
 
@@ -88,31 +88,31 @@ El `FREEZER_ROLE` puede bloquear una dirección; el contrato emitió <!-- copm:c
 
 | Día | Transfers | Volumen bruto |
 | :--- | ---: | ---: |
-| **<!-- copm:celo.topTx.1.day -->2025-01-19<!-- /copm -->** | **<!-- copm:celo.topTx.1.transfers -->1.919<!-- /copm -->** | <!-- copm:celo.topTx.1.usd -->US$19,9 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.2.day -->2026-08-28<!-- /copm --> | <!-- copm:celo.topTx.2.transfers -->1.572<!-- /copm --> | <!-- copm:celo.topTx.2.usd -->US$67 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.3.day -->2025-02-03<!-- /copm --> | <!-- copm:celo.topTx.3.transfers -->1.461<!-- /copm --> | <!-- copm:celo.topTx.3.usd -->US$18,2 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.4.day -->2025-01-20<!-- /copm --> | <!-- copm:celo.topTx.4.transfers -->1.408<!-- /copm --> | <!-- copm:celo.topTx.4.usd -->US$14,5 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.5.day -->2025-01-27<!-- /copm --> | <!-- copm:celo.topTx.5.transfers -->1.301<!-- /copm --> | <!-- copm:celo.topTx.5.usd -->US$32,1 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.6.day -->2025-02-02<!-- /copm --> | <!-- copm:celo.topTx.6.transfers -->1.249<!-- /copm --> | <!-- copm:celo.topTx.6.usd -->US$12,2 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.7.day -->2024-11-26<!-- /copm --> | <!-- copm:celo.topTx.7.transfers -->1.221<!-- /copm --> | <!-- copm:celo.topTx.7.usd -->US$35,3 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.8.day -->2025-02-04<!-- /copm --> | <!-- copm:celo.topTx.8.transfers -->1.218<!-- /copm --> | <!-- copm:celo.topTx.8.usd -->US$39,3 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.9.day -->2025-01-23<!-- /copm --> | <!-- copm:celo.topTx.9.transfers -->1.106<!-- /copm --> | <!-- copm:celo.topTx.9.usd -->US$7,8 mil<!-- /copm --> |
-| <!-- copm:celo.topTx.10.day -->2026-06-23<!-- /copm --> | <!-- copm:celo.topTx.10.transfers -->1.070<!-- /copm --> | <!-- copm:celo.topTx.10.usd -->US$24,9 mil<!-- /copm --> |
+| **<!-- copm:celo.topTx.1.day -->2025-01-19<!-- /copm -->** | **<!-- copm:celo.topTx.1.transfers -->1.919<!-- /copm -->** | <!-- copm:celo.topTx.1.usd -->US$18,3 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.2.day -->2026-08-28<!-- /copm --> | <!-- copm:celo.topTx.2.transfers -->1.572<!-- /copm --> | <!-- copm:celo.topTx.2.usd -->US$85,3 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.3.day -->2025-02-03<!-- /copm --> | <!-- copm:celo.topTx.3.transfers -->1.461<!-- /copm --> | <!-- copm:celo.topTx.3.usd -->US$17,4 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.4.day -->2025-01-20<!-- /copm --> | <!-- copm:celo.topTx.4.transfers -->1.408<!-- /copm --> | <!-- copm:celo.topTx.4.usd -->US$13,3 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.5.day -->2025-01-27<!-- /copm --> | <!-- copm:celo.topTx.5.transfers -->1.301<!-- /copm --> | <!-- copm:celo.topTx.5.usd -->US$30,6 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.6.day -->2025-02-02<!-- /copm --> | <!-- copm:celo.topTx.6.transfers -->1.249<!-- /copm --> | <!-- copm:celo.topTx.6.usd -->US$11,7 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.7.day -->2024-11-26<!-- /copm --> | <!-- copm:celo.topTx.7.transfers -->1.221<!-- /copm --> | <!-- copm:celo.topTx.7.usd -->US$32,2 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.8.day -->2025-02-04<!-- /copm --> | <!-- copm:celo.topTx.8.transfers -->1.218<!-- /copm --> | <!-- copm:celo.topTx.8.usd -->US$37,5 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.9.day -->2025-01-23<!-- /copm --> | <!-- copm:celo.topTx.9.transfers -->1.106<!-- /copm --> | <!-- copm:celo.topTx.9.usd -->US$7,3 mil<!-- /copm --> |
+| <!-- copm:celo.topTx.10.day -->2026-06-23<!-- /copm --> | <!-- copm:celo.topTx.10.transfers -->1.070<!-- /copm --> | <!-- copm:celo.topTx.10.usd -->US$29,3 mil<!-- /copm --> |
 
 ### Por volumen
 
 | Día | Volumen bruto | Transfers |
 | :--- | ---: | ---: |
-| **<!-- copm:celo.topVol.1.day -->2025-07-23<!-- /copm -->** | **<!-- copm:celo.topVol.1.usd -->US$737 mil<!-- /copm -->** | <!-- copm:celo.topVol.1.transfers -->192<!-- /copm --> |
-| <!-- copm:celo.topVol.2.day -->2026-09-16<!-- /copm --> | <!-- copm:celo.topVol.2.usd -->US$300 mil<!-- /copm --> | <!-- copm:celo.topVol.2.transfers -->43<!-- /copm --> |
-| <!-- copm:celo.topVol.3.day -->2025-07-17<!-- /copm --> | <!-- copm:celo.topVol.3.usd -->US$258 mil<!-- /copm --> | <!-- copm:celo.topVol.3.transfers -->20<!-- /copm --> |
-| <!-- copm:celo.topVol.4.day -->2025-07-24<!-- /copm --> | <!-- copm:celo.topVol.4.usd -->US$235 mil<!-- /copm --> | <!-- copm:celo.topVol.4.transfers -->90<!-- /copm --> |
-| <!-- copm:celo.topVol.5.day -->2024-10-03<!-- /copm --> | <!-- copm:celo.topVol.5.usd -->US$203 mil<!-- /copm --> | <!-- copm:celo.topVol.5.transfers -->8<!-- /copm --> |
-| <!-- copm:celo.topVol.6.day -->2025-07-25<!-- /copm --> | <!-- copm:celo.topVol.6.usd -->US$194 mil<!-- /copm --> | <!-- copm:celo.topVol.6.transfers -->786<!-- /copm --> |
-| <!-- copm:celo.topVol.7.day -->2025-12-19<!-- /copm --> | <!-- copm:celo.topVol.7.usd -->US$176 mil<!-- /copm --> | <!-- copm:celo.topVol.7.transfers -->174<!-- /copm --> |
-| <!-- copm:celo.topVol.8.day -->2024-12-04<!-- /copm --> | <!-- copm:celo.topVol.8.usd -->US$156 mil<!-- /copm --> | <!-- copm:celo.topVol.8.transfers -->229<!-- /copm --> |
-| <!-- copm:celo.topVol.9.day -->2025-07-03<!-- /copm --> | <!-- copm:celo.topVol.9.usd -->US$152 mil<!-- /copm --> | <!-- copm:celo.topVol.9.transfers -->37<!-- /copm --> |
-| <!-- copm:celo.topVol.10.day -->2025-11-13<!-- /copm --> | <!-- copm:celo.topVol.10.usd -->US$149 mil<!-- /copm --> | <!-- copm:celo.topVol.10.transfers -->26<!-- /copm --> |
+| **<!-- copm:celo.topVol.1.day -->2025-07-23<!-- /copm -->** | **<!-- copm:celo.topVol.1.usd -->US$726 mil<!-- /copm -->** | <!-- copm:celo.topVol.1.transfers -->192<!-- /copm --> |
+| <!-- copm:celo.topVol.2.day -->2026-09-16<!-- /copm --> | <!-- copm:celo.topVol.2.usd -->US$387 mil<!-- /copm --> | <!-- copm:celo.topVol.2.transfers -->43<!-- /copm --> |
+| <!-- copm:celo.topVol.3.day -->2025-07-17<!-- /copm --> | <!-- copm:celo.topVol.3.usd -->US$256 mil<!-- /copm --> | <!-- copm:celo.topVol.3.transfers -->20<!-- /copm --> |
+| <!-- copm:celo.topVol.4.day -->2025-07-24<!-- /copm --> | <!-- copm:celo.topVol.4.usd -->US$232 mil<!-- /copm --> | <!-- copm:celo.topVol.4.transfers -->90<!-- /copm --> |
+| <!-- copm:celo.topVol.5.day -->2024-10-03<!-- /copm --> | <!-- copm:celo.topVol.5.usd -->US$193 mil<!-- /copm --> | <!-- copm:celo.topVol.5.transfers -->8<!-- /copm --> |
+| <!-- copm:celo.topVol.6.day -->2025-07-25<!-- /copm --> | <!-- copm:celo.topVol.6.usd -->US$191 mil<!-- /copm --> | <!-- copm:celo.topVol.6.transfers -->786<!-- /copm --> |
+| <!-- copm:celo.topVol.7.day -->2025-12-19<!-- /copm --> | <!-- copm:celo.topVol.7.usd -->US$181 mil<!-- /copm --> | <!-- copm:celo.topVol.7.transfers -->174<!-- /copm --> |
+| <!-- copm:celo.topVol.8.day -->2026-09-10<!-- /copm --> | <!-- copm:celo.topVol.8.usd -->US$161 mil<!-- /copm --> | <!-- copm:celo.topVol.8.transfers -->15<!-- /copm --> |
+| <!-- copm:celo.topVol.9.day -->2025-11-13<!-- /copm --> | <!-- copm:celo.topVol.9.usd -->US$160 mil<!-- /copm --> | <!-- copm:celo.topVol.9.transfers -->26<!-- /copm --> |
+| <!-- copm:celo.topVol.10.day -->2025-07-03<!-- /copm --> | <!-- copm:celo.topVol.10.usd -->US$151 mil<!-- /copm --> | <!-- copm:celo.topVol.10.transfers -->37<!-- /copm --> |
 
 ![Top 10 días por volumen](../../charts/celo/05-top10-volume-days.svg)
 
@@ -120,7 +120,7 @@ El `FREEZER_ROLE` puede bloquear una dirección; el contrato emitió <!-- copm:c
 
 ## Validación
 
-Las mismas <!-- copm:celo.checksTotal -->19<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->19<!-- /copm --> pasaron (validado el <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+Las mismas <!-- copm:celo.checksTotal -->21<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->21<!-- /copm --> pasaron (validado el <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |
@@ -153,7 +153,7 @@ Idéntica a la de [Polygon](./polygon.es.md#metodología) — mismo pipeline, mi
 ## Limitaciones
 
 1. **Solo Celo.** Polygon se audita en [su propia auditoría](./polygon.es.md); la vista consolidada está en la [auditoría unificada](../AUDIT.es.md).
-2. **Tasa fija <!-- copm:fx.copPerUsd -->4.000<!-- /copm --> COP/USD.** Margen de ±5%.
+2. **Las cifras en USD son una estimación.** Igual que en Polygon: 1 COPM se trata como 1 COP y cada día usa su propia TRM.
 3. **Direcciones internas no filtradas.** Igual que en Polygon.
 4. **Procedencia del historial.** El endpoint público de Celo (`forno.celo.org`) responde `eth_getLogs` con arreglos vacíos y sin error para una parte grande de los rangos con eventos, así que el 2026-10-11 un scan del historial completo no pudo terminar ahí. El historial hasta el bloque 79.856.063 se armó con la unión de siete scans más el dataset anterior y se certificó con las mismas verificaciones: oferta igual a `totalSupply()` al wei y cada balance igual a `balanceOf`. Las transferencias quedan cubiertas por esa prueba. Los contadores de approvals (<!-- copm:celo.approvals -->82.623<!-- /copm -->) son una cota inferior. Un scan desde el deploy block contra un endpoint de archivo (`scan --fresh --chain celo`) reconstruye el historial desde cero.
 5. **Las transferencias no son pagos.** Un solo pago puede emitir varias transferencias, así que el ticket promedio es un valor por transfer, no por pago.

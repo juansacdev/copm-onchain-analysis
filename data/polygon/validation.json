@@ -1,7 +1,7 @@
 {
   "chain": "polygon",
   "block": 95378468,
-  "validatedAt": "2026-10-12T03:14:01.832Z",
+  "validatedAt": "2026-10-12T04:27:23.760Z",
   "checks": [
     {
       "id": "event-count",
@@ -74,6 +74,11 @@
       "detail": "block=95373931 checkpoint=95378468 state=122241 daily=122241 spenders=122241"
     },
     {
+      "id": "rates-cover-series",
+      "ok": true,
+      "detail": "days=1118 rates=2023-09-19..2026-10-13 provisional=0"
+    },
+    {
       "id": "daily-matches-ledger",
       "ok": true,
       "detail": "rows=1118 lastSupply=4478360707.754852 ledgerSupply=4478360707754852048213337676 totalSupply=4478360707754852048213337676"
@@ -96,9 +101,14 @@
     {
       "id": "dashboard-matches-ledger",
       "ok": true,
-      "detail": "block=95378468 checkpoint=95378468 sections=14"
+      "detail": "block=95378468 checkpoint=95378468 sections=15"
+    },
+    {
+      "id": "summary-matches-ledger",
+      "ok": true,
+      "detail": "sections=8"
     }
   ],
-  "passed": 19,
+  "passed": 21,
   "failed": 0
 }

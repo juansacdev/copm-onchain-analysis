@@ -4,6 +4,17 @@ import { buildDailySeries, dailyCsv, summarize } from "../../pipeline/domain/agg
 import { buildHolderRows, formatUnits, holdersCsv } from "../../pipeline/domain/holders.js";
 import { createLedger, foldTransfers } from "../../pipeline/domain/ledger.js";
 import { ZERO_ADDRESS } from "../../pipeline/domain/units.js";
+import { createRateTable, parseRatesCsv, ratesCsv } from "../../pipeline/domain/rates.js";
+
+// One rate per day from January 1st to February 10th 2024, different every
+// day so that a rate taken from the wrong day shows.
+export function fixtureRatesText() {
+  const rows = Array.from({ length: 41 }, (_, k) => ({
+    day: new Date(Date.UTC(2024, 0, 1 + k)).toISOString().slice(0, 10),
+    rate: 3900 + k * 10,
+  }));
+  return ratesCsv(rows);
+}
 
 // A small, fully consistent set of pipeline artifacts for the validation
 // rules. Blocks start at celo's real deploy block so the step can run against
@@ -56,14 +67,15 @@ export function fixture() {
     deployTimestamp: new Date(ts(2024, 1, 31, 11) * 1000).toISOString(),
   };
 
-  const { series, totals } = buildDailySeries(transfers, approvals.daily);
+  const ratesText = fixtureRatesText();
+  const rates = createRateTable(parseRatesCsv(ratesText));
+  const { series, totals } = buildDailySeries(transfers, approvals.daily, rates);
   const summary = summarize({
     manifest,
     chainKey: CHAIN_KEY,
     series,
     totals,
     transferEvents: transfers.length,
-    copPerUsd: 4000,
   });
   const csvText = dailyCsv(series);
 
@@ -85,9 +97,9 @@ export function fixture() {
       top: [],
     },
   };
-  const dashboard = buildDashboard({ chainKey: CHAIN_KEY, state, transfers, adminEvents, approvals, holders: holders.json });
+  const dashboard = buildDashboard({ chainKey: CHAIN_KEY, state, transfers, adminEvents, approvals, holders: holders.json, rates });
 
-  return { deployBlock: DEPLOY, manifest, state, partitions, transfers, adminEvents, approvals, csvText, summary, holders, dashboard };
+  return { deployBlock: DEPLOY, manifest, state, partitions, transfers, adminEvents, approvals, csvText, summary, holders, dashboard, ratesText };
 }
 
 // Writes a fixture the way the pipeline steps do, so the validate step can
@@ -99,6 +111,7 @@ export function writeFixture(store, dirUrl, fx) {
   store.writeApprovals(fx.approvals);
   if (fx.holders.csv) store.writeHolders(fx.holders);
   writeText(new URL("daily.csv", dirUrl), fx.csvText);
+  if (fx.ratesText) writeText(new URL("cop-usd.csv", dirUrl), fx.ratesText);
   if (fx.dashboard) writeJson(new URL("dashboard.json", dirUrl), fx.dashboard);
   writeJson(new URL("summary.json", dirUrl), fx.summary, 2);
   writeJson(new URL("manifest.json", dirUrl), fx.manifest, 2);

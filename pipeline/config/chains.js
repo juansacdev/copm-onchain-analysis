@@ -88,7 +88,13 @@ export const dataPath = (key, name) => new URL(name, dataDir(key));
 export const chartsDir = (key) => new URL(`charts/${key}/`, ROOT);
 export const combinedChartsDir = () => new URL("charts/combined/", ROOT);
 
-export const copPerUsd = (env = process.env) => Number(env.COP_PER_USD ?? 4000);
+// The daily COP per USD rates are shared by every chain: data/rates/.
+export const ratesDir = () => new URL("data/rates/", ROOT);
+export const ratesPath = (name) => new URL(name, ratesDir());
+
+// The first day any chain needs a rate: the day COPM was first deployed
+// (Polygon, 2023-09-19). Celo came a year later.
+export const RATES_FROM_DAY = "2023-09-19";
 
 export const ERC20_ABI = [
   {

@@ -2,11 +2,12 @@
 // wrote for one chain. Each rule returns { id, ok, detail }; ids and details
 // are what validation.json records, so keep them stable. There is no
 // tolerance anywhere: amounts are compared to the wei.
-import { buildDailySeries, dailyCsv } from "./aggregate.js";
+import { buildDailySeries, dailyCsv, summarize } from "./aggregate.js";
 import { buildDashboard } from "./dashboard.js";
 import { parseHoldersCsv, formatUnits } from "./holders.js";
 import { createLedger, foldTransfers, negativeBalances } from "./ledger.js";
 import { monthKey } from "./partition.js";
+import { createRateTable, parseRatesCsv } from "./rates.js";
 import { reconcileSupply } from "./reconcile.js";
 
 const check = (id, ok, detail) => ({ id, ok, detail });
@@ -185,14 +186,54 @@ export function checkApprovalsConsistent(approvals, state) {
   );
 }
 
-// daily.csv is a pure function of the transfers and the approval counts, so
-// the file must be byte for byte what they produce now. That also pins its
+// The rates file as a table, or the reason it cannot be used.
+export function loadRatesText(ratesText) {
+  if (typeof ratesText !== "string") return { error: 'missing data/rates/cop-usd.csv: run "rates" first' };
+  try {
+    return { table: createRateTable(parseRatesCsv(ratesText)) };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+// How many trailing days of a series may use the last known rate while their
+// own is not yet published. TRM ranges run a few days ahead; a longer stretch
+// means the rates file stopped being refreshed.
+export const MAX_PROVISIONAL_DAYS = 7;
+
+// Every day of daily.csv needs a rate, rates are positive, the file is ordered
+// and gapless (all enforced by parsing it), and only the trailing days may be
+// provisional. `days` are the days of daily.csv.
+export function checkRatesCoverSeries(rates, days) {
+  if (rates.error) return check("rates-cover-series", false, rates.error);
+  const { table } = rates;
+  if (days.length === 0) return check("rates-cover-series", false, "daily.csv has no days");
+  const first = days[0];
+  const provisional = days.filter((day) => day > table.lastDay).length;
+  const detail = `days=${days.length} rates=${table.firstDay}..${table.lastDay} provisional=${provisional}`;
+  if (first < table.firstDay) {
+    return check("rates-cover-series", false, `${detail}; the series starts on ${first}, before the first rate`);
+  }
+  if (provisional > MAX_PROVISIONAL_DAYS) {
+    return check("rates-cover-series", false, `${detail}; more than ${MAX_PROVISIONAL_DAYS} trailing days are provisional`);
+  }
+  return check("rates-cover-series", true, detail);
+}
+
+// daily.csv is a pure function of the transfers, the approval counts and the
+// rates, so the file must be byte for byte what they produce now. That also pins its
 // supply column to the ledger, and the last row to totalSupply.
-export function checkDailyMatchesLedger({ transfers, approvals, csvText, state }) {
+export function checkDailyMatchesLedger({ transfers, approvals, csvText, state, rates }) {
   if (transfers.some((t) => !t.ts)) {
     return check("daily-matches-ledger", false, "cannot rebuild the daily series: rows without a timestamp");
   }
-  const { series } = buildDailySeries(transfers, approvals.daily);
+  if (rates.error) return check("daily-matches-ledger", false, `cannot rebuild the daily series without usable rates: ${rates.error}`);
+  let series;
+  try {
+    ({ series } = buildDailySeries(transfers, approvals.daily, rates.table));
+  } catch (err) {
+    return check("daily-matches-ledger", false, `cannot rebuild the daily series: ${err.message}`);
+  }
   const expected = dailyCsv(series).split("\n");
   const actual = csvText.trimEnd().split("\n");
 
@@ -252,16 +293,19 @@ export function checkCsvTransferTotal(csvRows, summary) {
 // what those produce now. Rebuilding it pins every figure the page shows (not
 // only the totals) to the ledger the other rules verified, and the page can
 // never show numbers the audit did not check.
-export function checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders }) {
+export function checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders, rates }) {
   if (!dashboard) {
     return check("dashboard-matches-ledger", false, `dashboard.json missing: run "dashboard --chain ${state.chain}"`);
   }
   if (!holders?.json) {
     return check("dashboard-matches-ledger", false, `cannot rebuild the dashboard without holders.json: run "holders --chain ${state.chain}"`);
   }
+  if (rates.error) {
+    return check("dashboard-matches-ledger", false, `cannot rebuild the dashboard without usable rates: ${rates.error}`);
+  }
   let expected;
   try {
-    expected = buildDashboard({ chainKey: state.chain, state, transfers, adminEvents, approvals, holders: holders.json });
+    expected = buildDashboard({ chainKey: state.chain, state, transfers, adminEvents, approvals, holders: holders.json, rates: rates.table });
   } catch (err) {
     return check("dashboard-matches-ledger", false, `cannot rebuild the dashboard: ${err.message}`);
   }
@@ -277,6 +321,27 @@ export function checkDashboardMatchesLedger({ dashboard, state, transfers, admin
   );
 }
 
+// summary.json is a pure function of the manifest, the transfers, the approval
+// counts and the rates, and the report figures read it. Rebuilding it the way
+// `aggregate` does and requiring the stored file to be identical means a hand
+// edit of any total, average, peak or rate note cannot pass `validate`.
+export function checkSummaryMatchesLedger({ summary, manifest, state, transfers, approvals, rates }) {
+  const id = "summary-matches-ledger";
+  if (rates.error) return check(id, false, `cannot rebuild the summary without usable rates: ${rates.error}`);
+  let expected;
+  try {
+    const { series, totals } = buildDailySeries(transfers, approvals.daily, rates.table);
+    expected = summarize({ manifest, chainKey: state.chain, series, totals, transferEvents: transfers.length });
+  } catch (err) {
+    return check(id, false, `cannot rebuild the summary: ${err.message}`);
+  }
+  // The stored file went through JSON, so compare the same way.
+  const wanted = JSON.parse(JSON.stringify(expected));
+  const sections = [...new Set([...Object.keys(wanted), ...Object.keys(summary)])];
+  const wrong = sections.filter((name) => JSON.stringify(wanted[name]) !== JSON.stringify(summary[name]));
+  return check(id, wrong.length === 0, `sections=${sections.length}` + (wrong.length ? `; differs: ${wrong.join(", ")}` : ""));
+}
+
 // Every rule, in report order. `partitions` is [{ key, rows }] in month order.
 export function strictChecks({
   deployBlock,
@@ -289,10 +354,12 @@ export function strictChecks({
   summary,
   holders,
   dashboard,
+  ratesText,
 }) {
   const transfers = partitions.flatMap((p) => p.rows);
   const ledger = foldTransfers(createLedger(), transfers);
   const csvRows = csvText.trim().split("\n").slice(1);
+  const rates = loadRatesText(ratesText);
   return [
     checkEventCount(transfers, state),
     checkSupplyExact(state),
@@ -308,10 +375,12 @@ export function strictChecks({
     checkAdminEventsOrdered(adminEvents, state),
     checkAdminEventsCount(adminEvents, state),
     checkApprovalsConsistent(approvals, state),
-    checkDailyMatchesLedger({ transfers, approvals, csvText, state }),
+    checkRatesCoverSeries(rates, csvRows.map((row) => row.slice(0, 10))),
+    checkDailyMatchesLedger({ transfers, approvals, csvText, state, rates }),
     checkSeriesLength(csvRows, summary),
     checkSeriesContinuous(csvRows),
     checkCsvTransferTotal(csvRows, summary),
-    checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders }),
+    checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders, rates }),
+    checkSummaryMatchesLedger({ summary, manifest, state, transfers, approvals, rates }),
   ];
 }

@@ -173,7 +173,7 @@ export const es = {
         },
         {
           title: "Limitaciones documentadas.",
-          body: "Tasa fija de {copPerUsd} COP/USD (±5 %). El historial de Celo se armó uniendo varios scans, porque el endpoint público no permitió completar uno solo; quedó certificado con las mismas verificaciones. Los detalles están en el README.",
+          body: "Los montos en USD usan la TRM de cada día, la tasa de cambio oficial de la Superintendencia Financiera de Colombia publicada en datos.gov.co; la última es {rateLatest} COP por USD, del {rateLatestDate}. El historial de Celo se armó uniendo varios scans, porque el endpoint público no permitió completar uno solo; quedó certificado con las mismas verificaciones. Los detalles están en el README.",
         },
       ],
       reproComment: "# reproduce todo con tus propios ojos",
@@ -218,6 +218,6 @@ export const es = {
       press: "Nota en La República",
       github: "GitHub — @juansacdev",
     },
-    credit: "Hecho por Juan Sebastián Agudelo (Juanse) · Datos al {asOf}, actualizados a diario · Tasa: 1 USD = {copPerUsd} COP (±5 %)",
+    credit: "Hecho por Juan Sebastián Agudelo (Juanse) · Datos al {asOf}, actualizados a diario · USD a la TRM de cada día (Superintendencia Financiera de Colombia, datos.gov.co): última {rateLatest} COP al {rateLatestDate}",
   },
 };

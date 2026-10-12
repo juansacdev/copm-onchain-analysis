@@ -1,12 +1,14 @@
 // Wires the dashboard in the browser: reads the filter state from the URL
-// hash, re-renders the tiles, the sentences' visibility, the largest-transfers
-// table and the charts whenever a filter changes. The first render is already
+// hash, re-renders the headline cards, the tiles, the largest-transfers tables,
+// the headline figure of the volume block and the charts whenever a filter
+// changes. The first render is already
 // in the HTML (server side); this module only keeps it in step with the
 // filters, using the same pure functions the server used.
-import { RENDERERS, flowTotals, readTokens } from "./charts.js";
+import { RENDERERS, readTokens } from "./charts.js";
+import { headlineCards } from "../../lib/dashboard-cards.js";
 import { DEFAULT_STATE, decodeState, encodeState } from "../../lib/dashboard-filters.js";
-import { amountCompact, amountFull, arrowFor, changeText, tileNotes, utcDateTime } from "../../lib/dashboard-format.js";
-import { granularityFor, largestRows, periodTurnover, selectedChains, tilesFor, viewWindow } from "../../lib/dashboard-view.js";
+import { amountCompact, amountFull, rowAmount, tileDelta, tileNotes, utcDateTime } from "../../lib/dashboard-format.js";
+import { flowStats, granularityFor, largestRows, selectedChains, tilesFor, viewWindow } from "../../lib/dashboard-view.js";
 import { formatDate, formatDecimal, formatInt } from "../../lib/format.js";
 import { middleEllipsis } from "../../lib/links.js";
 import { formatSerialBlock } from "../../lib/serial.js";
@@ -66,7 +68,6 @@ export function mountDashboard(doc) {
   const payload = JSON.parse(payloadNode.textContent);
   const { t } = payload;
   const lang = t.lang;
-  const rate = payload.copPerUsd;
   const tok = readTokens();
 
   let state = decodeState(location.hash) ?? { ...DEFAULT_STATE };
@@ -92,25 +93,34 @@ export function mountDashboard(doc) {
     }
   });
 
-  /* Tiles and sentences ------------------------------------------------------ */
+  /* Cards and tiles ------------------------------------------------------------ */
+  function renderCards() {
+    const list = root.querySelector("[data-cards]");
+    list.replaceChildren();
+    for (const card of headlineCards({ chains: payload.chains, chain: state.chain, t: t.cards, lang })) {
+      const item = el("li", "hcard");
+      item.dataset.card = card.id;
+      item.append(el("p", "v", card.figure), el("p", "k", card.label), el("p", "d", card.support));
+      list.append(item);
+    }
+  }
+
   function renderTiles() {
     const tiles = tilesFor(payload.chains, state);
-    const delta = (change, key) => {
-      const text = changeText(change, lang);
-      if (text === null) return t.tiles.noBase;
-      return `${arrowFor(change)} ${interpolate(t.tiles[key], { change: text, n: tiles.window.days ?? "" })}`;
-    };
+    const delta = (change, key) => tileDelta(change, key, { t: t.tiles, lang, days: tiles.window.days });
     const notes = tileNotes({ tiles, t, lang });
     const set = (id, value, delta) => {
       const tile = root.querySelector(`[data-tile="${id}"]`);
       tile.querySelector("[data-v]").textContent = value;
-      tile.querySelector("[data-d]").textContent = delta;
+      const line = tile.querySelector("[data-d]");
+      line.textContent = delta;
+      line.hidden = delta === "";
       const note = tile.querySelector("[data-n]");
       note.textContent = notes[id];
       note.hidden = notes[id] === "";
     };
-    set("supply", amountCompact(tiles.supply.value, state.unit, lang, rate), delta(tiles.supply.changePct, "vsStart"));
-    set("volume", amountCompact(tiles.volume.current, state.unit, lang, rate), delta(tiles.volume.changePct, "vsPeriod"));
+    set("supply", amountCompact(tiles.supply.value, state.unit, lang), delta(tiles.supply.changePct, "vsStart"));
+    set("volume", amountCompact(tiles.volume.current, state.unit, lang), delta(tiles.volume.changePct, "vsPeriod"));
     set("transfers", formatInt(tiles.transfers.current, lang), delta(tiles.transfers.changePct, "vsPeriod"));
     set("holders", formatInt(tiles.holders, lang), "");
     const serial = tiles.blocks.map((b) => `${b.chain === "polygon" ? "POL" : "CELO"} ${formatSerialBlock(b.block)}`).join(" · ");
@@ -125,16 +135,22 @@ export function mountDashboard(doc) {
     for (const node of root.querySelectorAll("[data-chains]")) {
       node.hidden = !(state.chain === "both" || node.dataset.chains === state.chain);
     }
-    for (const node of root.querySelectorAll("[data-show]")) {
-      node.hidden = !node.dataset.show.split(" ").includes(state.chain);
-    }
   }
 
   function renderLargest() {
-    const table = root.querySelector("[data-largest] tbody");
+    const VISIBLE = 5;
     const rows = largestRows(payload.chains, state);
+    fillLargest(root.querySelector('[data-largest="head"] tbody'), rows.slice(0, VISIBLE), true);
+    fillLargest(root.querySelector('[data-largest="rest"] tbody'), rows.slice(VISIBLE), false);
+    const more = root.querySelector("[data-largest-more]");
+    more.hidden = rows.length <= VISIBLE;
+    root.querySelector("[data-largest-summary]").textContent = interpolate(t.who.largestMore, { count: Math.max(0, rows.length - VISIBLE) });
+  }
+
+  function fillLargest(table, rows, announceEmpty) {
     table.replaceChildren();
     if (rows.length === 0) {
+      if (!announceEmpty) return;
       const tr = el("tr");
       const td = el("td", "", t.who.largestEmpty);
       td.colSpan = 7;
@@ -158,7 +174,7 @@ export function mountDashboard(doc) {
         day,
         el("td", "", payload.chains[r.chain].label),
         el("td", "", t.columns.kindValue[r.kind]),
-        el("td", "num", amountFull(r.amount, state.unit, lang, rate)),
+        el("td", "num", amountFull(rowAmount(r, state.unit), state.unit, lang)),
         addr(r.from),
         addr(r.to),
         tx,
@@ -167,20 +183,18 @@ export function mountDashboard(doc) {
     }
   }
 
-  function renderTurnover() {
-    const line = root.querySelector("[data-turnover]");
-    const parts = [];
-    const ctx = { payload, state };
-    const chains = selectedChains(payload.chains, state);
-    for (const chain of chains) {
-      const totals = flowTotals(ctx, chain);
-      const turnover = totals.has ? periodTurnover(totals) : null;
-      if (turnover === null) continue;
-      const sentence = interpolate(t.charts.flows.turnover, { turnover: formatDecimal(turnover, 1, lang) });
-      parts.push(chains.length > 1 ? `${chain.label}: ${sentence}` : sentence);
+  // The headline figure of the volume block: how many times each minted peso
+  // is counted in the gross volume of the period, per chain in view. It is a
+  // ratio of COPM, so it does not change with the unit.
+  function renderFlowStats() {
+    const box = root.querySelector('[data-stat="flows"]');
+    box.replaceChildren();
+    for (const stat of flowStats(payload.chains, state)) {
+      if (stat.turnover === null) continue;
+      const line = el("p", "flow-stat");
+      line.append(el("strong", "", `${formatDecimal(stat.turnover, 1, lang)}×`), document.createTextNode(" "), el("span", "", `${t.charts.flows.turnover} · ${stat.label}`));
+      box.append(line);
     }
-    line.textContent = parts.join(" ");
-    line.hidden = parts.length === 0;
   }
 
   /* Charts ------------------------------------------------------------------- */
@@ -198,7 +212,7 @@ export function mountDashboard(doc) {
       const width = Math.max(300, Math.floor(body.clientWidth || figure.clientWidth - 32));
       let out;
       try {
-        out = noData ? { nodes: [], legend: [], table: { columns: [], rows: [] } } : RENDERERS[id]({ payload, state, t, lang, rate, tok, width: 0 }, columnsWidth(width, id));
+        out = noData ? { nodes: [], legend: [], table: { columns: [], rows: [] } } : RENDERERS[id]({ payload, state, t, lang, tok, width: 0 }, columnsWidth(width, id));
       } catch (error) {
         console.error(`dashboard chart ${id}`, error);
         body.replaceChildren(el("p", "muted dchart-note", t.chartUi.error));
@@ -228,7 +242,7 @@ export function mountDashboard(doc) {
 
   // Small multiples sit side by side when there is room: each gets half.
   function columnsWidth(width, id) {
-    const sideBySide = ["supply", "mintBurn", "flows", "volume", "calendar", "daily", "holders"].includes(id);
+    const sideBySide = ["supply", "mintBurn", "volume", "calendar", "daily"].includes(id);
     const count = selectedChains(payload.chains, state).length;
     if (!sideBySide || count < 2 || width < 760) return width;
     return Math.floor((width - 16) / 2);
@@ -252,11 +266,12 @@ export function mountDashboard(doc) {
     }
     const token = encodeState(state);
     for (const a of doc.querySelectorAll(".langswitch a")) a.hash = token;
+    renderCards();
     renderTiles();
     renderVisibility();
     renderLargest();
     renderCharts();
-    renderTurnover();
+    renderFlowStats();
   }
 
   let resizeTimer;

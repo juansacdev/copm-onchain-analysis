@@ -8,8 +8,8 @@
 | :--- | :--- |
 | 📖 **[The dashboard and the story](https://copm.juansac.dev/en/)** | The site is bilingual (ES/EN), Astro, source in [`site/`](./site): the dashboard of verified figures lives at `/en/` (`/` in Spanish) and the long-form analysis at `/en/analysis/` (`/analisis/`) |
 | 📊 **[Unified audit (Polygon + Celo)](./docs/AUDIT.md)** | The consolidated, side-by-side view |
-| 🟣 **[Polygon audit](./docs/audit/polygon.md)** | <!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> moved in <!-- copm:polygon.years -->3.1<!-- /copm --> years |
-| 🟢 **[Celo audit](./docs/audit/celo.md)** | <!-- copm:celo.transfers -->132,944<!-- /copm --> transfers at a <!-- copm:celo.avgTicketUsd -->$98<!-- /copm --> average ticket |
+| 🟣 **[Polygon audit](./docs/audit/polygon.md)** | <!-- copm:polygon.grossVolumeUsd -->$2.27B<!-- /copm --> moved in <!-- copm:polygon.years -->3.1<!-- /copm --> years |
+| 🟢 **[Celo audit](./docs/audit/celo.md)** | <!-- copm:celo.transfers -->132,944<!-- /copm --> transfers at a <!-- copm:celo.avgTicketUsd -->$101<!-- /copm --> average ticket |
 | 🔔 **[Contract events](./docs/EVENTS.md)** | Which events matter and what each one tells you |
 | 📚 **[Glossary](./docs/GLOSSARY.md)** | Every term, in plain language |
 
@@ -23,26 +23,26 @@ And here comes the classic problem: almost none of it can be shown. The code bel
 
 But there's one giant exception: **the blockchain is public by definition.** Every mint, every burn, every COPM transfer was recorded on Polygon and Celo, verifiable by anyone, forever. It's not the company's internal information, not its codebase, not its IP — it's the public record of what the system did.
 
-So instead of asking you to take my word for it, I audited it: **<!-- copm:combined.transfers -->374,820<!-- /copm --> `Transfer` events, ~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> in volume, two chains, <!-- copm:combined.checksPassed -->38<!-- /copm --> validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
+So instead of asking you to take my word for it, I audited it: **<!-- copm:combined.transfers -->374,820<!-- /copm --> `Transfer` events, ~<!-- copm:combined.grossVolumeUsd -->$2.28B<!-- /copm --> in volume, two chains, <!-- copm:combined.checksPassed -->42<!-- /copm --> validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
 
 ## The headlines
 
 | Metric | Value |
 | :--- | :--- |
-| Total gross volume (both chains) | **~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> USD** |
+| Total gross volume (both chains) | **~<!-- copm:combined.grossVolumeUsd -->$2.28B<!-- /copm --> USD** |
 | Audited `Transfer` events | **<!-- copm:combined.transfers -->374,820<!-- /copm -->** |
-| Peak month (Polygon) | **<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** (<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->) |
-| Peak volume day (Polygon) | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
+| Peak month (Polygon) | **<!-- copm:polygon.peakMonthUsd -->$337.1M<!-- /copm --> USD** (<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->) |
+| Peak volume day (Polygon) | **<!-- copm:polygon.peakVolumeUsd -->$40.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | Busiest day (Polygon) | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transfers** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | Supply turnover (Polygon, last 30 days) | **~<!-- copm:polygon.turnoverMonthly -->13.8<!-- /copm -->x per month** |
 | Supply reconciliation | **Exact on both chains**: minted − burned equals `totalSupply()` to the wei |
-| Validation | **<!-- copm:combined.checksPassed -->38<!-- /copm -->/<!-- copm:combined.checksTotal -->38<!-- /copm --> strict checks** — offline, no tolerance, every balance checked against `balanceOf` |
+| Validation | **<!-- copm:combined.checksPassed -->42<!-- /copm -->/<!-- copm:combined.checksTotal -->42<!-- /copm --> strict checks** — offline, no tolerance, every balance checked against `balanceOf` |
 
 → The detail, the charts, and the full story live in the **[unified audit](./docs/AUDIT.md)**.
 
 ## In the press
 
-In September 2025, **La República** (Colombia's financial newspaper) covered Minteo's milestone of crossing **US$200 million monthly** in COPM transactions on Polygon: [*"Cómo hacer transacciones con stablecoins"*](https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338) (in Spanish). This audit confirms that milestone with public data — and shows that two months later the system reached **<!-- copm:polygon.month.2025-11.usd -->$318.4M<!-- /copm -->** in a single month.
+In September 2025, **La República** (Colombia's financial newspaper) covered Minteo's milestone of crossing **US$200 million monthly** in COPM transactions on Polygon: [*"Cómo hacer transacciones con stablecoins"*](https://www.larepublica.co/finanzas/como-hacer-transacciones-con-stablecoins-4221338) (in Spanish). This audit confirms that milestone with public data — and shows that two months later the system reached **<!-- copm:polygon.month.2025-11.usd -->$337.1M<!-- /copm -->** in a single month.
 
 ## How it works
 
@@ -54,7 +54,10 @@ scan              → verified incremental scan of every contract event (eth_get
                      parallel workers); resumes from the last checkpoint
 holders           → holders snapshot at the checkpoint block, every balance checked
                      against balanceOf (holders.csv, holders.json)
-aggregate         → daily series: volume, mints, burns, derived supply, approvals
+rates             → the TRM of every day (data/rates/cop-usd.csv), once for both chains;
+                     no --chain
+aggregate         → daily series: volume, mints, burns, derived supply, approvals,
+                     and every USD amount at the rate of its own day
 dashboard         → the one compact file the site reads (dashboard.json), derived from
                      the transfers, admin events and holders snapshot; deterministic
 charts            → self-contained SVGs (no canvas, no headless browser)
@@ -65,7 +68,9 @@ reports           → fills every figure of the Markdown reports from the data f
 
 Each step is a command of one CLI: `node pipeline/cli.js <command> [--chain polygon|celo] [--fresh]`. `--chain` defaults to the `CHAIN` environment variable, then to `polygon`. The `npm run` scripts below wrap it.
 
-**The only source is an RPC endpoint.** No indexers, no third-party APIs, no block explorers. Works with a paid RPC (faster) or a public one (free; the scanner retries and cross-checks its answers).
+**The only source of chain data is an RPC endpoint.** No indexers, no third-party APIs, no block explorers. Works with a paid RPC (faster) or a public one (free; the scanner retries and cross-checks its answers).
+
+**USD figures use the TRM of each day.** The TRM (Tasa Representativa del Mercado) is the official daily rate certified by the Superintendencia Financiera de Colombia and published as open data on [datos.gov.co](https://www.datos.gov.co/resource/32sa-8pi3.json) (dataset `32sa-8pi3`, no key). `rates` expands its validity ranges into `data/rates/cop-usd.csv` (`day,cop_per_usd`, one row per UTC day, ascending, no gaps) and `data/rates/source.json` (dataset, first and last day, number of ranges; no clock, so a run with no new data changes nothing). 1 COPM is treated as 1 COP, so each day's USD amount is its COPM divided by its own rate, and every USD total is a sum of daily amounts. **Day convention:** transfers are grouped by UTC day, and each UTC day takes the TRM whose Colombian calendar validity range contains that same date. A transfer at 23:30 Colombia time is 04:30 UTC of the next day and so takes the next day's rate: a shift of up to five hours. A day later than the last published range uses the last known rate and is provisional until its own is published. Published rates never change, so the committed file only grows: if the portal is down, answers nothing or answers fewer days than the file holds, and the file already covers the series, `rates` warns and the job goes on; a gap, a conflicting overlap, or a published day whose rate differs from the committed one is an error. Both files are written atomically, the CSV first.
 
 ### Why the scan can be trusted
 
@@ -100,7 +105,7 @@ No number in the reports is typed by hand. A figure is written as `<!-- copm:pol
 
 ### Validation
 
-`validate` is strict and offline: it reads only the files written by `scan`, `holders`, `aggregate` and `dashboard`, so CI can run it on every push. Among its <!-- copm:polygon.checksTotal -->19<!-- /copm --> rules: minted − burned equals `totalSupply` to the wei, folding the stored transfers reproduces the checkpoint, no negative balance, `holders.csv` adds up to `totalSupply` at the checkpoint block, partitions are strictly ordered and each row sits in its UTC month, nothing lies above the checkpoint, the approval counters in `state.json`, `approvals.daily` and `approvals.spenders` agree, `daily.csv` is exactly what the transfers produce, and `dashboard.json` is exactly what is recomputed from the transfers, the admin events, the approval counts and the holders snapshot. Results go to `data/<chain>/validation.json`.
+`validate` is strict and offline: it reads only the files written by `scan`, `holders`, `rates`, `aggregate` and `dashboard`, so CI can run it on every push. Among its <!-- copm:polygon.checksTotal -->21<!-- /copm --> rules: minted − burned equals `totalSupply` to the wei, folding the stored transfers reproduces the checkpoint, no negative balance, `holders.csv` adds up to `totalSupply` at the checkpoint block, partitions are strictly ordered and each row sits in its UTC month, nothing lies above the checkpoint, the approval counters in `state.json`, `approvals.daily` and `approvals.spenders` agree, the rates cover every day of the series (positive, ordered, gapless, at most a week of provisional days), `daily.csv` is exactly what the transfers and the rates produce, and `dashboard.json` is exactly what is recomputed from the transfers, the admin events, the approval counts, the holders snapshot and the rates, and `summary.json` is exactly what is recomputed from the transfers, the approval counts and the rates. Results go to `data/<chain>/validation.json`.
 
 Tuning, all optional: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (or the matching `SCAN_*` variables). Defaults are per chain in `pipeline/config/chains.js`. `scan --fresh` discards the chain's scan output and starts over.
 
@@ -112,6 +117,7 @@ cd copm-onchain-analysis
 cp .env.example .env   # configure your RPCs (the public Celo one is preset)
 npm install
 
+npm run rates          # the daily exchange rate (network: datos.gov.co)
 npm run audit:polygon  # Polygon only (~10 min from the deploy block on a paid RPC)
 npm run audit:celo     # Celo only (seconds from the committed checkpoint)
 npm run audit:all      # both + combined charts + report figures
@@ -123,7 +129,7 @@ The first `scan` walks the whole history from the deploy block; later runs only 
 
 Two GitHub Actions workflows keep the data current and checked:
 
-- **`.github/workflows/daily-scan.yml`** runs every day at 09:17 UTC (04:17 in Colombia) and on demand. For each chain it runs `scan`, `holders`, `aggregate`, `dashboard` and `validate`, then commits `data/`. The scan only covers the blocks added since the committed checkpoint, so a run takes a couple of minutes. If supply does not reconcile, a balance differs from `balanceOf`, or any validation rule fails, the job fails and commits nothing.
+- **`.github/workflows/daily-scan.yml`** runs every day at 09:17 UTC (04:17 in Colombia) and on demand. It first runs `rates` once, then for each chain `scan`, `holders`, `aggregate`, `dashboard` and `validate`, and commits `data/`. The scan only covers the blocks added since the committed checkpoint, so a run takes a couple of minutes. If supply does not reconcile, a balance differs from `balanceOf`, or any validation rule fails, the job fails and commits nothing.
 - **`.github/workflows/ci.yml`** runs on every pull request and on pushes to `main` made by people: unit tests, the strict validation of the committed data, and the site build. It needs no RPC endpoint. Pushes made with the repository token do not trigger other workflows, so the daily data commits are not checked by `ci.yml`; the daily job checks them itself before committing, with the unit tests and the strict validation.
 
 Charts and the figures in these documents are regenerated on the first day of each month (or when the workflow is started by hand with `month_close`), so the reports are a coherent monthly cut while the data and the dashboard move daily.
@@ -173,13 +179,16 @@ Every route ends with a slash (`/`, `/analisis/`, `/en/`, `/en/analysis/`), matc
 │   ├── steps/                    # one module per command
 │   └── charts/                   # SVG chart library
 ├── tests/                        # node --test, no extra dependencies
+├── data/rates/                   # the TRM, shared by both chains
+│   ├── cop-usd.csv               # day,cop_per_usd: one rate per UTC day
+│   └── source.json               # dataset, URL, first and last day, number of ranges
 ├── data/<chain>/                 # raw + derived data per chain
 │   ├── transfers/YYYY-MM.jsonl   # every Transfer event, one file per UTC month
 │   ├── admin-events.jsonl        # upgrades, roles, pauses, freezes
 │   ├── approvals.json            # Approval counts per day and per spender
 │   ├── state.json                # scan checkpoint (written only after reconciliation)
 │   ├── holders.csv / holders.json # holders snapshot at the checkpoint block
-│   ├── daily.csv                 # aggregated daily series
+│   ├── daily.csv                 # aggregated daily series (COPM, then the day's rate and USD amounts)
 │   ├── dashboard.json            # everything the dashboard shows, one file per chain
 │   ├── summary.json              # totals, averages, peaks
 │   ├── manifest.json             # static contract metadata

@@ -1,0 +1,36 @@
+---
+// A grid of stat cards: a short label, one figure, and one supporting line.
+// Each card belongs to a chain; the browser hides the cards of the chain the
+// filter leaves out (data-chains), so the figures stay in the HTML without it.
+import { explorerAddressUrl, middleEllipsis } from '../../lib/links.js';
+
+interface Item {
+  chain: string;
+  label: string;
+  figure: string;
+  support: string;
+  /** Addresses that complete the supporting line, linked to the explorer. */
+  addresses?: string[];
+}
+interface Props {
+  items: Item[];
+  chainLabel: Record<string, string>;
+  name: string;
+  /** Extra grid class: "quad" for four cards per chain. */
+  cls?: string;
+}
+const { items, chainLabel, name, cls = '' } = Astro.props;
+---
+
+<ul class={`cardgrid ${cls}`} aria-label={name}>
+  {items.map((item) => (
+    <li class="scard" data-chains={item.chain}>
+      <p class="v">{item.figure}</p>
+      <p class="k"><span class={`dot ${item.chain}`} aria-hidden="true"></span><span>{item.label} · {chainLabel[item.chain]}</span></p>
+      <p class="d">
+        {item.support}
+        {(item.addresses ?? []).map((a) => <a class="addr" href={explorerAddressUrl(item.chain, a)} title={a} target="_blank" rel="noopener noreferrer">{middleEllipsis(a, 6, 4)}</a>)}
+      </p>
+    </li>
+  ))}
+</ul>

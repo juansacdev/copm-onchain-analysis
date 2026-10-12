@@ -1,12 +1,13 @@
 // Strict, offline validation of every artifact the pipeline wrote for a chain.
 //
 // It reads only local files (the scan's partitions and checkpoint, the holders
-// snapshot, daily.csv, summary.json, manifest.json) and needs no network, so
+// snapshot, daily.csv, summary.json, manifest.json, and the shared
+// data/rates/cop-usd.csv) and needs no network, so
 // CI can run it on every push. There is no tolerance: any single failing rule
 // makes the exit code 1. The rules live in domain/validation.js; this step
 // loads the files, prints the verdicts and writes validation.json.
 import { existsSync } from "node:fs";
-import { getChain, dataDir } from "../config/chains.js";
+import { getChain, dataDir, ratesPath } from "../config/chains.js";
 import { createStore, readJson, readText, writeJson } from "../adapters/store.js";
 import { strictChecks } from "../domain/validation.js";
 
@@ -20,6 +21,7 @@ export function validateChain({
   chainKey,
   dir,
   deployBlock,
+  ratesUrl,
   log = console.log,
   clock = () => new Date(),
 }) {
@@ -39,6 +41,8 @@ export function validateChain({
     adminEvents: store.readAdminEvents(),
     approvals: store.readApprovals(),
     csvText: readRequired(dir, "daily.csv", "aggregate", chainKey, readText),
+    // A missing file is a failing rule (rates-cover-series), not a crash.
+    ratesText: ratesUrl && existsSync(ratesUrl) ? readText(ratesUrl) : null,
     summary: readRequired(dir, "summary.json", "aggregate", chainKey, readJson),
     holders: store.readHolders(),
     // A missing file is a failing rule, not a crash: validate still reports.
@@ -73,5 +77,6 @@ export async function run({ chainKey }) {
     chainKey,
     dir: dataDir(chainKey),
     deployBlock: getChain(chainKey).deployBlock,
+    ratesUrl: ratesPath("cop-usd.csv"),
   });
 }

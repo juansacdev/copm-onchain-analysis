@@ -7,6 +7,8 @@ import { validateChain } from "../pipeline/steps/validate.js";
 import { writeDashboard } from "../pipeline/steps/dashboard.js";
 import { writeJson, writeText } from "../pipeline/adapters/store.js";
 import { CHAIN_KEY, DEPLOY, fixture, writeFixture } from "./helpers/validation-fixture.js";
+import { flatRates } from "./helpers/rates.js";
+import { ratesCsv } from "../pipeline/domain/rates.js";
 import { CHAIN, DEPLOY as SCAN_DEPLOY, SETTINGS, scannedDataset, tempStore } from "./helpers/dataset.js";
 
 const validate = (dir, extra = {}) =>
@@ -14,6 +16,7 @@ const validate = (dir, extra = {}) =>
     chainKey: CHAIN_KEY,
     dir,
     deployBlock: DEPLOY,
+    ratesUrl: new URL("cop-usd.csv", dir),
     log: () => {},
     clock: () => new Date("2026-01-01T00:00:00.000Z"),
     ...extra,
@@ -106,13 +109,21 @@ test("scan, holders, aggregate and dashboard output validate end to end", async 
     deployBlock: String(SCAN_DEPLOY),
     deployTimestamp: new Date((state.lastBlockTime - 86_400) * 1000).toISOString(),
   };
-  const { summary, csv } = buildAggregate({ store: dataset.store, manifest, chainKey: CHAIN.key, copPerUsd: 4000 });
+  const rates = flatRates(4000);
+  writeText(new URL("cop-usd.csv", dataset.url), ratesCsv(rates.rows));
+  const { summary, csv } = buildAggregate({ store: dataset.store, manifest, chainKey: CHAIN.key, rates });
   writeJson(new URL("summary.json", dataset.url), summary, 2);
   writeText(new URL("daily.csv", dataset.url), csv);
   writeJson(new URL("manifest.json", dataset.url), manifest, 2);
-  writeDashboard({ store: dataset.store, dirUrl: dataset.url, chainKey: CHAIN.key, log: () => {} });
+  writeDashboard({ store: dataset.store, dirUrl: dataset.url, chainKey: CHAIN.key, rates, log: () => {} });
 
-  const result = validateChain({ chainKey: CHAIN.key, dir: dataset.url, deployBlock: SCAN_DEPLOY, log: () => {} });
+  const result = validateChain({
+    chainKey: CHAIN.key,
+    dir: dataset.url,
+    deployBlock: SCAN_DEPLOY,
+    ratesUrl: new URL("cop-usd.csv", dataset.url),
+    log: () => {},
+  });
   const failed = report(dataset.url).checks.filter((c) => !c.ok);
   assert.deepEqual(failed, []);
   assert.equal(result.exitCode, 0);
@@ -142,4 +153,12 @@ test("a changed result is written with the time of the new run", () => {
   writeJson(new URL("state.json", url), { ...fx.state, totalSupply: (BigInt(fx.state.totalSupply) + 1n).toString() }, 2);
   validate(url, { clock: () => new Date("2026-02-02T00:00:00.000Z") });
   assert.equal(report(url).validatedAt, "2026-02-02T00:00:00.000Z");
+});
+
+test("a missing rates file fails the rates rule and the three rebuilds instead of crashing the step", () => {
+  const { url, store } = tempStore();
+  writeFixture(store, url, { ...fixture(), ratesText: null });
+  assert.equal(validate(url).exitCode, 1);
+  const failed = report(url).checks.filter((c) => !c.ok).map((c) => c.id);
+  assert.deepEqual(failed, ["rates-cover-series", "daily-matches-ledger", "dashboard-matches-ledger", "summary-matches-ledger"]);
 });

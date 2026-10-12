@@ -1,7 +1,7 @@
 // Combined charts: COPM across Polygon + Celo on the same axes.
 // Reads data/polygon/ and data/celo/ directly — run after both pipelines.
 import { writeFileSync } from "node:fs";
-import { combinedChartsDir, copPerUsd, dataPath } from "../config/chains.js";
+import { combinedChartsDir, dataPath } from "../config/chains.js";
 import { ensureDir, readJson, readText } from "../adapters/store.js";
 import {
   CHAIN_PALETTES,
@@ -22,8 +22,7 @@ function load(chain) {
   };
 }
 
-export async function run({ env = process.env } = {}) {
-  const COP_PER_USD = copPerUsd(env);
+export async function run() {
   const OUT_DIR = combinedChartsDir();
   const polygon = load("polygon");
   const celo = load("celo");
@@ -41,8 +40,8 @@ export async function run({ env = process.env } = {}) {
   const cByMonth = new Map(cMonthly.map((m) => [m.month, m]));
   const monthly = monthSet.map((month) => ({
     label: month,
-    polygon: (pByMonth.get(month)?.gross ?? 0) / COP_PER_USD,
-    celo: (cByMonth.get(month)?.gross ?? 0) / COP_PER_USD,
+    polygon: pByMonth.get(month)?.grossUSD ?? 0,
+    celo: cByMonth.get(month)?.grossUSD ?? 0,
     polygonTx: pByMonth.get(month)?.transfers ?? 0,
     celoTx: cByMonth.get(month)?.transfers ?? 0,
   }));
@@ -78,7 +77,7 @@ export async function run({ env = process.env } = {}) {
       "01-monthly-volume-by-chain",
       groupedBarChart({
         title: "COPM — Monthly Gross Volume by Chain (USD)",
-        subtitle: `1 USD = ${COP_PER_USD} COP · ${monthSet[0]} → ${monthSet.at(-1)}`,
+        subtitle: `Each day at its own TRM · ${monthSet[0]} → ${monthSet.at(-1)}`,
         badge,
         badgeColor,
         footer,
@@ -111,8 +110,8 @@ export async function run({ env = process.env } = {}) {
         badgeColor,
         footer,
         series: [
-          { label: "Polygon", color: CHAIN_PALETTES.polygon.primary, data: cumulative(polygon.rows, COP_PER_USD) },
-          { label: "Celo", color: CHAIN_PALETTES.celo.primary, data: cumulative(celo.rows, COP_PER_USD) },
+          { label: "Polygon", color: CHAIN_PALETTES.polygon.primary, data: cumulative(polygon.rows) },
+          { label: "Celo", color: CHAIN_PALETTES.celo.primary, data: cumulative(celo.rows) },
         ],
         yFormatter: fmtUSD,
       })
@@ -144,10 +143,10 @@ export async function run({ env = process.env } = {}) {
   }
 }
 
-function cumulative(rows, copPerUsdRate) {
+function cumulative(rows) {
   let acc = 0;
   return rows.map((r) => {
-    acc += r.grossCOPM / copPerUsdRate;
+    acc += r.grossUSD;
     return { day: r.day, value: acc };
   });
 }

@@ -6,11 +6,19 @@
 // `chains` is { polygon, celo }, each a (trimmed) dashboard.json. Plain JS, no
 // DOM and no Astro imports.
 import { addDays, compareWindows, windowSum } from "../../../pipeline/domain/dashboard.js";
+import { cents } from "../../../pipeline/domain/rates.js";
 
 export const PERIOD_DAYS = { "30d": 30, "90d": 90, "1y": 365, all: null };
 const CHAIN_ORDER = ["polygon", "celo"];
 const DAY_MS = 86_400_000;
-const MEASURES = ["transfers", "volume", "mint", "burn", "supply"];
+const MEASURES = ["transfers", "volume", "mint", "burn", "supply", "volumeUsd", "mintUsd", "burnUsd", "supplyUsd"];
+
+// The daily array of a measure in the chosen unit: "volume" or "volumeUsd".
+// Counts (transfers) have no USD form and are asked for without a unit.
+export const measureKey = (name, unit) => (unit === "usd" ? `${name}Usd` : name);
+
+const isUsd = (name) => name.endsWith("Usd");
+const isSupply = (name) => name.startsWith("supply");
 
 export const granularityFor = (period) => (period === "30d" || period === "90d" ? "week" : "month");
 
@@ -71,7 +79,9 @@ const BOUNDS = {
 export function bucketize(slice, granularity) {
   const bounds = BOUNDS[granularity];
   const out = { bucket: [], partial: [] };
-  for (const m of MEASURES) out[m] = [];
+  // A dashboard.json written before the daily rate has no USD arrays.
+  const measures = MEASURES.filter((m) => m in slice);
+  for (const m of measures) out[m] = [];
   let current = null;
   slice.day.forEach((day, k) => {
     const { key, start, end } = bounds(day);
@@ -79,13 +89,14 @@ export function bucketize(slice, granularity) {
       current = key;
       out.bucket.push(granularity === "week" ? day : key);
       out.partial.push(day !== start);
-      for (const m of MEASURES) out[m].push(0);
+      for (const m of measures) out[m].push(0);
     }
     const last = out.bucket.length - 1;
     if (k === slice.day.length - 1 && day !== end) out.partial[last] = true;
-    for (const m of MEASURES) {
-      if (m === "supply") out.supply[last] = slice.supply[k];
-      else out[m][last] += slice[m][k];
+    for (const m of measures) {
+      if (isSupply(m)) out[m][last] = slice[m][k];
+      // Dollars are cents: the sum of days carries no floating-point tail.
+      else out[m][last] = isUsd(m) ? cents(out[m][last] + slice[m][k]) : out[m][last] + slice[m][k];
     }
   });
   return out;
@@ -100,22 +111,30 @@ export function tilesFor(chains, state) {
   const selected = selectedChains(chains, state);
   const { fromDay, toDay, days } = viewWindow(chains, state);
 
-  const sum = (measure) => {
-    const current = selected.reduce((t, c) => t + windowSum({ day: c.daily.day, v: c.daily[measure] }, toDay, days ?? 36_500), 0);
+  // `money` measures follow the unit; counts do not.
+  const sum = (name, { money = false } = {}) => {
+    const measure = money ? measureKey(name, state.unit) : name;
+    const round = isUsd(measure) ? cents : (n) => n;
+    const current = round(selected.reduce((t, c) => t + windowSum({ day: c.daily.day, v: c.daily[measure] }, toDay, days ?? 36_500), 0));
     const comparable = days !== null && selected.every((c) => addDays(fromDay, -days) >= c.checkpoint.firstDay);
     if (!comparable) return { current, previous: null, changePct: null };
-    const previous = selected.reduce((t, c) => t + compareWindows({ day: c.daily.day, v: c.daily[measure] }, toDay, days).previous, 0);
+    const previous = round(selected.reduce((t, c) => t + compareWindows({ day: c.daily.day, v: c.daily[measure] }, toDay, days).previous, 0));
     return { current, previous, changePct: change(current, previous) };
   };
 
-  const supplyNow = selected.reduce((t, c) => t + c.checkpoint.totalSupply, 0);
+  // The supply of each chain at its checkpoint, valued at the rate of that day;
+  // the day before the window is read from the daily array in the same unit.
+  const supplyField = state.unit === "usd" ? "totalSupplyUsd" : "totalSupply";
+  const supplyNow = selected.reduce((t, c) => t + c.checkpoint[supplyField], 0);
   const comparable = days !== null && selected.every((c) => addDays(fromDay, -1) >= c.checkpoint.firstDay);
-  const supplyBefore = comparable ? selected.reduce((t, c) => t + valueAt(c.daily, "supply", addDays(fromDay, -1)), 0) : null;
+  const supplyBefore = comparable
+    ? selected.reduce((t, c) => t + valueAt(c.daily, measureKey("supply", state.unit), addDays(fromDay, -1)), 0)
+    : null;
 
   return {
     window: { fromDay, toDay, days },
     supply: { value: supplyNow, previous: supplyBefore, changePct: change(supplyNow, supplyBefore) },
-    volume: sum("volume"),
+    volume: sum("volume", { money: true }),
     transfers: sum("transfers"),
     holders: selected.reduce((t, c) => t + c.holders.count, 0),
     contracts: selected.reduce((t, c) => t + (c.holders.contracts ?? 0), 0),
@@ -125,10 +144,16 @@ export function tilesFor(chains, state) {
 
 const LARGEST_KEY = { "30d": "d30", "90d": "d90", "1y": "d365", all: "all" };
 
+// The pipeline writes one ranking per unit, because the top 25 by COPM and the
+// top 25 by USD are different sets (the rate differs by day). The list shown
+// is the one of the unit in view, merged across chains and ordered by that
+// unit's amount.
 export function largestRows(chains, state, n = 25) {
+  const unit = state.unit === "usd" ? "usd" : "copm";
+  const amountOf = (row) => (unit === "usd" ? row.usd : row.amount);
   return selectedChains(chains, state)
-    .flatMap((c) => c.largest[LARGEST_KEY[state.period]].map((row) => ({ ...row, chain: c.key })))
-    .sort((a, b) => b.amount - a.amount || CHAIN_ORDER.indexOf(a.chain) - CHAIN_ORDER.indexOf(b.chain) || a.block - b.block)
+    .flatMap((c) => c.largest[unit][LARGEST_KEY[state.period]].map((row) => ({ ...row, chain: c.key })))
+    .sort((a, b) => amountOf(b) - amountOf(a) || CHAIN_ORDER.indexOf(a.chain) - CHAIN_ORDER.indexOf(b.chain) || a.block - b.block)
     .slice(0, n);
 }
 
@@ -154,4 +179,69 @@ export function periodTurnover({ gross, minted }) {
   if (!(minted > 0) || !(gross > 0)) return null;
   const ratio = gross / minted;
   return ratio > MAX_PERIOD_TURNOVER ? null : ratio;
+}
+
+/* Flows, composition and the rate ------------------------------------------- */
+
+// Windowed totals of one chain in the chosen unit: what the period minted,
+// burned, moved between wallets, and the gross volume that is all of them
+// together. In USD they are sums of the daily dollars.
+export function flowTotalsOf(chain, { fromDay, toDay }, unit) {
+  const slice = sliceDaily(chain.daily, fromDay, toDay);
+  const sum = (name) => {
+    const total = slice[measureKey(name, unit)].reduce((a, b) => a + b, 0);
+    return unit === "usd" ? cents(total) : total;
+  };
+  const minted = sum("mint");
+  const burned = sum("burn");
+  const gross = sum("volume");
+  const rest = gross - minted - burned;
+  const wallet = unit === "usd" ? Math.max(0, cents(rest)) : Math.max(0, rest);
+  return { minted, burned, gross, wallet, has: slice.day.length > 0 };
+}
+
+// Minted, wallet to wallet and burned as shares of the gross volume. They add
+// up to 100 because the gross volume is exactly those three. Null when
+// nothing moved.
+export function flowComposition({ minted, burned, wallet, gross }) {
+  if (!(gross > 0)) return null;
+  return { minted: (minted / gross) * 100, wallet: (wallet / gross) * 100, burned: (burned / gross) * 100 };
+}
+
+// Per chain in view: the totals of the period in the chosen unit, the turnover
+// (a ratio of COPM, so it never depends on the unit or the rate) and the
+// composition. Chains with no days in the window are left out.
+export function flowStats(chains, state) {
+  const window = viewWindow(chains, state);
+  return selectedChains(chains, state)
+    .map((c) => {
+      const totals = flowTotalsOf(c, window, state.unit);
+      if (!totals.has) return null;
+      const copm = state.unit === "copm" ? totals : flowTotalsOf(c, window, "copm");
+      return { key: c.key, label: c.label, totals, turnover: periodTurnover(copm), shares: flowComposition(totals) };
+    })
+    .filter(Boolean);
+}
+
+// The largest address, the next nine and everyone else, as shares of the
+// supply of one chain. They add up to 100.
+export function holderComposition(chain) {
+  const shares = chain.holders.top.map((h) => h.share);
+  const largest = shares[0] ?? 0;
+  const next = shares.slice(1, 10).reduce((a, b) => a + b, 0);
+  return { largest, next, rest: Math.max(0, 100 - largest - next) };
+}
+
+// The COP-per-USD rate of every day of the window: one line, because the rate
+// does not depend on the chain. It comes from the first chain in view that has
+// days in the window. Null when no chain has a day, or the data has no rate.
+export function rateSeries(chains, state) {
+  const { fromDay, toDay } = viewWindow(chains, state);
+  for (const c of selectedChains(chains, state)) {
+    if (!c.daily.rate) continue;
+    const slice = sliceDaily(c.daily, fromDay, toDay);
+    if (slice.day.length === 0) continue;
+    return { days: slice.day, values: slice.rate, latest: { day: slice.day.at(-1), value: slice.rate.at(-1) } };
+  }
+  return null;
 }

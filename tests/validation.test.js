@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { strictChecks } from "../pipeline/domain/validation.js";
-import { A, fixture } from "./helpers/validation-fixture.js";
+import { checkRatesCoverSeries, loadRatesText, strictChecks } from "../pipeline/domain/validation.js";
+import { A, fixture, fixtureRatesText } from "./helpers/validation-fixture.js";
 
 const results = (fx) => Object.fromEntries(strictChecks(fx).map((c) => [c.id, c]));
 const failing = (fx) => strictChecks(fx).filter((c) => !c.ok).map((c) => c.id);
@@ -23,11 +23,13 @@ test("a consistent dataset passes every rule, in report order", () => {
     "admin-events-ordered",
     "admin-events-count",
     "approvals-consistent",
+    "rates-cover-series",
     "daily-matches-ledger",
     "series-length",
     "series-continuous",
     "csv-transfer-total",
     "dashboard-matches-ledger",
+    "summary-matches-ledger",
   ]);
   assert.deepEqual(failing(fixture()), []);
 });
@@ -224,7 +226,7 @@ test("daily-matches-ledger: the last day's supply is tied to totalSupply to the 
 test("series rules compare daily.csv with summary.json: length, continuity and the transfer total", () => {
   const length = fixture();
   length.summary.range.totalDays += 1;
-  assert.deepEqual(failing(length), ["series-length"]);
+  assert.deepEqual(failing(length), ["series-length", "summary-matches-ledger"]);
 
   const gap = fixture();
   const lines = gap.csvText.split("\n");
@@ -283,11 +285,13 @@ test("dashboard-matches-ledger: every other field of dashboard.json is checked t
   for (const [name, edit] of Object.entries({
     gross: (d) => (d.flows.gross += 1),
     turnover: (d) => (d.flows.turnover += 1),
-    supplyPeak: (d) => (d.supplyPeak.copm += 1),
+    supplyPeak: (d) => (d.supplyPeak.copm.amount += 1),
+    supplyPeakUsd: (d) => (d.supplyPeak.usd.day = "2024-01-01"),
+    largestUsd: (d) => (d.largest.usd.all[0].usd += 1),
     activityTransfers: (d) => (d.activity.transfers.current += 1),
     activityVolume: (d) => (d.activity.volume.previous += 1),
     sizes: (d) => (d.sizes[0].count += 1),
-    largest: (d) => (d.largest.all[0].amount += 1),
+    largest: (d) => (d.largest.copm.all[0].amount += 1),
     issuance: (d) => (d.issuance.mint.topSharePct = 1),
     holders: (d) => (d.holders.count += 1),
     monthly: (d) => (d.monthly.volume[0] += 1),
@@ -312,6 +316,57 @@ test("dashboard-matches-ledger: without the holders snapshot it cannot rebuild a
   const fx = fixture();
   fx.holders = { csv: null, json: null };
   assert.equal(results(fx)["dashboard-matches-ledger"].ok, false);
+});
+
+test("summary-matches-ledger: an untouched summary passes and says what it compared", () => {
+  const r = results(fixture())["summary-matches-ledger"];
+  assert.equal(r.ok, true);
+  assert.match(r.detail, /sections=\d+/);
+});
+
+test("summary-matches-ledger: every headline field of summary.json is checked, a changed one fails it alone", () => {
+  for (const [name, edit] of Object.entries({
+    grossVolumeUSD: (d) => (d.totals.grossVolumeUSD += 1),
+    grossVolumeCOPM: (d) => (d.totals.grossVolumeCOPM += 1),
+    totalMintedCOPM: (d) => (d.totals.totalMintedCOPM += 1),
+    totalMintedUSD: (d) => (d.totals.totalMintedUSD += 1),
+    totalBurnedCOPM: (d) => (d.totals.totalBurnedCOPM += 1),
+    currentSupplyCOPM: (d) => (d.totals.currentSupplyCOPM += 1),
+    transferEvents: (d) => (d.totals.transferEvents += 1),
+    average: (d) => (d.averages.avgDailyTransfers += 1),
+    peakCopm: (d) => (d.peaks.maxSupplyEndOfDay.copm += 1),
+    peakUsdDay: (d) => (d.peaks.maxSupplyEndOfDayUsd.day = "2024-01-01"),
+    range: (d) => (d.range.totalDays += 1),
+    fx: (d) => (d.fx.latestCopPerUsd += 1),
+    chain: (d) => (d.chain = "other"),
+    extraField: (d) => (d.invented = true),
+  })) {
+    const fx = fixture();
+    edit(fx.summary);
+    assert.equal(results(fx)["summary-matches-ledger"].ok, false, name);
+    assert.ok(failing(fx).includes("summary-matches-ledger"), name);
+    // The transfer count and the day count are also checked against daily.csv.
+    const alsoChecked = ["csv-transfer-total", "series-length"];
+    assert.deepEqual(failing(fx).filter((id) => !alsoChecked.includes(id)), ["summary-matches-ledger"], name);
+  }
+});
+
+test("summary-matches-ledger: the detail names the sections that differ", () => {
+  const fx = fixture();
+  fx.summary.totals.grossVolumeUSD += 1;
+  assert.match(results(fx)["summary-matches-ledger"].detail, /differs: totals/);
+});
+
+test("summary-matches-ledger: it follows the rates, so a summary valued at other rates fails", () => {
+  const fx = fixture();
+  fx.ratesText = fx.ratesText.replace(/,(\d+)$/gm, (_, rate) => `,${Number(rate) + 1}`);
+  assert.equal(results(fx)["summary-matches-ledger"].ok, false);
+});
+
+test("summary-matches-ledger: without usable rates it cannot rebuild and fails", () => {
+  const fx = fixture();
+  fx.ratesText = null;
+  assert.equal(results(fx)["summary-matches-ledger"].ok, false);
 });
 
 test("approvals-consistent: the checkpoint's count, the daily counts and the spender counts must agree", () => {
@@ -340,4 +395,76 @@ test("approvals-consistent: fails when approvals.json is ahead of the checkpoint
   const fx = fixture();
   fx.approvals.block = fx.state.lastBlock + 1;
   assert.ok(failing(fx).includes("approvals-consistent"));
+});
+
+/* rates-cover-series ------------------------------------------------------ */
+
+const withRates = (lines) => ({ ...fixture(), ratesText: `day,cop_per_usd\n${lines.join("\n")}\n` });
+const range = (from, to, rate = 4000) => {
+  const days = [];
+  for (let d = Date.parse(`${from}T00:00:00Z`); d <= Date.parse(`${to}T00:00:00Z`); d += 864e5) {
+    days.push(`${new Date(d).toISOString().slice(0, 10)},${rate}`);
+  }
+  return days;
+};
+
+test("rates-cover-series: passes when every day of daily.csv has a rate", () => {
+  assert.equal(results(fixture())["rates-cover-series"].ok, true);
+  assert.match(results(fixture())["rates-cover-series"].detail, /provisional=0/);
+});
+
+test("rates-cover-series: fails when the rates file is missing", () => {
+  const fx = { ...fixture(), ratesText: null };
+  assert.ok(failing(fx).includes("rates-cover-series"));
+  assert.match(results(fx)["rates-cover-series"].detail, /run "rates"/);
+  assert.ok(failing(fx).includes("daily-matches-ledger"), "the daily series cannot be rebuilt without rates");
+  assert.ok(failing(fx).includes("dashboard-matches-ledger"));
+});
+
+test("rates-cover-series: fails when the rates start after the first day of the series", () => {
+  const fx = withRates(range("2024-02-01", "2024-02-10"));
+  assert.ok(failing(fx).includes("rates-cover-series"));
+  assert.match(results(fx)["rates-cover-series"].detail, /2024-01-31/);
+});
+
+test("rates-cover-series: fails on a rate that is zero or negative", () => {
+  for (const bad of ["0", "-3000"]) {
+    const lines = range("2024-01-01", "2024-02-10");
+    lines[5] = `2024-01-06,${bad}`;
+    assert.ok(failing(withRates(lines)).includes("rates-cover-series"), `rate ${bad}`);
+  }
+});
+
+test("rates-cover-series: fails on a file that is out of order or has a gap", () => {
+  const lines = range("2024-01-01", "2024-02-10");
+  const swapped = [...lines];
+  [swapped[3], swapped[4]] = [swapped[4], swapped[3]];
+  assert.ok(failing(withRates(swapped)).includes("rates-cover-series"));
+  assert.ok(failing(withRates(lines.filter((_, k) => k !== 10))).includes("rates-cover-series"));
+});
+
+test("rates-cover-series: the trailing days after the last rate are provisional, up to a week", () => {
+  // The series is 2024-01-31 and 2024-02-01: both lie after the last rate.
+  const two = withRates(range("2024-01-01", "2024-01-30"));
+  assert.equal(results(two)["rates-cover-series"].ok, true);
+  assert.match(results(two)["rates-cover-series"].detail, /provisional=2/);
+
+  const days = (from, to) => range(from, to).map((line) => line.slice(0, 10));
+  const rates = loadRatesText(`day,cop_per_usd\n${range("2024-01-01", "2024-01-10").join("\n")}\n`);
+  const seven = checkRatesCoverSeries(rates, days("2024-01-05", "2024-01-17"));
+  assert.equal(seven.ok, true);
+  assert.match(seven.detail, /provisional=7/);
+  const eight = checkRatesCoverSeries(rates, days("2024-01-05", "2024-01-18"));
+  assert.equal(eight.ok, false);
+  assert.match(eight.detail, /provisional=8/);
+});
+
+test("daily-matches-ledger and dashboard-matches-ledger use the rates file: a changed rate makes both fail", () => {
+  const fx = fixture();
+  fx.ratesText = fixtureRatesText().replace("2024-01-31,4200", "2024-01-31,4201");
+  assert.notEqual(fx.ratesText, fixtureRatesText());
+  const bad = failing(fx);
+  assert.ok(bad.includes("daily-matches-ledger"));
+  assert.ok(bad.includes("dashboard-matches-ledger"));
+  assert.ok(!bad.includes("rates-cover-series"));
 });

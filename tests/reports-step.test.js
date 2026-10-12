@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { runReports, localeOf } from "../pipeline/steps/reports.js";
 import { chain } from "./helpers/report-fixture.js";
+import { CSV_HEADER } from "../pipeline/domain/aggregate.js";
 
 const mark = (key, content = "") => `<!-- copm:${key} -->${content}<!-- /copm -->`;
 
@@ -29,8 +30,10 @@ function repo(files) {
     put(
       `${base}daily.csv`,
       [
-        "day,supply_end_copm,transfers,unique_txs,active_addresses,gross_volume_copm,net_volume_copm,mint_copm,burn_copm,mint_count,burn_count,approvals",
-        ...c.daily.map((r) => [r.day, r.supplyEnd, r.transfers, 1, 1, r.grossCOPM, r.netCOPM, 0, 0, 0, 0, 0].join(",")),
+        CSV_HEADER,
+        ...c.daily.map((r) =>
+          [r.day, r.supplyEnd, r.transfers, 1, 1, r.grossCOPM, r.netCOPM, 0, 0, 0, 0, 0, r.rate, r.supplyUSD, r.grossUSD, r.netUSD, r.mintUSD, r.burnUSD].join(","),
+        ),
       ].join("\n")
     );
   }
@@ -39,7 +42,7 @@ function repo(files) {
 }
 
 const run = (r, files, options = {}) =>
-  runReports({ root: r.root, files, copPerUsd: 4000, log: () => {}, ...options });
+  runReports({ root: r.root, files, log: () => {}, ...options });
 
 test("the locale comes from the file name", () => {
   assert.equal(localeOf("README.es.md"), "es");
@@ -107,4 +110,20 @@ test("a malformed marker fails reports and reports --check, naming the file and 
     assert.throws(() => run(r, ["a.md"], { check }), /a\.md: malformed marker.*line 2/s, `check=${check}`);
   }
   assert.equal(r.read("a.md"), "intro\n<!--copm:polygon.transfers-->x<!--/copm-->\n");
+});
+
+test("the rate markers are filled from the summaries: latest rate, its date and the range", () => {
+  const r = repo({
+    "a.md": `${mark("fx.latestRate")} on ${mark("fx.latestDate")}, between ${mark("fx.minRate")} and ${mark("fx.maxRate")}`,
+    "a.es.md": `${mark("fx.latestRate")} el ${mark("fx.latestDate")}`,
+  });
+  run(r, ["a.md", "a.es.md"]);
+  assert.equal(r.read("a.md"), `${mark("fx.latestRate", "3,900.5")} on ${mark("fx.latestDate", "2024-02-03")}, between ${mark("fx.minRate", "3,800")} and ${mark("fx.maxRate", "4,100")}`);
+  assert.equal(r.read("a.es.md"), `${mark("fx.latestRate", "3.900,5")} el ${mark("fx.latestDate", "2024-02-03")}`);
+});
+
+test("the old fixed-rate marker is an unknown figure", () => {
+  const old = ["fx.cop", "PerUsd"].join("");
+  const r = repo({ "a.md": mark(old, "4,000") });
+  assert.throws(() => run(r, ["a.md"]), new RegExp(`unknown figure "${old}"`));
 });

@@ -7,7 +7,9 @@ import {
   dataDir,
   dataPath,
   chartsDir,
-  copPerUsd,
+  RATES_FROM_DAY,
+  ratesDir,
+  ratesPath,
   scanSettings,
 } from "../pipeline/config/chains.js";
 
@@ -38,9 +40,11 @@ test("data and charts paths are scoped per chain under the repository root", () 
   assert.equal(fileURLToPath(chartsDir("polygon")), `${root}charts/polygon/`);
 });
 
-test("copPerUsd reads the override and falls back to 4000", () => {
-  assert.equal(copPerUsd({}), 4000);
-  assert.equal(copPerUsd({ COP_PER_USD: "3900" }), 3900);
+test("the daily rates are shared by every chain, under data/rates/, from the first deploy day", () => {
+  const root = fileURLToPath(new URL("../", import.meta.url));
+  assert.equal(fileURLToPath(ratesDir()), `${root}data/rates/`);
+  assert.equal(fileURLToPath(ratesPath("cop-usd.csv")), `${root}data/rates/cop-usd.csv`);
+  assert.equal(RATES_FROM_DAY, "2023-09-19", "the day Polygon's COPM was deployed");
 });
 
 test("each chain carries its deploy block", () => {

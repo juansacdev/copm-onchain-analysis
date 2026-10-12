@@ -1,7 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ZERO_ADDRESS } from "../pipeline/domain/units.js";
-import { CSV_HEADER, buildDailySeries, dailyCsv, summarize } from "../pipeline/domain/aggregate.js";
+import { CSV_HEADER, buildDailySeries as build, dailyCsv, summarize } from "../pipeline/domain/aggregate.js";
+import { flatRates, rateTable } from "./helpers/rates.js";
+
+// Most tests care about volumes and supply, not about the rate: they run on a
+// flat 4,000 COP per USD. The tests of the rate itself pass their own table.
+const RATES = flatRates(4000);
+const buildDailySeries = (transfers, approvals = {}) => build(transfers, approvals, RATES);
 
 const COPM = (n) => BigInt(n) * 10n ** 18n;
 const A = "0xaaaa000000000000000000000000000000000001";
@@ -179,6 +185,91 @@ test("without an approvals map every day has zero approvals", () => {
 // tests below were written after the code, and the committed data/ files act
 // as the byte-for-byte regression oracle (see the aggregate step check).
 
+// Two days with two different rates: 4,000 on March 1st and 3,000 on March 2nd.
+const TWO_RATES = rateTable("2024-03-01", [4000, 3000]);
+const twoDays = () => {
+  const transfers = [
+    ev(100, 0, ZERO_ADDRESS, A, COPM(4_000_000)), // day 1: mint 4M
+    ev(101, 0, A, B, COPM(1_000_000)), // day 1: wallet 1M
+    ev(200, 0, A, ZERO_ADDRESS, COPM(300_000)), // day 2: burn 300k
+    ev(201, 0, B, A, COPM(600_000)), // day 2: wallet 600k
+  ];
+  return stamp(transfers, {
+    100: day(2024, 3, 1),
+    101: day(2024, 3, 1, 13),
+    200: day(2024, 3, 2),
+    201: day(2024, 3, 2, 13),
+  });
+};
+const MANIFEST = { chain: "celo", chainLabel: "Celo", address: "0xabc", decimals: 18 };
+
+test("every day carries the rate of its own day and its USD amounts at that rate", () => {
+  const { series } = build(twoDays(), {}, TWO_RATES);
+  const [d1, d2] = series;
+
+  assert.equal(d1.rate, 4000);
+  assert.equal(d1.provisional, false);
+  assert.equal(d1.grossUsd, 1250); // 5M COPM / 4000
+  assert.equal(d1.mintUsd, 1000);
+  assert.equal(d1.netUsd, 250);
+  assert.equal(d1.burnUsd, 0);
+  assert.equal(d1.supplyEndUsd, 1000);
+
+  assert.equal(d2.rate, 3000);
+  assert.equal(d2.grossUsd, 300); // 900k COPM / 3000
+  assert.equal(d2.burnUsd, 100);
+  assert.equal(d2.supplyEndUsd, 1233.33, "supply is valued at the rate of the day it refers to");
+});
+
+test("a day after the last published rate uses the last known rate and is provisional", () => {
+  const { series } = build(twoDays(), {}, rateTable("2024-03-01", [4000]));
+  assert.deepEqual(series.map((d) => [d.rate, d.provisional]), [[4000, false], [4000, true]]);
+});
+
+test("a day before the first rate is an error, not a silent default", () => {
+  assert.throws(() => build(twoDays(), {}, rateTable("2024-03-02", [3000, 3000])), /before the first rate/);
+});
+
+test("building the series without rates is an error", () => {
+  assert.throws(() => build(twoDays(), {}), /rates/);
+});
+
+test("USD totals are sums of daily amounts, not the COPM total over a single rate", () => {
+  const { series, totals } = build(twoDays(), {}, TWO_RATES);
+  const summary = summarize({ manifest: MANIFEST, chainKey: "celo", series, totals, transferEvents: 4 });
+
+  assert.equal(summary.totals.grossVolumeUSD, 1250 + 300);
+  assert.equal(summary.totals.netVolumeUSD, 250 + 200);
+  assert.equal(summary.totals.totalMintedUSD, 1000);
+  assert.equal(summary.totals.totalBurnedUSD, 100);
+  assert.equal(summary.totals.currentSupplyUSD, 1233.33);
+  const oneRate = 5_900_000 / 4000;
+  assert.notEqual(summary.totals.grossVolumeUSD, oneRate);
+  assert.notEqual(summary.totals.grossVolumeUSD, 5_900_000 / 3000);
+  assert.equal(summary.averages.avgDailyGrossVolumeUSD, (1250 + 300) / 2);
+});
+
+test("the summary states the rate it ended on and the range of rates over the series", () => {
+  const { series, totals } = build(twoDays(), {}, rateTable("2024-03-01", [4000, 3000, 3500]));
+  const summary = summarize({ manifest: MANIFEST, chainKey: "celo", series, totals, transferEvents: 4 });
+  assert.deepEqual(summary.fx, {
+    latestDay: "2024-03-02",
+    latestCopPerUsd: 3000,
+    provisionalDays: 0,
+    provisionalFrom: null,
+    minCopPerUsd: 3000,
+    maxCopPerUsd: 4000,
+  });
+});
+
+test("the summary counts the provisional days and names the first one", () => {
+  // Rates stop on day 1; day 2 uses the last known rate.
+  const { series, totals } = build(twoDays(), {}, rateTable("2024-03-01", [4000]));
+  const summary = summarize({ manifest: MANIFEST, chainKey: "celo", series, totals, transferEvents: 4 });
+  assert.equal(summary.fx.provisionalDays, 1);
+  assert.equal(summary.fx.provisionalFrom, "2024-03-02");
+});
+
 test("summarize reports totals, averages and peaks in COPM and USD", () => {
   const transfers = [
     ev(100, 0, ZERO_ADDRESS, A, COPM(4000)),
@@ -190,14 +281,7 @@ test("summarize reports totals, averages and peaks in COPM and USD", () => {
     101: day(2024, 3, 1, 13),
     200: day(2024, 3, 2),
   }));
-  const summary = summarize({
-    manifest: { chain: "celo", chainLabel: "Celo", address: "0xabc", decimals: 18 },
-    chainKey: "celo",
-    series,
-    totals,
-    transferEvents: 3,
-    copPerUsd: 4000,
-  });
+  const summary = summarize({ manifest: MANIFEST, chainKey: "celo", series, totals, transferEvents: 3 });
 
   assert.deepEqual(summary.range, { firstDay: "2024-03-01", lastDay: "2024-03-02", totalDays: 2 });
   assert.equal(summary.totals.grossVolumeCOPM, 5400);
@@ -211,11 +295,31 @@ test("summarize reports totals, averages and peaks in COPM and USD", () => {
   assert.deepEqual(summary.peaks.maxTransfersInOneDay, { day: "2024-03-01", count: 2 });
   assert.equal(summary.peaks.maxSupplyEndOfDay.day, "2024-03-01");
   assert.equal(summary.peaks.maxSupplyEndOfDay.copm, 4000);
+  assert.equal(summary.peaks.maxSupplyEndOfDay.usd, undefined, "a COPM peak carries no dollar figure");
+  assert.deepEqual(summary.peaks.maxSupplyEndOfDayUsd, { day: "2024-03-01", usd: 1 });
+  assert.equal(summary.peaks.maxGrossVolumeInOneDay.usd, 1.25);
 });
 
-test("dailyCsv writes a header, one row per day, approvals last, and no trailing newline", () => {
+test("summarize finds the supply peak in COPM and, separately, in USD", () => {
+  // The supply falls in COPM from day 1 to day 2, but the rate falls faster.
+  const transfers = [
+    ev(100, 0, ZERO_ADDRESS, A, COPM(4000)),
+    ev(200, 0, A, ZERO_ADDRESS, COPM(1000)),
+  ];
+  const rates = rateTable("2024-03-01", [4000, 1000]);
+  const { series, totals } = build(
+    stamp(transfers, { 100: day(2024, 3, 1), 200: day(2024, 3, 2) }),
+    {},
+    rates,
+  );
+  const { peaks } = summarize({ manifest: MANIFEST, chainKey: "celo", series, totals, transferEvents: 2 });
+  assert.deepEqual(peaks.maxSupplyEndOfDay, { day: "2024-03-01", copm: 4000 });
+  assert.deepEqual(peaks.maxSupplyEndOfDayUsd, { day: "2024-03-02", usd: 3 });
+});
+
+test("dailyCsv writes a header, one row per day, the original columns first and the rate and USD columns last, with no trailing newline", () => {
   const { series } = buildDailySeries(
-    stamp([ev(100, 0, ZERO_ADDRESS, A, COPM(2)), ev(101, 0, A, B, COPM(1))], {
+    stamp([ev(100, 0, ZERO_ADDRESS, A, COPM(2000)), ev(101, 0, A, B, COPM(1000))], {
       100: day(2024, 3, 1),
       101: day(2024, 3, 1, 13),
     }),
@@ -224,10 +328,9 @@ test("dailyCsv writes a header, one row per day, approvals last, and no trailing
   const csv = dailyCsv(series);
 
   assert.equal(
-    csv,
-    [
-      CSV_HEADER,
-      "2024-03-01,2,2,2,3,3,1,2,0,1,0,7",
-    ].join("\n")
+    CSV_HEADER,
+    "day,supply_end_copm,transfers,unique_txs,active_addresses,gross_volume_copm,net_volume_copm,mint_copm,burn_copm,mint_count,burn_count,approvals," +
+      "cop_per_usd,supply_end_usd,gross_volume_usd,net_volume_usd,mint_usd,burn_usd"
   );
+  assert.equal(csv, [CSV_HEADER, "2024-03-01,2000,2,2,3,3000,1000,2000,0,1,0,7,4000,0.5,0.75,0.25,0.5,0"].join("\n"));
 });

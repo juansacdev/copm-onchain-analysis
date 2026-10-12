@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import { chartsDir, copPerUsd, dataPath } from "../config/chains.js";
+import { chartsDir, dataPath } from "../config/chains.js";
 import { ensureDir, readJson, readText } from "../adapters/store.js";
 import {
   BASE,
@@ -17,8 +17,7 @@ import {
   fmtNum,
 } from "../charts/chartlib.js";
 
-export async function run({ chainKey, env = process.env }) {
-  const COP_PER_USD = copPerUsd(env);
+export async function run({ chainKey }) {
   const CHARTS_DIR = chartsDir(chainKey);
   const palette = CHAIN_PALETTES[chainKey];
   const manifest = readJson(dataPath(chainKey, "manifest.json"));
@@ -27,9 +26,11 @@ export async function run({ chainKey, env = process.env }) {
   const lastDay = rows.at(-1).day;
   const footer = provenanceFooter(manifest, lastDay);
 
+  // The chart is in USD, so the ranking is too: each day at its own rate.
   const top10Volume = [...rows]
-    .sort((a, b) => b.grossCOPM - a.grossCOPM)
+    .sort((a, b) => b.grossUSD - a.grossUSD)
     .slice(0, 10);
+  const latest = rows.at(-1);
 
   console.log(`chain: ${chainKey} — ${rows.length} days, ${monthlyRows.length} months`);
 
@@ -76,11 +77,11 @@ export async function run({ chainKey, env = process.env }) {
       "02-daily-volume-usd",
       lineChart({
         title: `COPM — Daily Gross Volume (USD)`,
-        subtitle: `Conversion: 1 USD = ${COP_PER_USD} COP · peak day: ${fmtUSD(Math.max(...rows.map((r) => r.grossCOPM / COP_PER_USD)))}`,
+        subtitle: `Each day at its own TRM (latest ${latest.rate} COP per USD, ${latest.day}) · peak day: ${fmtUSD(Math.max(...rows.map((r) => r.grossUSD)))}`,
         badge,
         badgeColor,
         footer,
-        data: rows.map((r) => ({ ...r, volumeUSD: r.grossCOPM / COP_PER_USD })),
+        data: rows.map((r) => ({ ...r, volumeUSD: r.grossUSD })),
         yKey: "volumeUSD",
         yFormatter: fmtUSD,
         color: palette.primary,
@@ -106,13 +107,13 @@ export async function run({ chainKey, env = process.env }) {
       "04-monthly-volume-usd",
       barChart({
         title: `COPM — Monthly Gross Volume (USD)`,
-        subtitle: `${monthlyRows.length} months · peak month: ${fmtUSD(Math.max(...monthlyRows.map((m) => m.gross / COP_PER_USD)))}`,
+        subtitle: `${monthlyRows.length} months · each day at its own TRM · peak month: ${fmtUSD(Math.max(...monthlyRows.map((m) => m.grossUSD)))}`,
         badge,
         badgeColor,
         footer,
         data: monthlyRows.map((m) => ({
           month: m.month,
-          grossUSD: m.gross / COP_PER_USD,
+          grossUSD: m.grossUSD,
         })),
         xKey: "month",
         yKey: "grossUSD",
@@ -131,7 +132,7 @@ export async function run({ chainKey, env = process.env }) {
         footer,
         data: top10Volume.map((r) => ({
           day: r.day,
-          grossUSD: r.grossCOPM / COP_PER_USD,
+          grossUSD: r.grossUSD,
         })),
         xKey: "day",
         yKey: "grossUSD",

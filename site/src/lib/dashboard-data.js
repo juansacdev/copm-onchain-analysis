@@ -16,7 +16,7 @@ function readJson(dataDir, chain, name, command) {
   }
 }
 
-export function loadDashboardData({ dataDir, copPerUsd }) {
+export function loadDashboardData({ dataDir }) {
   const chains = {};
   for (const key of CHAIN_KEYS) {
     const dashboard = readJson(dataDir, key, "dashboard.json", "dashboard");
@@ -32,18 +32,39 @@ export function loadDashboardData({ dataDir, copPerUsd }) {
     }
     chains[key] = { key, label: manifest.chainLabel, address: manifest.address, dashboard, validation, state };
   }
-  return { copPerUsd, chains };
+  return { fx: rateOf(chains), chains };
 }
 
-// The part of the data the browser needs to draw and filter: the six daily
-// series, the lists and the headline figures. Governance, monthly tables and
-// the validation rules are rendered on the server and stay out of the page's
-// JSON.
+// The TRM behind the dollar figures, from the two series: the rate on the
+// latest day any of them reaches, and the lowest and highest over the token's
+// life. Each dashboard.json states its own; the page only reports them.
+function rateOf(chains) {
+  const fxs = Object.values(chains).map((c) => c.dashboard.fx);
+  const latest = fxs.reduce((a, b) => (b.latestDay > a.latestDay ? b : a));
+  return {
+    latest: latest.latest,
+    latestDay: latest.latestDay,
+    min: Math.min(...fxs.map((x) => x.min)),
+    max: Math.max(...fxs.map((x) => x.max)),
+    // Days that still use the last known rate: the most any series has, from
+    // the earliest day any of them starts on.
+    provisionalDays: Math.max(...fxs.map((x) => x.provisionalDays ?? 0)),
+    provisionalFrom: fxs.map((x) => x.provisionalFrom).filter(Boolean).sort()[0] ?? null,
+  };
+}
+
+// One side of the issuance (mints or burns) with only its largest party.
+const party = ({ addresses, volume, topSharePct, top }) => ({ addresses, volume, topSharePct, top: top.slice(0, 1) });
+
+// The part of the data the browser needs to draw and filter: the daily
+// series (COPM and USD), the lists and the headline figures. The admin events and roles, the
+// monthly tables and the validation rules are rendered on the server and stay
+// out of the page's JSON.
 export function clientPayload(data) {
   const chains = {};
   for (const [key, c] of Object.entries(data.chains)) {
     const d = c.dashboard;
-    const { day, transfers, volume, mint, burn, supply } = d.daily;
+    const { day, transfers, volume, mint, burn, supply, rate, volumeUsd, mintUsd, burnUsd, supplyUsd } = d.daily;
     chains[key] = {
       key,
       label: c.label,
@@ -52,11 +73,17 @@ export function clientPayload(data) {
       flows: d.flows,
       supplyPeak: d.supplyPeak,
       activity: d.activity,
-      daily: { day, transfers, volume, mint, burn, supply },
+      daily: { day, transfers, volume, mint, burn, supply, rate, volumeUsd, mintUsd, burnUsd, supplyUsd },
+      issuance: { mint: party(d.issuance.mint), burn: party(d.issuance.burn) },
+      governance: {
+        roleHolders: d.governance.roleHolders,
+        roleCount: Object.values(d.governance.roles).filter((members) => members.length > 0).length,
+        frozen: d.governance.frozen,
+      },
       sizes: d.sizes.map(({ min, count }) => ({ min, count })),
       holders: { count: d.holders.count, contracts: d.holders.contracts, top1Pct: d.holders.top1Pct, top10Pct: d.holders.top10Pct, top: d.holders.top },
       largest: d.largest,
     };
   }
-  return { copPerUsd: data.copPerUsd, chains };
+  return { fx: data.fx, chains };
 }
