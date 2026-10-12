@@ -155,33 +155,39 @@ export function flowParties(transfers, kind, n) {
   };
 }
 
-// Highest end-of-day supply and the first day it was reached.
+// Highest end-of-day supply and the first day it was reached, found in each
+// unit on its own. The rate moves, so the day of the COPM peak is not the day
+// of the USD peak; an amount, the peak it is compared with and the percentage
+// between them must all come from the same unit.
 export function supplyPeak(series) {
   if (series.length === 0) return null;
-  const peak = series.reduce((a, b) => (b.supplyEnd > a.supplyEnd ? b : a));
-  return { day: peak.day, copm: toCOPM(peak.supplyEnd), usd: peak.supplyEndUsd };
+  const inCopm = series.reduce((a, b) => (b.supplyEnd > a.supplyEnd ? b : a));
+  const inUsd = series.reduce((a, b) => (b.supplyEndUsd > a.supplyEndUsd ? b : a));
+  return {
+    copm: { day: inCopm.day, amount: toCOPM(inCopm.supplyEnd) },
+    usd: { day: inUsd.day, amount: inUsd.supplyEndUsd },
+  };
 }
 
 // The n biggest transfers, optionally limited to days fromDay..toDay (both
 // inclusive). Equal amounts: earlier block first, then earlier log index.
 // Each row also carries its amount in USD at the rate of its own day.
-export function largestTransfers(transfers, { n = 25, fromDay = null, toDay = null, rates } = {}) {
+// `rankBy` is the unit the list is ordered and cut by: "copm" (default) or
+// "usd". The two lists are not the same set, because the rate differs by day.
+export function largestTransfers(transfers, { n = 25, fromDay = null, toDay = null, rates, rankBy = "copm" } = {}) {
   if (!rates?.at) throw new Error("largestTransfers needs the rates (data/rates/cop-usd.csv)");
-  return transfers
+  if (rankBy !== "copm" && rankBy !== "usd") throw new Error(`largestTransfers: unknown ranking "${rankBy}"`);
+  const rows = transfers
     .filter((t) => {
       const day = dayOf(t.ts);
       return (fromDay === null || day >= fromDay) && (toDay === null || day <= toDay);
     })
-    .sort((a, b) => {
-      const va = BigInt(a.v);
-      const vb = BigInt(b.v);
-      return vb > va ? 1 : va > vb ? -1 : a.b - b.b || a.i - b.i;
-    })
-    .slice(0, n)
     .map((t) => ({
       day: dayOf(t.ts),
       ts: t.ts,
       block: t.b,
+      index: t.i,
+      wei: BigInt(t.v),
       amount: toCOPM(BigInt(t.v)),
       usd: usdAt(toCOPM(BigInt(t.v)), rates.at(dayOf(t.ts)).rate),
       kind: kindOf(t),
@@ -189,6 +195,14 @@ export function largestTransfers(transfers, { n = 25, fromDay = null, toDay = nu
       to: t.r,
       tx: t.t,
     }));
+  const byValue =
+    rankBy === "usd"
+      ? (a, b) => b.usd - a.usd || (b.wei > a.wei ? 1 : a.wei > b.wei ? -1 : 0)
+      : (a, b) => (b.wei > a.wei ? 1 : a.wei > b.wei ? -1 : 0);
+  return rows
+    .sort((a, b) => byValue(a, b) || a.block - b.block || a.index - b.index)
+    .slice(0, n)
+    .map(({ wei: _wei, index: _index, ...row }) => row);
 }
 
 /* Daily and monthly arrays -------------------------------------------------- */
@@ -344,8 +358,22 @@ export function buildDashboard({ chainKey, state, transfers, adminEvents, approv
     return measure.endsWith("Usd") ? { ...w, current: cents(w.current), previous: cents(w.previous) } : w;
   };
 
-  const largest = (days) =>
-    largestTransfers(transfers, { n: LARGEST_SIZE, fromDay: addDays(endDay, -(days - 1)), toDay: endDay, rates });
+  // One list per unit and window: the true top 25 by COPM and the true top 25
+  // by USD are different sets, and the page shows the one of the unit chosen.
+  const largest = (rankBy, days) =>
+    largestTransfers(transfers, {
+      n: LARGEST_SIZE,
+      fromDay: days === null ? null : addDays(endDay, -(days - 1)),
+      toDay: days === null ? null : endDay,
+      rates,
+      rankBy,
+    });
+  const largestBy = (rankBy) => ({
+    d30: largest(rankBy, 30),
+    d90: largest(rankBy, 90),
+    d365: largest(rankBy, 365),
+    all: largest(rankBy, null),
+  });
 
   const walletWei = totals.gross - totals.mint - totals.burn;
   return {
@@ -374,13 +402,15 @@ export function buildDashboard({ chainKey, state, transfers, adminEvents, approv
       },
     },
     // The TRM behind every USD figure; `provisionalFrom` is the first day that
-    // uses the last known rate because its own is not published yet.
+    // uses the last known rate because its own is not published yet, and
+    // `provisionalDays` how many days do.
     fx: {
       latestDay: series.at(-1).day,
       latest: series.at(-1).rate,
       min: Math.min(...daily.rate),
       max: Math.max(...daily.rate),
       provisionalFrom: series.find((r) => r.provisional)?.day ?? null,
+      provisionalDays: series.filter((r) => r.provisional).length,
     },
     supplyPeak: supplyPeak(series),
     activity: {
@@ -398,12 +428,7 @@ export function buildDashboard({ chainKey, state, transfers, adminEvents, approv
       burn: flowParties(transfers, "burn", RANKING_SIZE),
     },
     counterparties: counterparties(transfers),
-    largest: {
-      d30: largest(30),
-      d90: largest(90),
-      d365: largest(365),
-      all: largestTransfers(transfers, { n: LARGEST_SIZE, rates }),
-    },
+    largest: { copm: largestBy("copm"), usd: largestBy("usd") },
     holders: holdersSection(holders),
     governance: governanceSection(holders, adminEvents),
   };

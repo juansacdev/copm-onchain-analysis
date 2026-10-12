@@ -164,8 +164,10 @@ function supply(ctx, width) {
     const last = data.at(-1);
     const color = colorOf(ctx, chain.key);
     // The peak of the supply, when it falls inside the window and is not
-    // today's value: a dot with its label.
-    const peakRow = chain.supplyPeak && chain.supplyPeak.day !== last.day ? data.find((r) => r.day === chain.supplyPeak.day) : undefined;
+    // today's value: a dot with its label. It is the peak of the unit drawn:
+    // the rate moves, so the USD peak is usually another day than the COPM one.
+    const peakDay = chain.supplyPeak?.[ctx.state.unit === "usd" ? "usd" : "copm"].day;
+    const peakRow = peakDay && peakDay !== last.day ? data.find((r) => r.day === peakDay) : undefined;
     const plot = Plot.plot({
       ...baseOptions(ctx, width, PLOT_HEIGHT),
       marginLeft: MONEY_MARGIN,

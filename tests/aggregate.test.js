@@ -256,9 +256,18 @@ test("the summary states the rate it ended on and the range of rates over the se
     latestDay: "2024-03-02",
     latestCopPerUsd: 3000,
     provisionalDays: 0,
+    provisionalFrom: null,
     minCopPerUsd: 3000,
     maxCopPerUsd: 4000,
   });
+});
+
+test("the summary counts the provisional days and names the first one", () => {
+  // Rates stop on day 1; day 2 uses the last known rate.
+  const { series, totals } = build(twoDays(), {}, rateTable("2024-03-01", [4000]));
+  const summary = summarize({ manifest: MANIFEST, chainKey: "celo", series, totals, transferEvents: 4 });
+  assert.equal(summary.fx.provisionalDays, 1);
+  assert.equal(summary.fx.provisionalFrom, "2024-03-02");
 });
 
 test("summarize reports totals, averages and peaks in COPM and USD", () => {
@@ -286,8 +295,26 @@ test("summarize reports totals, averages and peaks in COPM and USD", () => {
   assert.deepEqual(summary.peaks.maxTransfersInOneDay, { day: "2024-03-01", count: 2 });
   assert.equal(summary.peaks.maxSupplyEndOfDay.day, "2024-03-01");
   assert.equal(summary.peaks.maxSupplyEndOfDay.copm, 4000);
-  assert.equal(summary.peaks.maxSupplyEndOfDay.usd, 1);
+  assert.equal(summary.peaks.maxSupplyEndOfDay.usd, undefined, "a COPM peak carries no dollar figure");
+  assert.deepEqual(summary.peaks.maxSupplyEndOfDayUsd, { day: "2024-03-01", usd: 1 });
   assert.equal(summary.peaks.maxGrossVolumeInOneDay.usd, 1.25);
+});
+
+test("summarize finds the supply peak in COPM and, separately, in USD", () => {
+  // The supply falls in COPM from day 1 to day 2, but the rate falls faster.
+  const transfers = [
+    ev(100, 0, ZERO_ADDRESS, A, COPM(4000)),
+    ev(200, 0, A, ZERO_ADDRESS, COPM(1000)),
+  ];
+  const rates = rateTable("2024-03-01", [4000, 1000]);
+  const { series, totals } = build(
+    stamp(transfers, { 100: day(2024, 3, 1), 200: day(2024, 3, 2) }),
+    {},
+    rates,
+  );
+  const { peaks } = summarize({ manifest: MANIFEST, chainKey: "celo", series, totals, transferEvents: 2 });
+  assert.deepEqual(peaks.maxSupplyEndOfDay, { day: "2024-03-01", copm: 4000 });
+  assert.deepEqual(peaks.maxSupplyEndOfDayUsd, { day: "2024-03-02", usd: 3 });
 });
 
 test("dailyCsv writes a header, one row per day, the original columns first and the rate and USD columns last, with no trailing newline", () => {

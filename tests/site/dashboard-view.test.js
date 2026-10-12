@@ -20,7 +20,7 @@ const days = (from, count) =>
   Array.from({ length: count }, (_, k) => new Date(Date.parse(`${from}T00:00:00Z`) + k * 86_400_000).toISOString().slice(0, 10));
 
 // 100 days from 2025-01-01 (a Wednesday): transfers = 1 each day, volume = 10, supply grows by 5.
-function chain(key, { from = "2025-01-01", count = 100, endDay = null, holders = 7, largest = {} } = {}) {
+function chain(key, { from = "2025-01-01", count = 100, endDay = null, holders = 7, largest = {}, largestUsd = largest } = {}) {
   const day = days(from, count);
   return {
     key,
@@ -40,7 +40,7 @@ function chain(key, { from = "2025-01-01", count = 100, endDay = null, holders =
       supplyUsd: day.map((_, k) => ((k + 1) * 5) / (k < 50 ? 2 : 4)),
     },
     holders: { count: holders },
-    largest: { d30: [], d90: [], d365: [], all: [], ...largest },
+    largest: { copm: { d30: [], d90: [], d365: [], all: [], ...largest }, usd: { d30: [], d90: [], d365: [], all: [], ...largestUsd } },
   };
 }
 
@@ -205,9 +205,27 @@ test("tiles in USD compare windows in USD and the supply with the day before at 
   assert.equal(t.supply.previous, 350 / 4);
 });
 
-test("the largest transfers keep their COPM order whatever the unit", () => {
-  const rows = (unit) => largestRows({ polygon: chain("polygon", { largest: { d30: [{ ...big("p", 9), usd: 1 }, { ...big("p", 3), usd: 5 }] } }) }, { chain: "polygon", period: "30d", unit }, 25);
-  assert.deepEqual(rows("usd").map((r) => r.amount), [9, 3]);
+test("the largest transfers come from the ranking of the unit in view, in descending order of that unit", () => {
+  // The two rankings are different sets: the USD one holds a row the COPM one cut off.
+  const chains = {
+    polygon: chain("polygon", {
+      largest: { d30: [{ ...big("p", 9), usd: 1 }, { ...big("p", 3), usd: 5 }] },
+      largestUsd: { d30: [{ ...big("p", 3), usd: 5 }, { ...big("p", 1), usd: 4 }, { ...big("p", 9), usd: 1 }] },
+    }),
+  };
+  const rows = (unit) => largestRows(chains, { chain: "polygon", period: "30d", unit }, 25);
+  assert.deepEqual(rows("copm").map((r) => r.amount), [9, 3]);
+  assert.deepEqual(rows("usd").map((r) => r.usd), [5, 4, 1]);
+  assert.deepEqual(rows("usd").map((r) => r.amount), [3, 1, 9]);
+});
+
+test("merging both chains in USD orders the merged list by USD", () => {
+  const chains = {
+    polygon: chain("polygon", { largestUsd: { all: [{ ...big("p", 100), usd: 2 }, { ...big("p", 90), usd: 1 }] } }),
+    celo: chain("celo", { largestUsd: { all: [{ ...big("c", 10), usd: 3 }] } }),
+  };
+  const rows = largestRows(chains, { chain: "both", period: "all", unit: "usd" }, 25);
+  assert.deepEqual(rows.map((r) => r.usd), [3, 2, 1]);
 });
 
 

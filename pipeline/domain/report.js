@@ -257,7 +257,10 @@ function chainFigures(p, d) {
   set("peakVolumeUsd", fig.usd(peaks.maxGrossVolumeInOneDay.usd));
   set("peakSupplyDay", fig.date(peaks.maxSupplyEndOfDay.day));
   set("peakSupplyCopm", fig.copm(peaks.maxSupplyEndOfDay.copm));
-  set("peakSupplyUsd", fig.usd(peaks.maxSupplyEndOfDay.usd));
+  // The supply peak is found in each unit on its own: the COPM figure and its
+  // day, and the USD figure with the (usually different) day it was reached.
+  set("peakSupplyUsd", fig.usd(peaks.maxSupplyEndOfDayUsd.usd));
+  set("peakSupplyUsdDay", fig.date(peaks.maxSupplyEndOfDayUsd.day));
 
   // the daily series
   const daily = d.daily;
@@ -326,6 +329,14 @@ export function buildFigures({ chains }) {
   const latest = fxs.reduce((a, b) => (b.latestDay > a.latestDay ? b : a));
   figures["fx.latestRate"] = fig.dec(latest.latestCopPerUsd, 2);
   figures["fx.latestDate"] = fig.date(latest.latestDay);
+  // Days that use the last known rate until their own is published: the most
+  // any series has, and the earliest day any of them starts on. With none,
+  // there is no first day and the figure does not exist.
+  const provisionalDays = Math.max(...fxs.map((x) => x.provisionalDays));
+  figures["fx.provisionalDays"] = fig.int(provisionalDays);
+  if (provisionalDays > 0) {
+    figures["fx.provisionalFrom"] = fig.date(fxs.map((x) => x.provisionalFrom).filter(Boolean).sort()[0]);
+  }
   figures["fx.minRate"] = fig.dec(Math.min(...fxs.map((x) => x.minCopPerUsd)), 2);
   figures["fx.maxRate"] = fig.dec(Math.max(...fxs.map((x) => x.maxCopPerUsd)), 2);
 

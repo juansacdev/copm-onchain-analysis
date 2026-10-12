@@ -155,10 +155,10 @@ test("a changed result is written with the time of the new run", () => {
   assert.equal(report(url).validatedAt, "2026-02-02T00:00:00.000Z");
 });
 
-test("a missing rates file fails the rates rule and the two rebuilds instead of crashing the step", () => {
+test("a missing rates file fails the rates rule and the three rebuilds instead of crashing the step", () => {
   const { url, store } = tempStore();
   writeFixture(store, url, { ...fixture(), ratesText: null });
   assert.equal(validate(url).exitCode, 1);
   const failed = report(url).checks.filter((c) => !c.ok).map((c) => c.id);
-  assert.deepEqual(failed, ["rates-cover-series", "daily-matches-ledger", "dashboard-matches-ledger"]);
+  assert.deepEqual(failed, ["rates-cover-series", "daily-matches-ledger", "dashboard-matches-ledger", "summary-matches-ledger"]);
 });

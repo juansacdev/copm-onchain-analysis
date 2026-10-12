@@ -2,7 +2,7 @@
 // wrote for one chain. Each rule returns { id, ok, detail }; ids and details
 // are what validation.json records, so keep them stable. There is no
 // tolerance anywhere: amounts are compared to the wei.
-import { buildDailySeries, dailyCsv } from "./aggregate.js";
+import { buildDailySeries, dailyCsv, summarize } from "./aggregate.js";
 import { buildDashboard } from "./dashboard.js";
 import { parseHoldersCsv, formatUnits } from "./holders.js";
 import { createLedger, foldTransfers, negativeBalances } from "./ledger.js";
@@ -321,6 +321,27 @@ export function checkDashboardMatchesLedger({ dashboard, state, transfers, admin
   );
 }
 
+// summary.json is a pure function of the manifest, the transfers, the approval
+// counts and the rates, and the report figures read it. Rebuilding it the way
+// `aggregate` does and requiring the stored file to be identical means a hand
+// edit of any total, average, peak or rate note cannot pass `validate`.
+export function checkSummaryMatchesLedger({ summary, manifest, state, transfers, approvals, rates }) {
+  const id = "summary-matches-ledger";
+  if (rates.error) return check(id, false, `cannot rebuild the summary without usable rates: ${rates.error}`);
+  let expected;
+  try {
+    const { series, totals } = buildDailySeries(transfers, approvals.daily, rates.table);
+    expected = summarize({ manifest, chainKey: state.chain, series, totals, transferEvents: transfers.length });
+  } catch (err) {
+    return check(id, false, `cannot rebuild the summary: ${err.message}`);
+  }
+  // The stored file went through JSON, so compare the same way.
+  const wanted = JSON.parse(JSON.stringify(expected));
+  const sections = [...new Set([...Object.keys(wanted), ...Object.keys(summary)])];
+  const wrong = sections.filter((name) => JSON.stringify(wanted[name]) !== JSON.stringify(summary[name]));
+  return check(id, wrong.length === 0, `sections=${sections.length}` + (wrong.length ? `; differs: ${wrong.join(", ")}` : ""));
+}
+
 // Every rule, in report order. `partitions` is [{ key, rows }] in month order.
 export function strictChecks({
   deployBlock,
@@ -360,5 +381,6 @@ export function strictChecks({
     checkSeriesContinuous(csvRows),
     checkCsvTransferTotal(csvRows, summary),
     checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders, rates }),
+    checkSummaryMatchesLedger({ summary, manifest, state, transfers, approvals, rates }),
   ];
 }

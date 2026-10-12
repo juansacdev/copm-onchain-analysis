@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -197,4 +197,136 @@ test("creates the output directory when it does not exist", async () => {
   await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
   assert.ok(existsSync(new URL("cop-usd.csv", dir)));
   mkdirSync(join(base, "keep"), { recursive: true });
+});
+
+/* Published rates are immutable ----------------------------------------------- */
+
+const files = (dir) => ["cop-usd.csv", "source.json"].map((name) => readFileSync(new URL(name, dir), "utf8"));
+
+test("a successful fetch that covers fewer days than the committed file is treated as a failed fetch", async () => {
+  const dir = dirOf(temp());
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  const before = files(dir);
+
+  const warnings = [];
+  const shorter = [row(3000, "2026-10-01", "2026-10-03")];
+  const result = await updateRates({
+    dirUrl: dir,
+    fromDay: "2026-10-01",
+    neededThrough: "2026-10-07",
+    fetchRows: ok(shorter),
+    log: () => {},
+    warn: (text) => warnings.push(text),
+  });
+  assert.equal(result.used, "committed");
+  assert.match(warnings.join("\n"), /2026-10-03.*2026-10-07/s, "names where the answer ends and where the committed file ends");
+  assert.deepEqual(files(dir), before, "the committed coverage never shrinks");
+});
+
+test("a shorter answer fails like a failed fetch when the committed file stops short of what the series needs", async () => {
+  const dir = dirOf(temp());
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  await assert.rejects(
+    updateRates({ dirUrl: dir, fromDay: "2026-10-01", neededThrough: "2026-10-08", fetchRows: ok([SOURCE[0]]), ...silent }),
+    /2026-10-07.*2026-10-08/s,
+  );
+});
+
+test("a day already published whose rate changed is an error naming the day and both values", async () => {
+  const dir = dirOf(temp());
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  const before = files(dir);
+
+  const revised = [row(3000, "2026-10-01", "2026-10-03"), row(3011, "2026-10-04", "2026-10-04"), row(3020, "2026-10-05", "2026-10-07")];
+  await assert.rejects(
+    updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(revised), ...silent }),
+    /2026-10-04.*3010.*3011/s,
+  );
+  assert.deepEqual(files(dir), before);
+});
+
+test("a changed rate is an error even when the answer is also shorter than the committed file", async () => {
+  const dir = dirOf(temp());
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  await assert.rejects(
+    updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok([row(2999, "2026-10-01", "2026-10-02")]), ...silent }),
+    /2026-10-01.*3000.*2999/s,
+  );
+});
+
+test("an answer that starts after the committed file does not shrink it either", async () => {
+  const dir = dirOf(temp());
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  const before = files(dir);
+  const result = await updateRates({
+    dirUrl: dir,
+    fromDay: "2026-10-04",
+    fetchRows: ok([row(3010, "2026-10-04", "2026-10-04"), row(3020, "2026-10-05", "2026-10-07")]),
+    ...silent,
+  });
+  assert.equal(result.used, "committed");
+  assert.deepEqual(files(dir), before);
+});
+
+test("an empty answer is treated as a failed fetch instead of throwing", async () => {
+  const dir = dirOf(temp());
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  const before = files(dir);
+  const warnings = [];
+  const result = await updateRates({
+    dirUrl: dir,
+    fromDay: "2026-10-01",
+    neededThrough: "2026-10-07",
+    fetchRows: ok([]),
+    log: () => {},
+    warn: (text) => warnings.push(text),
+  });
+  assert.equal(result.used, "committed");
+  assert.match(warnings.join("\n"), /no rows|empty/i);
+  assert.deepEqual(files(dir), before);
+});
+
+test("an empty answer with no committed file is an error", async () => {
+  const dir = dirOf(temp());
+  await assert.rejects(updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok([]), ...silent }), /no rows|empty/i);
+});
+
+test("a longer answer extends the committed file and keeps every published day", async () => {
+  const dir = dirOf(temp());
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  const longer = [...SOURCE, row(3030, "2026-10-08", "2026-10-10")];
+  const result = await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(longer), ...silent });
+  assert.equal(result.used, "fetched");
+  const csv = readFileSync(new URL("cop-usd.csv", dir), "utf8").trim().split("\n");
+  assert.equal(csv.length, 1 + 10);
+  assert.equal(csv[4], "2026-10-04,3010");
+});
+
+/* Atomic writes ----------------------------------------------------------------- */
+
+test("both files are written through a temp file and a rename, the CSV first and source.json last", async () => {
+  const path = temp();
+  const dir = dirOf(path);
+  await updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  const before = files(dir);
+
+  // A directory in the way of the temp file of source.json makes only that
+  // write fail. A plain write would ignore the temp path and succeed.
+  mkdirSync(join(path, "source.json.tmp"));
+  const longer = [...SOURCE, row(3030, "2026-10-08", "2026-10-09")];
+  await assert.rejects(updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok(longer), ...silent }));
+  const [csv, source] = files(dir);
+  assert.match(csv, /2026-10-09,3030/, "the CSV was written first");
+  assert.equal(source, before[1], "source.json is last, and a failed write leaves the old file whole");
+
+  rmSync(join(path, "source.json.tmp"), { recursive: true });
+  mkdirSync(join(path, "cop-usd.csv.tmp"));
+  await assert.rejects(updateRates({ dirUrl: dir, fromDay: "2026-10-01", fetchRows: ok([...longer, row(3040, "2026-10-10", "2026-10-10")]), ...silent }));
+  assert.equal(files(dir)[0], csv, "a failed CSV write leaves the old CSV whole");
+});
+
+test("no temp file is left behind after a good run", async () => {
+  const path = temp();
+  await updateRates({ dirUrl: dirOf(path), fromDay: "2026-10-01", fetchRows: ok(SOURCE), ...silent });
+  assert.deepEqual(readdirSync(path).sort(), ["cop-usd.csv", "source.json"]);
 });

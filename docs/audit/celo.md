@@ -22,7 +22,7 @@ If COPM's story on [Polygon](./polygon.md) is that of an institutional rail, the
 | **Peak volume in one day** | **<!-- copm:celo.peakVolumeUsd -->$726K<!-- /copm --> USD** (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) |
 | **Peak month (volume)** | <!-- copm:celo.peakMonth -->July 2025<!-- /copm -->: <!-- copm:celo.peakMonthUsd -->$2.1M<!-- /copm --> USD |
 | **Peak month (transfers)** | <!-- copm:celo.peakTxMonth -->January 2025<!-- /copm -->: <!-- copm:celo.peakTxMonthCount -->18,491<!-- /copm --> |
-| **Supply peak** | <!-- copm:celo.peakSupplyCopm -->1.14B<!-- /copm --> COPM ≈ <!-- copm:celo.peakSupplyUsd -->$309K<!-- /copm --> USD (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->) |
+| **Supply peak** | <!-- copm:celo.peakSupplyCopm -->1.14B<!-- /copm --> COPM (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->); in USD, <!-- copm:celo.peakSupplyUsd -->$340K<!-- /copm --> (<!-- copm:celo.peakSupplyUsdDay -->2026-07-11<!-- /copm -->) |
 | **Current supply** | <!-- copm:celo.supply -->418,585,134.63<!-- /copm --> COPM ≈ <!-- copm:celo.supplyUsd -->$131K<!-- /copm --> USD |
 | **Holders with a balance** | <!-- copm:celo.holders -->998<!-- /copm --> (the largest holds <!-- copm:celo.top1Pct -->76.2%<!-- /copm -->, the top 10 hold <!-- copm:celo.top10Pct -->98.8%<!-- /copm -->) |
 
@@ -120,7 +120,7 @@ The `FREEZER_ROLE` can block an address; the contract emitted <!-- copm:celo.eve
 
 ## Validation
 
-The same <!-- copm:celo.checksTotal -->20<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->20<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+The same <!-- copm:celo.checksTotal -->21<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->21<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Rule | Result |
 | :--- | :--- | :--- |

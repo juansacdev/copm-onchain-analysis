@@ -52,17 +52,18 @@ export function headlineCards({ chains, chain, t, lang }) {
     });
   }
 
-  // The supply today as a share of its peak (a ratio of COPM, whatever the
-  // rate did), with the day of the peak.
+  // The supply today as a share of its peak, in COPM: the card has no unit
+  // switch, so the supply, its peak and the day of that peak are all COPM (the
+  // USD peak is another day, see supplyPeak.usd) and the label says so.
   const peaked = selected.filter((c) => c.supplyPeak);
-  const peak = sum(peaked, (c) => c.supplyPeak.copm);
+  const peak = sum(peaked, (c) => c.supplyPeak.copm.amount);
   if (peaked.length > 0 && peak > 0) {
     const current = sum(peaked, (c) => c.checkpoint.totalSupply);
     const atPeak = current >= peak;
     const support =
       peaked.length === 1
-        ? interpolate(t.supply.support, { date: shortDate(peaked[0].supplyPeak.day, lang) })
-        : interpolate(t.supply.supportMany, { peaks: peaked.map((c) => `${c.label} ${shortDate(c.supplyPeak.day, lang)}`).join(", ") });
+        ? interpolate(t.supply.support, { date: shortDate(peaked[0].supplyPeak.copm.day, lang) })
+        : interpolate(t.supply.supportMany, { peaks: peaked.map((c) => `${c.label} ${shortDate(c.supplyPeak.copm.day, lang)}`).join(", ") });
     out.push({
       id: "supply",
       figure: percent(atPeak ? 100 : (current / peak) * 100, 0),

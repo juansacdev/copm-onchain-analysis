@@ -53,7 +53,7 @@ test("the client payload keeps what the charts and tables need and leaves the re
   const payload = clientPayload(data);
   const chain = payload.chains.polygon;
   assert.deepEqual(Object.keys(chain.daily).sort(), ["burn", "burnUsd", "day", "mint", "mintUsd", "rate", "supply", "supplyUsd", "transfers", "volume", "volumeUsd"]);
-  assert.ok(chain.largest.d30 && chain.largest.all);
+  assert.ok(chain.largest.copm.d30 && chain.largest.usd.all);
   assert.ok(chain.sizes && chain.holders.top && chain.activity.endDay);
   assert.deepEqual(chain.governance, { roleHolders: 1, roleCount: 1, frozen: [] }, "only what the headline cards read; the rest is rendered on the server");
   assert.deepEqual(Object.keys(chain.issuance.burn).sort(), ["addresses", "top", "topSharePct", "volume"]);
@@ -66,7 +66,7 @@ test("the client payload keeps what the charts and tables need and leaves the re
 test("the data carries the rate the dollar figures use: the latest, its day and the range", () => {
   const data = loadDashboardData({ dataDir: writeData() });
   const fx = fixture().dashboard.fx;
-  assert.deepEqual(data.fx, { latest: fx.latest, latestDay: fx.latestDay, min: fx.min, max: fx.max });
+  assert.deepEqual(data.fx, { latest: fx.latest, latestDay: fx.latestDay, min: fx.min, max: fx.max, provisionalDays: 0, provisionalFrom: null });
   assert.equal(data.fx.latestDay, "2024-02-01");
 });
 
@@ -76,5 +76,16 @@ test("the latest rate is the one of the chain whose series ends last, and the ra
   const base = fixture().dashboard;
   writeFileSync(file, JSON.stringify({ ...base, chain: "celo", fx: { ...base.fx, latestDay: "2024-02-05", latest: 3000, min: 2900, max: 4500 } }));
   const { fx } = loadDashboardData({ dataDir: dir });
-  assert.deepEqual(fx, { latest: 3000, latestDay: "2024-02-05", min: Math.min(2900, base.fx.min), max: Math.max(4500, base.fx.max) });
+  assert.deepEqual(fx, { latest: 3000, latestDay: "2024-02-05", min: Math.min(2900, base.fx.min), max: Math.max(4500, base.fx.max), provisionalDays: 0, provisionalFrom: null });
+});
+
+test("the provisional days are the most any series has, from the earliest day any of them starts on", () => {
+  const dir = writeData();
+  const base = fixture().dashboard;
+  const write = (chain, fx) => writeFileSync(join(dir, chain, "dashboard.json"), JSON.stringify({ ...base, chain, fx: { ...base.fx, ...fx } }));
+  write("polygon", { provisionalDays: 2, provisionalFrom: "2024-02-02" });
+  write("celo", { provisionalDays: 3, provisionalFrom: "2024-02-01" });
+  const { fx } = loadDashboardData({ dataDir: dir });
+  assert.equal(fx.provisionalDays, 3);
+  assert.equal(fx.provisionalFrom, "2024-02-01");
 });

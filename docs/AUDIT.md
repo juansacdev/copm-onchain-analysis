@@ -23,7 +23,7 @@ Data as of Polygon block <!-- copm:polygon.checkpointBlock -->95,378,468<!-- /co
 | Peak month (volume) | <!-- copm:polygon.peakMonthUsd -->$337.1M<!-- /copm --> (<!-- copm:polygon.peakMonthShort -->Nov 2025<!-- /copm -->) | <!-- copm:celo.peakMonthUsd -->$2.1M<!-- /copm --> (<!-- copm:celo.peakMonthShort -->Jul 2025<!-- /copm -->) | — |
 | Current on-chain supply | <!-- copm:polygon.supplyCompact -->4.48B<!-- /copm --> COPM | <!-- copm:celo.supplyCompact -->418.6M<!-- /copm --> COPM | **<!-- copm:combined.supply -->4.9B<!-- /copm --> COPM ≈ <!-- copm:combined.supplyUsd -->$1.5M<!-- /copm -->** |
 | Holders with a balance | <!-- copm:polygon.holders -->582<!-- /copm --> | <!-- copm:celo.holders -->998<!-- /copm --> | **<!-- copm:combined.holders -->1,580<!-- /copm -->** |
-| Strict validation rules | <!-- copm:polygon.checksPassed -->20<!-- /copm -->/<!-- copm:polygon.checksTotal -->20<!-- /copm --> ✅ | <!-- copm:celo.checksPassed -->20<!-- /copm -->/<!-- copm:celo.checksTotal -->20<!-- /copm --> ✅ | **<!-- copm:combined.checksPassed -->40<!-- /copm -->/<!-- copm:combined.checksTotal -->40<!-- /copm --> ✅** |
+| Strict validation rules | <!-- copm:polygon.checksPassed -->21<!-- /copm -->/<!-- copm:polygon.checksTotal -->21<!-- /copm --> ✅ | <!-- copm:celo.checksPassed -->21<!-- /copm -->/<!-- copm:celo.checksTotal -->21<!-- /copm --> ✅ | **<!-- copm:combined.checksPassed -->42<!-- /copm -->/<!-- copm:combined.checksTotal -->42<!-- /copm --> ✅** |
 
 > USD figures value every day at that day's TRM (the official daily rate of the Superintendencia Financiera de Colombia, read from datos.gov.co): the latest is <!-- copm:fx.latestRate -->3,194.44<!-- /copm --> COP per USD (<!-- copm:fx.latestDate -->2026-10-12<!-- /copm -->), and it ranged from <!-- copm:fx.minRate -->3,048.12<!-- /copm --> to <!-- copm:fx.maxRate -->4,478.21<!-- /copm --> over the token's life. Same methodology, same scripts, [same validations](#validation) on both chains.
 
@@ -61,14 +61,14 @@ Earlier versions of this dataset were missing part of Polygon's history and show
 
 ## Validation
 
-Each chain passes the same <!-- copm:polygon.checksTotal -->20<!-- /copm --> strict rules, offline and with no tolerance: minted − burned equals `totalSupply()` to the wei, replaying the stored transfers reproduces the checkpoint, no balance is negative, `holders.csv` adds up to `totalSupply()`, partitions are ordered and complete, timestamps are exact, and `daily.csv` is exactly what the transfers produce. Result: **<!-- copm:combined.checksPassed -->40<!-- /copm -->/<!-- copm:combined.checksTotal -->40<!-- /copm --> green**.
+Each chain passes the same <!-- copm:polygon.checksTotal -->21<!-- /copm --> strict rules, offline and with no tolerance: minted − burned equals `totalSupply()` to the wei, replaying the stored transfers reproduces the checkpoint, no balance is negative, `holders.csv` adds up to `totalSupply()`, partitions are ordered and complete, timestamps are exact, and `daily.csv` is exactly what the transfers produce. Result: **<!-- copm:combined.checksPassed -->42<!-- /copm -->/<!-- copm:combined.checksTotal -->42<!-- /copm --> green**.
 
 The comparison with the live chain happens when the data is written, not in `validate`: `scan` reconciles the ledger against `totalSupply()` at every stage before moving the checkpoint, and `holders` checks every balance against `balanceOf` at the checkpoint block.
 
 | Chain | Rules passed | Detail |
 | :--- | :--- | :--- |
-| Polygon | <!-- copm:polygon.checksPassed -->20<!-- /copm -->/<!-- copm:polygon.checksTotal -->20<!-- /copm --> ✅ | [`data/polygon/validation.json`](../data/polygon/validation.json) |
-| Celo | <!-- copm:celo.checksPassed -->20<!-- /copm -->/<!-- copm:celo.checksTotal -->20<!-- /copm --> ✅ | [`data/celo/validation.json`](../data/celo/validation.json) |
+| Polygon | <!-- copm:polygon.checksPassed -->21<!-- /copm -->/<!-- copm:polygon.checksTotal -->21<!-- /copm --> ✅ | [`data/polygon/validation.json`](../data/polygon/validation.json) |
+| Celo | <!-- copm:celo.checksPassed -->21<!-- /copm -->/<!-- copm:celo.checksTotal -->21<!-- /copm --> ✅ | [`data/celo/validation.json`](../data/celo/validation.json) |
 
 ## Why you can trust these numbers
 

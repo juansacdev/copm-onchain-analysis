@@ -1,7 +1,7 @@
 {
   "chain": "celo",
   "block": 79872373,
-  "validatedAt": "2026-10-12T03:54:16.966Z",
+  "validatedAt": "2026-10-12T04:27:25.863Z",
   "checks": [
     {
       "id": "event-count",
@@ -102,8 +102,13 @@
       "id": "dashboard-matches-ledger",
       "ok": true,
       "detail": "block=79872373 checkpoint=79872373 sections=15"
+    },
+    {
+      "id": "summary-matches-ledger",
+      "ok": true,
+      "detail": "sections=8"
     }
   ],
-  "passed": 20,
+  "passed": 21,
   "failed": 0
 }

@@ -22,7 +22,7 @@ Si la historia de COPM en [Polygon](./polygon.es.md) es la de un rail institucio
 | **Pico de volumen en un día** | **<!-- copm:celo.peakVolumeUsd -->US$726 mil<!-- /copm -->** (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) |
 | **Mes pico (volumen)** | <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->: <!-- copm:celo.peakMonthUsd -->US$2,1 millones<!-- /copm --> |
 | **Mes pico (transferencias)** | <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->: <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> |
-| **Pico de supply** | <!-- copm:celo.peakSupplyCopm -->1.145 millones<!-- /copm --> COPM ≈ <!-- copm:celo.peakSupplyUsd -->US$309 mil<!-- /copm --> (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->) |
+| **Pico de supply** | <!-- copm:celo.peakSupplyCopm -->1.145 millones<!-- /copm --> COPM (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->); en dólares, <!-- copm:celo.peakSupplyUsd -->US$340 mil<!-- /copm --> (<!-- copm:celo.peakSupplyUsdDay -->2026-07-11<!-- /copm -->) |
 | **Supply actual** | <!-- copm:celo.supply -->418.585.134,63<!-- /copm --> COPM ≈ <!-- copm:celo.supplyUsd -->US$131 mil<!-- /copm --> |
 | **Holders con saldo** | <!-- copm:celo.holders -->998<!-- /copm --> (el mayor tiene <!-- copm:celo.top1Pct -->76,2 %<!-- /copm -->, los 10 mayores tienen <!-- copm:celo.top10Pct -->98,8 %<!-- /copm -->) |
 
@@ -120,7 +120,7 @@ El `FREEZER_ROLE` puede bloquear una dirección; el contrato emitió <!-- copm:c
 
 ## Validación
 
-Las mismas <!-- copm:celo.checksTotal -->20<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->20<!-- /copm --> pasaron (validado el <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+Las mismas <!-- copm:celo.checksTotal -->21<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->21<!-- /copm --> pasaron (validado el <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |

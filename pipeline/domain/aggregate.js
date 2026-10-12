@@ -114,6 +114,7 @@ export function summarize({ manifest, chainKey, series, totals, transferEvents }
   const peakTxDay = maxBy(series, "transfers");
   const peakVolDay = maxBy(series, "grossVolume");
   const peakSupplyDay = maxBy(series, "supplyEnd");
+  const peakSupplyUsdDay = maxBy(series, "supplyEndUsd");
 
   const grossCOPM = toCOPM(totals.gross);
   const netCOPM = toCOPM(totals.gross - totals.mint - totals.burn);
@@ -122,8 +123,8 @@ export function summarize({ manifest, chainKey, series, totals, transferEvents }
   const supplyCOPM = Number(totals.supply / 10n ** 12n) / 1e6;
   const peakSupplyCOPM = Number(peakSupplyDay.supplyEnd / 10n ** 12n) / 1e6;
 
-  // USD is summed day by day at each day's rate. Peaks are chosen by COPM; the
-  // USD shown is that day's amount.
+  // USD is summed day by day at each day's rate. A peak is chosen in the unit
+  // it is shown in: the supply has one in COPM and, on its own day, one in USD.
   const usdTotal = (key) => sumUsd(series.map((r) => r[key]));
   const grossUSD = usdTotal("grossUsd");
   const rates = series.map((r) => r.rate);
@@ -164,17 +165,15 @@ export function summarize({ manifest, chainKey, series, totals, transferEvents }
         copm: toCOPM(peakVolDay.grossVolume),
         usd: peakVolDay.grossUsd,
       },
-      maxSupplyEndOfDay: {
-        day: peakSupplyDay.day,
-        copm: peakSupplyCOPM,
-        usd: peakSupplyDay.supplyEndUsd,
-      },
+      maxSupplyEndOfDay: { day: peakSupplyDay.day, copm: peakSupplyCOPM },
+      maxSupplyEndOfDayUsd: { day: peakSupplyUsdDay.day, usd: peakSupplyUsdDay.supplyEndUsd },
     },
     // The TRM behind the USD figures: where the series ends and its range.
     fx: {
       latestDay: series.at(-1).day,
       latestCopPerUsd: series.at(-1).rate,
       provisionalDays: series.filter((r) => r.provisional).length,
+      provisionalFrom: series.find((r) => r.provisional)?.day ?? null,
       minCopPerUsd: Math.min(...rates),
       maxCopPerUsd: Math.max(...rates),
     },

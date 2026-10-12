@@ -67,3 +67,14 @@ export function tileNotes({ tiles, t, lang }) {
     block: "",
   };
 }
+
+// The line under the headline cards: where the dollar rate comes from and the
+// latest rate. When trailing days still use the last known rate (their own is
+// not published yet), it also says how many and from which day; with none,
+// nothing extra is written. `t` is the dashboard dictionary, `fx` data.fx.
+export function rateLine({ fx, t, lang }) {
+  const base = interpolate(t.basis.rate, { rate: formatDecimal(fx.latest, 2, lang, { trim: true }), date: formatDate(fx.latestDay, lang) });
+  if (!(fx.provisionalDays > 0)) return base;
+  const words = fx.provisionalDays === 1 ? t.basis.provisionalOne : t.basis.provisional;
+  return `${base} ${interpolate(words, { count: formatInt(fx.provisionalDays, lang), date: formatDate(fx.provisionalFrom, lang) })}`;
+}

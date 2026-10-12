@@ -29,6 +29,7 @@ test("a consistent dataset passes every rule, in report order", () => {
     "series-continuous",
     "csv-transfer-total",
     "dashboard-matches-ledger",
+    "summary-matches-ledger",
   ]);
   assert.deepEqual(failing(fixture()), []);
 });
@@ -225,7 +226,7 @@ test("daily-matches-ledger: the last day's supply is tied to totalSupply to the 
 test("series rules compare daily.csv with summary.json: length, continuity and the transfer total", () => {
   const length = fixture();
   length.summary.range.totalDays += 1;
-  assert.deepEqual(failing(length), ["series-length"]);
+  assert.deepEqual(failing(length), ["series-length", "summary-matches-ledger"]);
 
   const gap = fixture();
   const lines = gap.csvText.split("\n");
@@ -284,11 +285,13 @@ test("dashboard-matches-ledger: every other field of dashboard.json is checked t
   for (const [name, edit] of Object.entries({
     gross: (d) => (d.flows.gross += 1),
     turnover: (d) => (d.flows.turnover += 1),
-    supplyPeak: (d) => (d.supplyPeak.copm += 1),
+    supplyPeak: (d) => (d.supplyPeak.copm.amount += 1),
+    supplyPeakUsd: (d) => (d.supplyPeak.usd.day = "2024-01-01"),
+    largestUsd: (d) => (d.largest.usd.all[0].usd += 1),
     activityTransfers: (d) => (d.activity.transfers.current += 1),
     activityVolume: (d) => (d.activity.volume.previous += 1),
     sizes: (d) => (d.sizes[0].count += 1),
-    largest: (d) => (d.largest.all[0].amount += 1),
+    largest: (d) => (d.largest.copm.all[0].amount += 1),
     issuance: (d) => (d.issuance.mint.topSharePct = 1),
     holders: (d) => (d.holders.count += 1),
     monthly: (d) => (d.monthly.volume[0] += 1),
@@ -313,6 +316,57 @@ test("dashboard-matches-ledger: without the holders snapshot it cannot rebuild a
   const fx = fixture();
   fx.holders = { csv: null, json: null };
   assert.equal(results(fx)["dashboard-matches-ledger"].ok, false);
+});
+
+test("summary-matches-ledger: an untouched summary passes and says what it compared", () => {
+  const r = results(fixture())["summary-matches-ledger"];
+  assert.equal(r.ok, true);
+  assert.match(r.detail, /sections=\d+/);
+});
+
+test("summary-matches-ledger: every headline field of summary.json is checked, a changed one fails it alone", () => {
+  for (const [name, edit] of Object.entries({
+    grossVolumeUSD: (d) => (d.totals.grossVolumeUSD += 1),
+    grossVolumeCOPM: (d) => (d.totals.grossVolumeCOPM += 1),
+    totalMintedCOPM: (d) => (d.totals.totalMintedCOPM += 1),
+    totalMintedUSD: (d) => (d.totals.totalMintedUSD += 1),
+    totalBurnedCOPM: (d) => (d.totals.totalBurnedCOPM += 1),
+    currentSupplyCOPM: (d) => (d.totals.currentSupplyCOPM += 1),
+    transferEvents: (d) => (d.totals.transferEvents += 1),
+    average: (d) => (d.averages.avgDailyTransfers += 1),
+    peakCopm: (d) => (d.peaks.maxSupplyEndOfDay.copm += 1),
+    peakUsdDay: (d) => (d.peaks.maxSupplyEndOfDayUsd.day = "2024-01-01"),
+    range: (d) => (d.range.totalDays += 1),
+    fx: (d) => (d.fx.latestCopPerUsd += 1),
+    chain: (d) => (d.chain = "other"),
+    extraField: (d) => (d.invented = true),
+  })) {
+    const fx = fixture();
+    edit(fx.summary);
+    assert.equal(results(fx)["summary-matches-ledger"].ok, false, name);
+    assert.ok(failing(fx).includes("summary-matches-ledger"), name);
+    // The transfer count and the day count are also checked against daily.csv.
+    const alsoChecked = ["csv-transfer-total", "series-length"];
+    assert.deepEqual(failing(fx).filter((id) => !alsoChecked.includes(id)), ["summary-matches-ledger"], name);
+  }
+});
+
+test("summary-matches-ledger: the detail names the sections that differ", () => {
+  const fx = fixture();
+  fx.summary.totals.grossVolumeUSD += 1;
+  assert.match(results(fx)["summary-matches-ledger"].detail, /differs: totals/);
+});
+
+test("summary-matches-ledger: it follows the rates, so a summary valued at other rates fails", () => {
+  const fx = fixture();
+  fx.ratesText = fx.ratesText.replace(/,(\d+)$/gm, (_, rate) => `,${Number(rate) + 1}`);
+  assert.equal(results(fx)["summary-matches-ledger"].ok, false);
+});
+
+test("summary-matches-ledger: without usable rates it cannot rebuild and fails", () => {
+  const fx = fixture();
+  fx.ratesText = null;
+  assert.equal(results(fx)["summary-matches-ledger"].ok, false);
 });
 
 test("approvals-consistent: the checkpoint's count, the daily counts and the spender counts must agree", () => {

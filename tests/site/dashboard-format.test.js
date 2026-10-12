@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rowAmount, shortDate, tileNotes, utcDateTime } from "../../site/src/lib/dashboard-format.js";
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rateLine, rowAmount, shortDate, tileNotes, utcDateTime } from "../../site/src/lib/dashboard-format.js";
 
 test("compact amounts follow the unit: COPM through the shared formatter, USD as the value already in dollars", () => {
   assert.equal(amountCompact(2_000_000, "usd", "en"), "$2M");
@@ -72,4 +72,32 @@ test("a short date keeps the day, the month name and the year in few characters"
   assert.equal(shortDate("2026-05-07", "es"), "7 may 2026");
   assert.equal(shortDate("2026-05-07", "en"), "May 7, 2026");
   assert.equal(shortDate("2025-12-31", "es"), "31 dic 2025");
+});
+
+/* The rate line ----------------------------------------------------------------- */
+
+import { dashboardDictionaries } from "../../site/src/i18n/index.js";
+
+const FX = { latest: 3194.44, latestDay: "2026-10-13", min: 3000, max: 4500, provisionalDays: 0, provisionalFrom: null };
+
+test("the rate line states the latest rate and its day, and nothing more when no day is provisional", () => {
+  for (const lang of ["es", "en"]) {
+    const line = rateLine({ fx: FX, t: dashboardDictionaries[lang], lang });
+    assert.match(line, /3[.,]194[.,]44/, lang);
+    assert.doesNotMatch(line, /provisional/i, lang);
+  }
+});
+
+test("the rate line says how many days are provisional and from which day", () => {
+  const fx = { ...FX, provisionalDays: 3, provisionalFrom: "2026-10-14" };
+  const en = rateLine({ fx, t: dashboardDictionaries.en, lang: "en" });
+  assert.match(en, /3 days.*provisional.*October 14, 2026|3 days.*last known rate.*October 14, 2026/s);
+  const es = rateLine({ fx, t: dashboardDictionaries.es, lang: "es" });
+  assert.match(es, /3 días.*(provisional|última tasa conocida).*14 de octubre de 2026/s);
+});
+
+test("one provisional day is written in the singular", () => {
+  const fx = { ...FX, provisionalDays: 1, provisionalFrom: "2026-10-14" };
+  assert.match(rateLine({ fx, t: dashboardDictionaries.en, lang: "en" }), /1 day\b(?!s)/);
+  assert.match(rateLine({ fx, t: dashboardDictionaries.es, lang: "es" }), /1 día\b(?!s)/);
 });

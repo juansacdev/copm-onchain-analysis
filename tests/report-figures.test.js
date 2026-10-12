@@ -41,6 +41,9 @@ test("volumes and peaks come from the summary", () => {
   assert.equal(en(f, "polygon.peakTxDay"), "2024-02-01");
   assert.equal(en(f, "polygon.peakVolumeUsd"), "$1K");
   assert.equal(en(f, "polygon.peakSupplyDay"), "2024-02-02");
+  assert.equal(en(f, "polygon.peakSupplyCopm"), "900");
+  assert.equal(en(f, "polygon.peakSupplyUsdDay"), "2024-02-01", "the USD peak has its own day");
+  assert.equal(en(f, "polygon.peakSupplyUsd"), "$300");
 });
 
 test("series figures come from daily.csv", () => {
@@ -124,6 +127,8 @@ test("the rate figures state the latest TRM, its date and the range over the tok
   assert.equal(en(f, "fx.latestRate"), "3,900.5");
   assert.equal(es(f, "fx.latestRate"), "3.900,5");
   assert.equal(en(f, "fx.latestDate"), "2024-02-03");
+  assert.equal(en(f, "fx.provisionalDays"), "0");
+  assert.throws(() => getFigure(f, "fx.provisionalFrom"), /unknown/i, "with no provisional day there is no first one to name");
   assert.equal(en(f, "fx.minRate"), "3,800");
   assert.equal(es(f, "fx.maxRate"), "4.100");
 });
@@ -166,4 +171,13 @@ test("minted, burned and supply in USD come from the daily totals of the summary
   assert.equal(getFigure(f, "polygon.burnedUsd").value, 0.1);
   assert.equal(getFigure(f, "polygon.supplyUsd").value, 0.15);
   assert.equal(getFigure(f, "combined.supplyUsd").value, 0.3);
+});
+
+test("provisional days are counted across the chains and the first one is named", () => {
+  const withFx = (over) => chain({ summary: { ...chain().summary, fx: { ...chain().summary.fx, ...over } } });
+  const polygon = withFx({ provisionalDays: 2, provisionalFrom: "2024-02-02" });
+  const celo = withFx({ provisionalDays: 3, provisionalFrom: "2024-02-01" });
+  const f = buildFigures({ chains: { polygon, celo } });
+  assert.equal(en(f, "fx.provisionalDays"), "3");
+  assert.equal(en(f, "fx.provisionalFrom"), "2024-02-01");
 });

@@ -20,7 +20,7 @@ import { clientPayload, loadDashboardData } from '../../lib/dashboard-data.js';
 import { headlineCards } from '../../lib/dashboard-cards.js';
 import { CHAIN_CHOICES, DEFAULT_STATE, PERIOD_CHOICES, UNIT_CHOICES } from '../../lib/dashboard-filters.js';
 import { PERIOD_DAYS, flowStats, granularityFor, largestRows, tilesFor } from '../../lib/dashboard-view.js';
-import { amountCompact, amountFull, arrowFor, changeText, eventArgText, shortDate, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rateLine, shortDate, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
 import { formatDate, formatDecimal, formatInt, formatMonthShort, rangeLabels } from '../../lib/format.js';
 import { formatSerialBlock } from '../../lib/serial.js';
 import {
@@ -92,7 +92,7 @@ const supplyStats = keys.flatMap((k) => {
     { chain: k, label: t.stats.minted, figure: amountCompact(d.flows.minted, 'copm', lang), support: amountCompact(d.flows.usd.minted, 'usd', lang) },
     { chain: k, label: t.stats.burned, figure: amountCompact(d.flows.burned, 'copm', lang), support: amountCompact(d.flows.usd.burned, 'usd', lang) },
     ...(d.supplyPeak
-      ? [{ chain: k, label: t.stats.peak, figure: amountCompact(d.supplyPeak.copm, 'copm', lang), support: shortDate(d.supplyPeak.day, lang) }]
+      ? [{ chain: k, label: t.stats.peak, figure: amountCompact(d.supplyPeak.copm.amount, 'copm', lang), support: shortDate(d.supplyPeak.copm.day, lang) }]
       : []),
   ];
 });
@@ -198,7 +198,7 @@ const clientData = { ...payload, t: clientText };
       ))}
     </ul>
 
-    <p class="dash-basis" data-basis>{interpolate(t.basis.rate, { rate: formatDecimal(data.fx.latest, 2, lang, { trim: true }), date: formatDate(data.fx.latestDay, lang) })}</p>
+    <p class="dash-basis" data-basis>{rateLine({ fx: data.fx, t, lang })}</p>
 
     <form class="filters" data-filters hidden aria-label={t.filters.label} onsubmit="return false">
       <div class="filter" role="group" aria-label={t.filters.chain.label} data-filter="chain">
@@ -249,6 +249,7 @@ const clientData = { ...payload, t: clientText };
           ))}
         </ul>
         <p>{t.notes.method}</p>
+        <p>{t.notes.day} {t.notes.dayShift}</p>
         <p><a href={readmeUrl(lang)} target="_blank" rel="noopener noreferrer">{t.notes.readme} →</a></p>
       </div>
     </details>

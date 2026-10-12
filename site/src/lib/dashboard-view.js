@@ -144,10 +144,16 @@ export function tilesFor(chains, state) {
 
 const LARGEST_KEY = { "30d": "d30", "90d": "d90", "1y": "d365", all: "all" };
 
+// The pipeline writes one ranking per unit, because the top 25 by COPM and the
+// top 25 by USD are different sets (the rate differs by day). The list shown
+// is the one of the unit in view, merged across chains and ordered by that
+// unit's amount.
 export function largestRows(chains, state, n = 25) {
+  const unit = state.unit === "usd" ? "usd" : "copm";
+  const amountOf = (row) => (unit === "usd" ? row.usd : row.amount);
   return selectedChains(chains, state)
-    .flatMap((c) => c.largest[LARGEST_KEY[state.period]].map((row) => ({ ...row, chain: c.key })))
-    .sort((a, b) => b.amount - a.amount || CHAIN_ORDER.indexOf(a.chain) - CHAIN_ORDER.indexOf(b.chain) || a.block - b.block)
+    .flatMap((c) => c.largest[unit][LARGEST_KEY[state.period]].map((row) => ({ ...row, chain: c.key })))
+    .sort((a, b) => amountOf(b) - amountOf(a) || CHAIN_ORDER.indexOf(a.chain) - CHAIN_ORDER.indexOf(b.chain) || a.block - b.block)
     .slice(0, n);
 }
 

@@ -15,7 +15,7 @@ import {
   windowEndDay,
   windowSum,
 } from "../pipeline/domain/dashboard.js";
-import { ZERO_ADDRESS } from "../pipeline/domain/units.js";
+import { ZERO_ADDRESS, toCOPM } from "../pipeline/domain/units.js";
 import { flatRates, rateTable } from "./helpers/rates.js";
 
 // Four days at four different rates: the USD figure of a day depends on that
@@ -180,8 +180,27 @@ test("supply peak: the highest end-of-day supply and the first day it was reache
     { day: "2024-01-03", supplyEnd: COPM(50), supplyEndUsd: 9 },
     { day: "2024-01-04", supplyEnd: COPM(20), supplyEndUsd: 2 },
   ];
-  assert.deepEqual(supplyPeak(series), { day: "2024-01-02", copm: 50, usd: 5 });
+  assert.deepEqual(supplyPeak(series), {
+    copm: { day: "2024-01-02", amount: 50 },
+    usd: { day: "2024-01-03", amount: 9 },
+  });
   assert.equal(supplyPeak([]), null);
+});
+
+test("supply peak: each unit has its own peak, chosen in that unit, so an amount and its peak never mix units", () => {
+  // The rate falls, so the supply peaks in COPM on day 1 and in USD on day 3.
+  const series = [
+    { day: "2024-01-01", supplyEnd: COPM(100), supplyEndUsd: 1 },
+    { day: "2024-01-02", supplyEnd: COPM(60), supplyEndUsd: 1.2 },
+    { day: "2024-01-03", supplyEnd: COPM(40), supplyEndUsd: 2 },
+  ];
+  const peak = supplyPeak(series);
+  assert.deepEqual(peak.copm, { day: "2024-01-01", amount: 100 });
+  assert.deepEqual(peak.usd, { day: "2024-01-03", amount: 2 });
+  for (const row of series) {
+    assert.ok(toCOPM(row.supplyEnd) <= peak.copm.amount);
+    assert.ok(row.supplyEndUsd <= peak.usd.amount);
+  }
 });
 
 /* Largest transfers -------------------------------------------------------- */
@@ -214,6 +233,41 @@ test("largest transfers: the 90-day cut includes day 89 and drops day 90 and the
   ];
   const out = largestTransfers(rows, { n: 10, fromDay: "2026-07-13", toDay: end, rates: flatRates(1) });
   assert.deepEqual(out.map((r) => r.amount), [2, 1]);
+});
+
+test("largest transfers: ranked by USD they follow the dollar amount, not the COPM one", () => {
+  // 100 COPM on a day at 1 COP per USD is worth more than 400 COPM at 10.
+  const cheap = at(2024, 3, 10);
+  const dear = at(2024, 3, 11);
+  const rates = rateTable("2024-03-10", [10, 1]);
+  const rows = [
+    { ...row(cheap, A, B, COPM(400)), b: 1 },
+    { ...row(dear, A, B, COPM(100)), b: 2 },
+    { ...row(cheap, A, B, COPM(300)), b: 3 },
+  ];
+  const byCopm = largestTransfers(rows, { n: 3, rates });
+  const byUsd = largestTransfers(rows, { n: 3, rates, rankBy: "usd" });
+  assert.deepEqual(byCopm.map((r) => r.amount), [400, 300, 100]);
+  assert.deepEqual(byUsd.map((r) => r.usd), [100, 40, 30]);
+  assert.deepEqual(byUsd.map((r) => r.amount), [100, 400, 300]);
+});
+
+test("largest transfers: the top n by USD can include a row the top n by COPM leaves out", () => {
+  const rates = rateTable("2024-03-10", [10, 1]);
+  const rows = [
+    { ...row(at(2024, 3, 10), A, B, COPM(400)), b: 1 },
+    { ...row(at(2024, 3, 10), A, B, COPM(300)), b: 2 },
+    { ...row(at(2024, 3, 11), A, B, COPM(100)), b: 3 },
+  ];
+  assert.deepEqual(largestTransfers(rows, { n: 2, rates }).map((r) => r.amount), [400, 300]);
+  assert.deepEqual(largestTransfers(rows, { n: 2, rates, rankBy: "usd" }).map((r) => r.amount), [100, 400]);
+});
+
+test("largest transfers: equal USD amounts keep the block then log index order", () => {
+  const t = at(2024, 3, 10);
+  const rows = [{ ...row(t, A, B, COPM(5)), b: 9, i: 1 }, { ...row(t, A, B, COPM(5)), b: 9, i: 0 }];
+  const out = largestTransfers(rows, { n: 2, rates: flatRates(1), rankBy: "usd" });
+  assert.deepEqual(out.map((r) => r.tx), [rows[1].t, rows[0].t]);
 });
 
 /* Whole dashboard ---------------------------------------------------------- */
@@ -327,11 +381,15 @@ test("dashboard: issuance, peak and counterparties are present and consistent", 
   const d = buildDashboard(input());
   assert.equal(d.issuance.mint.addresses, 1);
   assert.equal(d.issuance.burn.addresses, 1);
-  assert.deepEqual(d.supplyPeak, { day: "2024-01-01", copm: 100, usd: 1 });
+  assert.deepEqual(d.supplyPeak, {
+    copm: { day: "2024-01-01", amount: 100 },
+    usd: { day: "2024-01-04", amount: 4.5 },
+  });
   assert.deepEqual(d.counterparties.senders.map((s) => [s.address, s.volume]), [[A, 35]]);
   assert.deepEqual(d.counterparties.receivers.map((s) => [s.address, s.volume]), [[B, 35]]);
   assert.equal(d.sizes.reduce((s, b) => s + b.count, 0), 2);
-  assert.equal(d.largest.all.length, 4);
+  assert.equal(d.largest.copm.all.length, 4);
+  assert.equal(d.largest.usd.all.length, 4);
 });
 
 test("dashboard: deterministic. The same inputs give byte-identical output, whatever the input order", () => {
@@ -370,7 +428,7 @@ test("dashboard: USD flows and windows are sums of daily amounts, not COPM over 
 test("dashboard: each of the largest transfers carries its USD amount at its own day's rate", () => {
   const d = buildDashboard(input());
   assert.deepEqual(
-    d.largest.all.map((r) => [r.day, r.amount, r.usd]),
+    d.largest.copm.all.map((r) => [r.day, r.amount, r.usd]),
     [
       ["2024-01-01", 100, 1],
       ["2024-01-02", 30, 0.6],
@@ -380,11 +438,23 @@ test("dashboard: each of the largest transfers carries its USD amount at its own
   );
 });
 
+test("dashboard: emits one ranking per unit for every window, and the USD one is in descending USD order", () => {
+  const d = buildDashboard(input());
+  for (const unit of ["copm", "usd"]) {
+    assert.deepEqual(Object.keys(d.largest[unit]), ["d30", "d90", "d365", "all"]);
+  }
+  const usd = d.largest.usd.all.map((r) => r.usd);
+  assert.deepEqual(usd, [...usd].sort((a, b) => b - a));
+  assert.deepEqual(usd, [1, 0.6, 0.25, 0.2], "5 COPM at 20 beats 10 COPM at 50");
+  assert.deepEqual(d.largest.copm.all.map((r) => r.amount), [100, 30, 10, 5]);
+});
+
 test("dashboard: states the rate it ends on and where the rates turn provisional", () => {
   const d = buildDashboard(input());
-  assert.deepEqual(d.fx, { latestDay: "2024-01-04", latest: 20, min: 20, max: 100, provisionalFrom: null });
+  assert.deepEqual(d.fx, { latestDay: "2024-01-04", latest: 20, min: 20, max: 100, provisionalFrom: null, provisionalDays: 0 });
   const short = buildDashboard({ ...input(), rates: rateTable("2024-01-01", [100, 50]) });
   assert.equal(short.fx.provisionalFrom, "2024-01-03");
+  assert.equal(short.fx.provisionalDays, 2);
   assert.deepEqual(short.daily.rate, [100, 50, 50, 50]);
 });
 

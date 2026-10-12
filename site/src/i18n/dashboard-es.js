@@ -20,8 +20,8 @@ export const dashboardEs = {
     minted: { label: "Emitido", support: "{gross} movidos en bruto" },
     turnover: { label: "Rotación de lo emitido", support: "Volumen bruto sobre lo emitido" },
     supply: {
-      label: "Suministro frente a su pico",
-      labelAtPeak: "Suministro en su pico",
+      label: "Suministro COPM frente al pico",
+      labelAtPeak: "Suministro COPM en su pico",
       support: "Pico el {date}",
       supportMany: "Pico: {peaks}",
     },
@@ -55,12 +55,16 @@ export const dashboardEs = {
   },
   basis: {
     rate: "Dólares a la TRM de cada día (Superintendencia Financiera de Colombia, datos.gov.co): hoy 1 US$ = {rate} COP, {date}.",
+    provisionalOne: "1 día es provisional: usa la última tasa conocida ({date}).",
+    provisional: "{count} días son provisionales: usan la última tasa conocida, desde el {date}.",
   },
   notes: {
     summary: "Notas de método · cifras hasta el {day}",
     complete: "Cada período termina el último día completo, porque el día del punto de control está a medias.",
     item: "{chain}: hasta el {day}, bloque {block}, {time}.",
     method: "Se leen todos los eventos Transfer; emitido menos quemado debe igualar totalSupply() al wei, y cada saldo, balanceOf.",
+    day: "Los días son días UTC, cada uno valorado con la TRM vigente esa misma fecha en Colombia.",
+    dayShift: "Una transferencia nocturna en Colombia ya es del día UTC siguiente y toma su tasa: un desfase de hasta cinco horas.",
     readme: "Cómo se reproduce (README)",
   },
   tiles: {
@@ -247,6 +251,7 @@ export const dashboardEs = {
       "series-continuous": "La serie diaria no tiene días faltantes.",
       "csv-transfer-total": "Las transferencias de la serie diaria suman las del resumen.",
       "dashboard-matches-ledger": "Este panel es exactamente lo que se recalcula desde las transferencias, en el bloque verificado.",
+      "summary-matches-ledger": "Los totales del resumen son exactamente lo que se recalcula desde las transferencias y las tasas.",
     },
   },
   footer: { repo: "Repositorio", analysis: "Análisis", events: "Eventos del contrato", credit: "Datos públicos de Polygon y Celo." },

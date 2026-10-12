@@ -46,6 +46,10 @@ function rateOf(chains) {
     latestDay: latest.latestDay,
     min: Math.min(...fxs.map((x) => x.min)),
     max: Math.max(...fxs.map((x) => x.max)),
+    // Days that still use the last known rate: the most any series has, from
+    // the earliest day any of them starts on.
+    provisionalDays: Math.max(...fxs.map((x) => x.provisionalDays ?? 0)),
+    provisionalFrom: fxs.map((x) => x.provisionalFrom).filter(Boolean).sort()[0] ?? null,
   };
 }
 

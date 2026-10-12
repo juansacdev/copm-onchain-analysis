@@ -39,7 +39,10 @@
     },
     "maxSupplyEndOfDay": {
       "day": "2026-05-07",
-      "copm": 11362520323.754852,
+      "copm": 11362520323.754852
+    },
+    "maxSupplyEndOfDayUsd": {
+      "day": "2026-05-07",
       "usd": 3065615.61
     }
   },
@@ -47,6 +50,7 @@
     "latestDay": "2026-10-12",
     "latestCopPerUsd": 3194.44,
     "provisionalDays": 0,
+    "provisionalFrom": null,
     "minCopPerUsd": 3048.12,
     "maxCopPerUsd": 4478.21
   }

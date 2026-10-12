@@ -21,7 +21,7 @@ The data in this document doesn't come from a dashboard or a third party. It com
 | **Peak transfers in one day** | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | **Peak volume in one day** | **<!-- copm:polygon.peakVolumeUsd -->$40.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | **Peak month** | **<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->: <!-- copm:polygon.peakMonthUsd -->$337.1M<!-- /copm --> USD** |
-| **Supply peak** | <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM ≈ <!-- copm:polygon.peakSupplyUsd -->$3.1M<!-- /copm --> USD (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->) |
+| **Supply peak** | <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->); in USD, <!-- copm:polygon.peakSupplyUsd -->$3.1M<!-- /copm --> (<!-- copm:polygon.peakSupplyUsdDay -->2026-05-07<!-- /copm -->) |
 | **Current supply** | <!-- copm:polygon.supply -->4,478,360,707.75<!-- /copm --> COPM ≈ <!-- copm:polygon.supplyUsd -->$1.4M<!-- /copm --> USD |
 | **Holders with a balance** | <!-- copm:polygon.holders -->582<!-- /copm --> (the largest holds <!-- copm:polygon.top1Pct -->65.7%<!-- /copm -->, the top 10 hold <!-- copm:polygon.top10Pct -->95.6%<!-- /copm -->) |
 
@@ -150,7 +150,7 @@ The six roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_ROL
 
 ## Validation
 
-No number in this audit is reported unverified. The validation step ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) is strict and offline, runs <!-- copm:polygon.checksTotal -->20<!-- /copm --> rules with no tolerance, and <!-- copm:polygon.checksPassed -->20<!-- /copm --> passed (validated on <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
+No number in this audit is reported unverified. The validation step ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) is strict and offline, runs <!-- copm:polygon.checksTotal -->21<!-- /copm --> rules with no tolerance, and <!-- copm:polygon.checksPassed -->21<!-- /copm --> passed (validated on <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Rule | Result |
 | :--- | :--- | :--- |
@@ -186,7 +186,7 @@ The pipeline is a handful of steps, each a command of `node pipeline/cli.js`, wi
 4. **Rates** — reads the TRM of every day from the open data portal (`datos.gov.co`, dataset `32sa-8pi3`, no key) into `data/rates/cop-usd.csv`, one rate per UTC day, ascending and without gaps.
 5. **Aggregate** — replays the events in order and builds the daily series: volume, mints, burns, derived supply. Every USD amount is that day's COPM divided by that day's TRM (1 COPM is treated as 1 COP), and every USD total is the sum of the daily amounts. A day later than the last published rate uses the last known one and is marked provisional until its own is published.
 6. **Charts** — renders the SVGs with no canvas and no headless browser.
-7. **Validate** — the <!-- copm:polygon.checksTotal -->20<!-- /copm --> strict rules above.
+7. **Validate** — the <!-- copm:polygon.checksTotal -->21<!-- /copm --> strict rules above.
 8. **Reports** — fills every figure of these documents from the data.
 
 **Single source for the chain: one RPC endpoint.** No indexers, no third-party APIs, no explorers. Any provider works — a paid one (faster) or a public one (free, with rate limits the scanner handles on its own). The only other input is the TRM, used only to express COPM in dollars.

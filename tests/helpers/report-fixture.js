@@ -50,7 +50,8 @@ export function chain(overrides = {}) {
       peaks: {
         maxTransfersInOneDay: { day: "2024-02-01", count: 4 },
         maxGrossVolumeInOneDay: { day: "2024-02-01", copm: 4_000_000, usd: 1000 },
-        maxSupplyEndOfDay: { day: "2024-02-02", copm: 900, usd: 0.225 },
+        maxSupplyEndOfDay: { day: "2024-02-02", copm: 900 },
+        maxSupplyEndOfDayUsd: { day: "2024-02-01", usd: 300 },
       },
       fx: { latestDay: "2024-02-03", latestCopPerUsd: 3900.5, provisionalDays: 0, minCopPerUsd: 3800, maxCopPerUsd: 4100 },
     },

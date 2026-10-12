@@ -5,13 +5,18 @@
 // The files hold nothing that depends on when the command ran, so a run with
 // no new data leaves them byte for byte as they were.
 //
-// If the portal cannot be reached and the committed file already covers every
-// day the series needs, the run warns and continues; otherwise it fails. A gap
-// or a conflicting overlap in the source is always an error.
+// Official rates are immutable once published, so the committed file only ever
+// grows. If the portal cannot be reached, answers nothing, or answers fewer
+// days than the committed file holds, the run is treated as a failed fetch:
+// when the committed file already covers every day the series needs, it warns
+// and continues; otherwise it fails. A gap or a conflicting overlap in the
+// source is always an error, and so is a published day whose rate differs from
+// the committed one. Both files are written atomically, the CSV first and
+// source.json last, so a reader that finds the new source.json finds its CSV.
 import { existsSync } from "node:fs";
 import { CHAIN_KEYS, RATES_FROM_DAY, dataPath, ratesDir } from "../config/chains.js";
 import { TRM_BASE_URL, TRM_DATASET, fetchTrmRows, readRatesTable } from "../adapters/rates.js";
-import { ensureDir, readText, writeText } from "../adapters/store.js";
+import { ensureDir, readText, writeTextAtomic } from "../adapters/store.js";
 import { createRateTable, expandRanges, parseTrmRows, ratesCsv } from "../domain/rates.js";
 
 const lastLineDay = (url) => readText(url).trimEnd().split("\n").at(-1).slice(0, 10);
@@ -36,26 +41,52 @@ export async function updateRates({
   warn = console.warn,
 }) {
   let rows;
-  let ranges;
   try {
     rows = await fetchRows();
   } catch (err) {
     return fallBack({ dirUrl, fromDay, neededThrough, reason: err.message, log, warn });
   }
+  if (Array.isArray(rows) && rows.length === 0) {
+    return fallBack({ dirUrl, fromDay, neededThrough, reason: "the source returned no rows", log, warn });
+  }
 
   // From here a problem is in the data itself and is never papered over.
-  ranges = parseTrmRows(rows).filter((r) => r.to >= fromDay);
+  const ranges = parseTrmRows(rows).filter((r) => r.to >= fromDay);
   const series = expandRanges(ranges, { fromDay });
   const table = createRateTable(series);
 
+  const committed = readRatesTable(dirUrl);
+  if (committed) {
+    assertSamePublishedRates(committed, table);
+    // An answer that covers less than the file already holds is not a newer
+    // truth, it is a partial one: keep the file.
+    if (table.firstDay > committed.firstDay || table.lastDay < committed.lastDay) {
+      const reason =
+        `the source covers ${table.firstDay} to ${table.lastDay}, less than the committed file ` +
+        `(${committed.firstDay} to ${committed.lastDay})`;
+      return fallBack({ dirUrl, fromDay, neededThrough, reason, log, warn });
+    }
+  }
+
   ensureDir(dirUrl);
-  writeText(new URL("cop-usd.csv", dirUrl), ratesCsv(series));
-  writeText(
+  writeTextAtomic(new URL("cop-usd.csv", dirUrl), ratesCsv(series));
+  writeTextAtomic(
     new URL("source.json", dirUrl),
     `${JSON.stringify({ dataset: TRM_DATASET, url: TRM_BASE_URL, firstDay: table.firstDay, lastDay: table.lastDay, ranges: ranges.length }, null, 2)}\n`,
   );
   log(`rates: ${series.length} days, ${table.firstDay} to ${table.lastDay}, ${ranges.length} ranges`);
   return { used: "fetched", table };
+}
+
+// A day both files cover must carry the same rate: a published TRM does not change.
+function assertSamePublishedRates(committed, fetched) {
+  for (const { day, rate } of committed.rows) {
+    if (day < fetched.firstDay || day > fetched.lastDay) continue;
+    const now = fetched.at(day).rate;
+    if (now !== rate) {
+      throw new Error(`the rate of ${day} changed: the committed file has ${rate}, the source says ${now}`);
+    }
+  }
 }
 
 function fallBack({ dirUrl, fromDay, neededThrough, reason, log, warn }) {

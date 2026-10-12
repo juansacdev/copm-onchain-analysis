@@ -18,6 +18,8 @@ export const ensureDir = (dirUrl) => mkdirSync(dirUrl, { recursive: true });
 
 export const readText = (url) => readFileSync(url, "utf8");
 export const writeText = (url, text) => writeFileSync(url, text);
+// Temp file, flush, rename: a crash leaves the old file or the new one whole.
+export const writeTextAtomic = (url, text) => writeAtomic(url, text);
 
 export const readJson = (url) => JSON.parse(readText(url));
 export const writeJson = (url, value, space) =>

@@ -20,8 +20,8 @@ export const dashboardEn = {
     minted: { label: "Minted", support: "{gross} moved gross" },
     turnover: { label: "Turnover of what was minted", support: "Gross volume over minted" },
     supply: {
-      label: "Supply against its peak",
-      labelAtPeak: "Supply at its peak",
+      label: "COPM supply against its peak",
+      labelAtPeak: "COPM supply at its peak",
       support: "Peak on {date}",
       supportMany: "Peak: {peaks}",
     },
@@ -55,12 +55,16 @@ export const dashboardEn = {
   },
   basis: {
     rate: "Dollars at each day's TRM (Superintendencia Financiera de Colombia, datos.gov.co): today US$1 = {rate} COP, {date}.",
+    provisionalOne: "1 day is provisional: it uses the last known rate ({date}).",
+    provisional: "{count} days are provisional: they use the last known rate, from {date}.",
   },
   notes: {
     summary: "Method notes · figures through {day}",
     complete: "Every period ends on the last complete day, because the checkpoint's own day is partial.",
     item: "{chain}: through {day}, block {block}, {time}.",
     method: "Every Transfer event is read; minted minus burned must equal totalSupply() to the wei, and each balance, balanceOf.",
+    day: "Days are UTC days, each valued at the TRM valid on that same date in Colombia.",
+    dayShift: "A late-evening transfer in Colombia is already next-day UTC, so it takes the next day's rate: a shift of up to five hours.",
     readme: "How to reproduce it (README)",
   },
   tiles: {
@@ -247,6 +251,7 @@ export const dashboardEn = {
       "series-continuous": "The daily series has no missing days.",
       "csv-transfer-total": "The daily series' transfers add up to the summary's.",
       "dashboard-matches-ledger": "This dashboard is exactly what is recomputed from the transfers, at the verified block.",
+      "summary-matches-ledger": "The summary totals are exactly what is recomputed from the transfers and the rates.",
     },
   },
   footer: { repo: "Repository", analysis: "Analysis", events: "Contract events", credit: "Public data from Polygon and Celo." },

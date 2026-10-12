@@ -21,7 +21,7 @@ function chainData(key, overrides = {}) {
       turnover: 6.9,
       usd: { minted: 30e6, burned: 27e6, wallet: 150e6, gross: 207e6 },
     },
-    supplyPeak: { day: "2025-05-01", copm: 40e6, usd: 12e6 },
+    supplyPeak: { copm: { day: "2025-05-01", amount: 40e6 }, usd: { day: "2025-08-09", amount: 15e6 } },
     checkpoint: { block: 1234, time: 1791760950, totalSupply: 10e6, totalSupplyUsd: 3e6 },
     issuance: {
       mint: { addresses: 1, volume: 100e6, topSharePct: 100, top: [{ address: A, volume: 100e6 }] },
@@ -83,14 +83,23 @@ test("supply today as a share of its peak, with the peak date; at the peak the c
   const below = byId(cards(both(), "polygon"), "supply");
   assert.equal(below.figure, "25 %");
   assert.match(below.support, /1 may 2025/);
-  const atPeak = byId(cards({ polygon: chainData("polygon", { supplyPeak: { day: "2025-05-01", copm: 10e6, usd: 3e6 } }) }, "polygon"), "supply");
+  const atPeak = byId(cards({ polygon: chainData("polygon", { supplyPeak: { copm: { day: "2025-05-01", amount: 10e6 }, usd: { day: "2025-05-01", amount: 3e6 } } }) }, "polygon"), "supply");
   assert.equal(atPeak.figure, "100 %");
   assert.notEqual(atPeak.label, below.label);
   assert.equal(byId(cards({ polygon: chainData("polygon", { supplyPeak: null }) }, "polygon"), "supply"), undefined);
 });
 
+test("the supply card is in COPM terms and says so, and never uses the day of the USD peak", () => {
+  for (const lang of ["es", "en"]) {
+    const card = byId(cards(both(), "polygon", lang), "supply");
+    assert.match(`${card.label} ${byId(cards({ polygon: chainData("polygon", { supplyPeak: { copm: { day: "2025-05-01", amount: 10e6 }, usd: { day: "2025-05-01", amount: 3e6 } } }) }, "polygon", lang), "supply").label}`, /COPM.*COPM/);
+    assert.doesNotMatch(card.support, /aug|ago|9/i, "the USD peak of 9 Aug is not shown");
+    assert.match(card.support, /1 may|May 1/);
+  }
+});
+
 test("supply with both chains compares the sum with the sum of each chain's own peak and names both dates", () => {
-  const celo = chainData("celo", { supplyPeak: { day: "2025-03-02", copm: 20e6, usd: 6e6 } });
+  const celo = chainData("celo", { supplyPeak: { copm: { day: "2025-03-02", amount: 20e6 }, usd: { day: "2025-03-02", amount: 6e6 } } });
   const card = byId(cards({ polygon: chainData("polygon"), celo }), "supply");
   assert.equal(card.figure, "33 %");
   assert.match(card.support, /1 may 2025/);
