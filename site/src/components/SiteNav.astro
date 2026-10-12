@@ -1,0 +1,14 @@
+---
+interface Props {
+  label: string;
+  items: { label: string; href: string; current: boolean }[];
+}
+
+const { label, items } = Astro.props;
+---
+
+<nav id="sitenav" aria-label={label}>
+  {items.map((item) => (
+    <a href={item.href} aria-current={item.current ? 'page' : undefined}>{item.label}</a>
+  ))}
+</nav>
