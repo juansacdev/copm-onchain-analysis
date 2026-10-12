@@ -6,7 +6,7 @@
 
 | | |
 | :--- | :--- |
-| 📖 **[La historia como sitio web](https://copm.juansac.dev/)** | El storytelling para todo público — sitio Astro bilingüe (ES/EN), código en [`site/`](./site) |
+| 📖 **[El panel y la historia](https://copm.juansac.dev/)** | Sitio Astro bilingüe (ES/EN), código en [`site/`](./site): el panel de cifras verificadas está en `/` (`/en/` en inglés) y el análisis largo en `/analisis/` (`/en/analysis/`) |
 | 📊 **[Auditoría unificada (Polygon + Celo)](./docs/AUDIT.es.md)** | La vista consolidada, lado a lado |
 | 🟣 **[Auditoría de Polygon](./docs/audit/polygon.es.md)** | <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> movidos en <!-- copm:polygon.years -->3,1<!-- /copm --> años |
 | 🟢 **[Auditoría de Celo](./docs/audit/celo.es.md)** | <!-- copm:celo.transfers -->132.944<!-- /copm --> transferencias con ticket promedio de <!-- copm:celo.avgTicketUsd -->US$98<!-- /copm --> |
@@ -23,7 +23,7 @@ Y aquí viene el problema clásico: casi nada de eso se puede mostrar. El códig
 
 Pero hay una excepción enorme: **la blockchain es pública por definición.** Cada mint, cada burn, cada transfer de COPM quedó registrado en Polygon y Celo, verificable por cualquiera, para siempre. No es información interna de la empresa, ni su codebase, ni su IP — es el registro público de lo que el sistema hizo.
 
-Así que en vez de pedirte que me creas, lo audité: **<!-- copm:combined.transfers -->374.802<!-- /copm --> eventos `Transfer`, ~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm --> en volumen, dos chains, <!-- copm:combined.checksPassed -->34<!-- /copm --> checks de validación en verde.** Este repositorio es la evidencia, los scripts para reproducirla y el análisis de lo que cuenta.
+Así que en vez de pedirte que me creas, lo audité: **<!-- copm:combined.transfers -->374.802<!-- /copm --> eventos `Transfer`, ~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm --> en volumen, dos chains, <!-- copm:combined.checksPassed -->36<!-- /copm --> checks de validación en verde.** Este repositorio es la evidencia, los scripts para reproducirla y el análisis de lo que cuenta.
 
 ## Los titulares
 
@@ -36,7 +36,7 @@ Así que en vez de pedirte que me creas, lo audité: **<!-- copm:combined.transf
 | Día con más transferencias (Polygon) | **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> transferencias** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | Rotación del supply (Polygon, últimos 30 días) | **~<!-- copm:polygon.turnoverMonthly -->13,7<!-- /copm -->x al mes** |
 | Reconciliación de supply | **Exacta en ambas chains**: minted − burned es igual a `totalSupply()` al wei |
-| Validación | **<!-- copm:combined.checksPassed -->34<!-- /copm -->/<!-- copm:combined.checksTotal -->34<!-- /copm --> checks estrictos** — offline, sin tolerancia, cada balance contrastado con `balanceOf` |
+| Validación | **<!-- copm:combined.checksPassed -->36<!-- /copm -->/<!-- copm:combined.checksTotal -->36<!-- /copm --> checks estrictos** — offline, sin tolerancia, cada balance contrastado con `balanceOf` |
 
 → El detalle, los gráficos y la historia completa están en la **[auditoría unificada](./docs/AUDIT.es.md)**.
 
@@ -55,6 +55,8 @@ scan              → scan incremental y verificado de todos los eventos del con
 holders           → snapshot de holders en el bloque del checkpoint, cada balance
                      verificado con balanceOf (holders.csv, holders.json)
 aggregate         → serie diaria: volumen, mints, burns, supply derivado, approvals
+dashboard         → el archivo compacto que lee el sitio (dashboard.json), derivado de las
+                     transferencias, los eventos administrativos y los holders; determinista
 charts            → SVGs autocontenidos (sin canvas, sin headless browser)
 charts:combined   → gráficos Polygon + Celo en los mismos ejes
 validate          → reglas estrictas por chain, offline y sin tolerancia; exit 1 si falla alguna
@@ -97,7 +99,7 @@ Ningún número de los reportes se escribe a mano. Una cifra se escribe como `<!
 
 ### Validación
 
-`validate` es estricto y offline: lee solo los archivos que escriben `scan`, `holders` y `aggregate`, así que el CI puede correrlo en cada push. Entre sus <!-- copm:polygon.checksTotal -->17<!-- /copm --> reglas: minted − burned es igual a `totalSupply` al wei, recorrer las transferencias guardadas reproduce el checkpoint, ningún balance negativo, `holders.csv` suma `totalSupply` en el bloque del checkpoint, las particiones están estrictamente ordenadas y cada fila está en su mes UTC, nada queda por encima del checkpoint y `daily.csv` es exactamente lo que producen las transferencias. El resultado va a `data/<chain>/validation.json`.
+`validate` es estricto y offline: lee solo los archivos que escriben `scan`, `holders`, `aggregate` y `dashboard`, así que el CI puede correrlo en cada push. Entre sus <!-- copm:polygon.checksTotal -->18<!-- /copm --> reglas: minted − burned es igual a `totalSupply` al wei, recorrer las transferencias guardadas reproduce el checkpoint, ningún balance negativo, `holders.csv` suma `totalSupply` en el bloque del checkpoint, las particiones están estrictamente ordenadas y cada fila está en su mes UTC, nada queda por encima del checkpoint `daily.csv` es exactamente lo que producen las transferencias y `dashboard.json` está en el bloque del checkpoint con los minted, burned y supply del libro. El resultado va a `data/<chain>/validation.json`.
 
 Ajustes, todos opcionales: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (o las variables `SCAN_*` equivalentes). Los valores por defecto están por chain en `pipeline/config/chains.js`. `scan --fresh` descarta lo que el scan generó para esa chain y empieza de cero.
 
@@ -120,7 +122,7 @@ El primer `scan` recorre todo el historial desde el deploy block; las corridas s
 
 Dos workflows de GitHub Actions mantienen los datos al día y verificados:
 
-- **`.github/workflows/daily-scan.yml`** corre todos los días a las 09:17 UTC (04:17 en Colombia) y a demanda. Para cada chain ejecuta `scan`, `holders`, `aggregate` y `validate`, y luego hace commit de `data/`. El scan solo cubre los bloques agregados desde el checkpoint versionado, así que una corrida toma un par de minutos. Si el supply no reconcilia, un saldo difiere de `balanceOf` o falla cualquier regla de validación, el job falla y no hace commit de nada.
+- **`.github/workflows/daily-scan.yml`** corre todos los días a las 09:17 UTC (04:17 en Colombia) y a demanda. Para cada chain ejecuta `scan`, `holders`, `aggregate`, `dashboard` y `validate`, y luego hace commit de `data/`. El scan solo cubre los bloques agregados desde el checkpoint versionado, así que una corrida toma un par de minutos. Si el supply no reconcilia, un saldo difiere de `balanceOf` o falla cualquier regla de validación, el job falla y no hace commit de nada.
 - **`.github/workflows/ci.yml`** corre en cada pull request y en los pushes a `main` hechos por personas: tests unitarios, la validación estricta de los datos versionados y el build del sitio. No necesita endpoint RPC. Los pushes hechos con el token del repositorio no disparan otros workflows, así que `ci.yml` no revisa los commits diarios de datos; el job diario los revisa por su cuenta antes de hacer commit, con los tests unitarios y la validación estricta.
 
 Los charts y las cifras de estos documentos se regeneran el primer día de cada mes (o cuando el workflow se lanza a mano con `month_close`), así los reportes son un corte mensual coherente mientras los datos y el dashboard se mueven a diario.
@@ -160,6 +162,7 @@ El workflow hace push a la rama por defecto con el token del repositorio, así q
 │   ├── holders.csv / holders.json # snapshot de holders en el bloque del checkpoint
 │   ├── daily.csv                 # serie diaria agregada
 │   ├── summary.json              # totales, promedios, picos
+│   ├── dashboard.json            # todo lo que muestra el panel, un archivo por chain
 │   ├── manifest.json             # metadatos estáticos del contrato
 │   └── validation.json           # resultado de las reglas estrictas
 ├── charts/<chain>/               # 6 SVGs por chain

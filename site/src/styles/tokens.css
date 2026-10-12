@@ -37,6 +37,7 @@
   /* State colors, reserved for pass / fail and warnings, never for a series. */
   --ok: #6dbf8f;
   --warn: #e2b04a;
+  --fail: #f08c6a;
 
   /* Hero heading: the one gradient, applied to text only. */
   --hero-from: #ffffff;

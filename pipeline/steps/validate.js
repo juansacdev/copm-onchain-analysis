@@ -41,6 +41,8 @@ export function validateChain({
     csvText: readRequired(dir, "daily.csv", "aggregate", chainKey, readText),
     summary: readRequired(dir, "summary.json", "aggregate", chainKey, readJson),
     holders: store.readHolders(),
+    // A missing file is a failing rule, not a crash: validate still reports.
+    dashboard: existsSync(new URL("dashboard.json", dir)) ? readJson(new URL("dashboard.json", dir)) : null,
   });
 
   log(`validating chain: ${chainKey} at block ${state.lastBlock}\n`);

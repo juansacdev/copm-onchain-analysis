@@ -229,6 +229,33 @@ export function checkCsvTransferTotal(csvRows, summary) {
   );
 }
 
+// dashboard.json is a view of the ledger: it must be at the checkpoint block
+// and its totals must be the ledger's, so the page can never show numbers
+// that the audit did not verify.
+export function checkDashboardMatchesLedger({ dashboard, ledger, state }) {
+  if (!dashboard) {
+    return check("dashboard-matches-ledger", false, `dashboard.json missing: run "dashboard --chain ${state.chain}"`);
+  }
+  const supply = toCOPM(BigInt(state.totalSupply));
+  const days = dashboard.daily ?? { transfers: [], supply: [] };
+  const transfers = days.transfers.reduce((total, n) => total + n, 0);
+  const figures = {
+    block: dashboard.checkpoint?.block === state.lastBlock,
+    minted: dashboard.flows?.minted === toCOPM(ledger.minted),
+    burned: dashboard.flows?.burned === toCOPM(ledger.burned),
+    supply: dashboard.checkpoint?.totalSupply === supply && days.supply.at(-1) === supply,
+    transfers: transfers === state.transfers,
+  };
+  const wrong = Object.entries(figures).filter(([, ok]) => !ok).map(([name]) => name);
+  return check(
+    "dashboard-matches-ledger",
+    wrong.length === 0,
+    `block=${dashboard.checkpoint?.block} checkpoint=${state.lastBlock} minted=${dashboard.flows?.minted} ` +
+      `burned=${dashboard.flows?.burned} supply=${dashboard.checkpoint?.totalSupply} transfers=${transfers}` +
+      (wrong.length ? `; differs: ${wrong.join(", ")}` : ""),
+  );
+}
+
 // Every rule, in report order. `partitions` is [{ key, rows }] in month order.
 export function strictChecks({
   deployBlock,
@@ -240,6 +267,7 @@ export function strictChecks({
   csvText,
   summary,
   holders,
+  dashboard,
 }) {
   const transfers = partitions.flatMap((p) => p.rows);
   const ledger = foldTransfers(createLedger(), transfers);
@@ -262,5 +290,6 @@ export function strictChecks({
     checkSeriesLength(csvRows, summary),
     checkSeriesContinuous(csvRows),
     checkCsvTransferTotal(csvRows, summary),
+    checkDashboardMatchesLedger({ dashboard, ledger, state }),
   ];
 }

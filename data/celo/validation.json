@@ -1,7 +1,7 @@
 {
   "chain": "celo",
   "block": 79861762,
-  "validatedAt": "2026-10-12T00:12:57.678Z",
+  "validatedAt": "2026-10-12T01:00:52.612Z",
   "checks": [
     {
       "id": "event-count",
@@ -87,8 +87,13 @@
       "id": "csv-transfer-total",
       "ok": true,
       "detail": "csv=132944 summary=132944"
+    },
+    {
+      "id": "dashboard-matches-ledger",
+      "ok": true,
+      "detail": "block=79861762 checkpoint=79861762 minted=5281673083.219653 burned=4863087948.591542 supply=418585134.62811 transfers=132944"
     }
   ],
-  "passed": 17,
+  "passed": 18,
   "failed": 0
 }

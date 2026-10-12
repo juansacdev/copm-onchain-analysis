@@ -1,4 +1,5 @@
 import { writeJson, writeText } from "../../pipeline/adapters/store.js";
+import { buildDashboard } from "../../pipeline/domain/dashboard.js";
 import { buildDailySeries, dailyCsv, summarize } from "../../pipeline/domain/aggregate.js";
 import { buildHolderRows, formatUnits, holdersCsv } from "../../pipeline/domain/holders.js";
 import { createLedger, foldTransfers } from "../../pipeline/domain/ledger.js";
@@ -69,10 +70,24 @@ export function fixture() {
   const rows = buildHolderRows({ balances: ledger.balances, activity: ledger.activity, totalSupply });
   const holders = {
     csv: holdersCsv(rows),
-    json: { block: lastBlock, totalSupply: formatUnits(totalSupply), holders: rows.length },
+    json: {
+      block: lastBlock,
+      totalSupply: formatUnits(totalSupply),
+      holders: rows.length,
+      addressesEverSeen: rows.length,
+      contracts: 0,
+      frozen: [],
+      concentration: { top1Pct: 100, top5Pct: 100, top10Pct: 100, top50Pct: 100 },
+      buckets: [],
+      roles: { DEFAULT_ADMIN_ROLE: [A] },
+      paused: false,
+      implementation: B,
+      top: [],
+    },
   };
+  const dashboard = buildDashboard({ chainKey: CHAIN_KEY, state, transfers, adminEvents, approvals, holders: holders.json });
 
-  return { deployBlock: DEPLOY, manifest, state, partitions, transfers, adminEvents, approvals, csvText, summary, holders };
+  return { deployBlock: DEPLOY, manifest, state, partitions, transfers, adminEvents, approvals, csvText, summary, holders, dashboard };
 }
 
 // Writes a fixture the way the pipeline steps do, so the validate step can
@@ -84,6 +99,7 @@ export function writeFixture(store, dirUrl, fx) {
   store.writeApprovals(fx.approvals);
   if (fx.holders.csv) store.writeHolders(fx.holders);
   writeText(new URL("daily.csv", dirUrl), fx.csvText);
+  if (fx.dashboard) writeJson(new URL("dashboard.json", dirUrl), fx.dashboard);
   writeJson(new URL("summary.json", dirUrl), fx.summary, 2);
   writeJson(new URL("manifest.json", dirUrl), fx.manifest, 2);
 }

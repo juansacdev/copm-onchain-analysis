@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { buildAggregate } from "../pipeline/steps/aggregate.js";
 import { runHolders } from "../pipeline/steps/holders.js";
 import { validateChain } from "../pipeline/steps/validate.js";
+import { writeDashboard } from "../pipeline/steps/dashboard.js";
 import { writeJson, writeText } from "../pipeline/adapters/store.js";
 import { CHAIN_KEY, DEPLOY, fixture, writeFixture } from "./helpers/validation-fixture.js";
 import { CHAIN, DEPLOY as SCAN_DEPLOY, SETTINGS, scannedDataset, tempStore } from "./helpers/dataset.js";
@@ -86,7 +87,7 @@ test("missing inputs say which step to run", () => {
   assert.throws(() => validate(url), /missing manifest\.json: run "discover --chain celo"/);
 });
 
-test("scan, holders and aggregate output validate end to end", async () => {
+test("scan, holders, aggregate and dashboard output validate end to end", async () => {
   const dataset = await scannedDataset();
   await runHolders({
     chain: CHAIN,
@@ -109,6 +110,7 @@ test("scan, holders and aggregate output validate end to end", async () => {
   writeJson(new URL("summary.json", dataset.url), summary, 2);
   writeText(new URL("daily.csv", dataset.url), csv);
   writeJson(new URL("manifest.json", dataset.url), manifest, 2);
+  writeDashboard({ store: dataset.store, dirUrl: dataset.url, chainKey: CHAIN.key, log: () => {} });
 
   const result = validateChain({ chainKey: CHAIN.key, dir: dataset.url, deployBlock: SCAN_DEPLOY, log: () => {} });
   const failed = report(dataset.url).checks.filter((c) => !c.ok);

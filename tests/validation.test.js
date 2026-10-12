@@ -26,6 +26,7 @@ test("a consistent dataset passes every rule, in report order", () => {
     "series-length",
     "series-continuous",
     "csv-transfer-total",
+    "dashboard-matches-ledger",
   ]);
   assert.deepEqual(failing(fixture()), []);
 });
@@ -226,4 +227,38 @@ test("no rule has a tolerance: one wei of supply difference fails even when the 
   const bad = failing(fx);
   assert.ok(bad.includes("supply-exact"));
   assert.ok(bad.includes("ledger-matches-state"));
+});
+
+test("dashboard-matches-ledger: dashboard.json at the checkpoint with the ledger's totals passes", () => {
+  const r = results(fixture())["dashboard-matches-ledger"];
+  assert.equal(r.ok, true);
+  assert.match(r.detail, /block=\d+/);
+});
+
+test("dashboard-matches-ledger: a dashboard from another block fails", () => {
+  const fx = fixture();
+  fx.dashboard.checkpoint.block -= 1;
+  assert.ok(failing(fx).includes("dashboard-matches-ledger"));
+});
+
+test("dashboard-matches-ledger: minted, burned and supply must equal the ledger's", () => {
+  for (const edit of [
+    (d) => (d.flows.minted += 1),
+    (d) => (d.flows.burned += 1),
+    (d) => (d.checkpoint.totalSupply += 1),
+    (d) => (d.daily.supply[d.daily.supply.length - 1] += 1),
+    (d) => (d.daily.transfers[0] += 1),
+  ]) {
+    const fx = fixture();
+    edit(fx.dashboard);
+    assert.deepEqual(failing(fx), ["dashboard-matches-ledger"]);
+  }
+});
+
+test("dashboard-matches-ledger: a missing dashboard.json fails and says how to make it", () => {
+  const fx = fixture();
+  fx.dashboard = null;
+  const r = results(fx)["dashboard-matches-ledger"];
+  assert.equal(r.ok, false);
+  assert.match(r.detail, /dashboard --chain celo/);
 });

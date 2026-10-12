@@ -1,0 +1,31 @@
+---
+// The frame every chart shares: a title that states the question, a one-line
+// reading aid, a legend slot, the plot and a "view as table" twin. The plot
+// and the table are filled in the browser (charts.js); without JavaScript the
+// block shows a note that points at the server-rendered tables.
+interface Props {
+  id: string;
+  /** Title with its {bucket} placeholder already resolved for the default view. */
+  title: string;
+  /** The raw template, so the browser can re-resolve it when the bucket changes. */
+  titleTemplate: string;
+  aid: string;
+  noscript: string;
+  viewTable: string;
+  loading: string;
+}
+
+const { id, title, titleTemplate, aid, noscript, viewTable, loading } = Astro.props;
+---
+
+<figure class="dchart" data-chart={id}>
+  <div class="dchart-head">
+    <h3 data-title={titleTemplate}>{title}</h3>
+    <button type="button" class="btn btn-small" data-toggle hidden>{viewTable}</button>
+  </div>
+  <p class="aid">{aid}</p>
+  <div class="dchart-legend" data-legend></div>
+  <div class="dchart-body" data-plot aria-live="polite"><p class="muted dchart-note" data-loading hidden>{loading}</p></div>
+  <div class="dchart-table" data-table hidden></div>
+  <noscript><p class="muted dchart-note">{noscript}</p></noscript>
+</figure>

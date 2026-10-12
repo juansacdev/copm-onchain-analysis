@@ -120,7 +120,7 @@ The `FREEZER_ROLE` can block an address; the contract emitted <!-- copm:celo.eve
 
 ## Validation
 
-The same <!-- copm:celo.checksTotal -->17<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->17<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+The same <!-- copm:celo.checksTotal -->18<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->18<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Rule | Result |
 | :--- | :--- | :--- |
