@@ -1,15 +1,15 @@
 {
-  "block": 95378468,
-  "blockTime": "2026-10-12T02:43:00.000Z",
-  "totalSupply": "4478360707.754852048213337676",
+  "block": 95383587,
+  "blockTime": "2026-10-12T04:50:59.000Z",
+  "totalSupply": "4478064269.754852048213337676",
   "holders": 582,
   "addressesEverSeen": 2555,
   "contracts": 244,
   "frozen": [],
   "concentration": {
-    "top1Pct": 65.6971,
-    "top5Pct": 92.1705,
-    "top10Pct": 95.5981,
+    "top1Pct": 65.7015,
+    "top5Pct": 92.1766,
+    "top10Pct": 95.6044,
     "top50Pct": 99.582
   },
   "buckets": [
@@ -29,7 +29,7 @@
       "label": "1M – 10M",
       "min": "1000000",
       "holders": 23,
-      "copm": "86746450.886589775777137178"
+      "copm": "86450012.886589775777137178"
     },
     {
       "label": "100k – 1M",
@@ -89,7 +89,7 @@
       "rank": 1,
       "address": "0xb45d396ebf3eaf418b44bb9f3fe8f409fcd5dc1e",
       "balance": "2942154178.638762097276086158",
-      "sharePct": "65.6971",
+      "sharePct": "65.7015",
       "kind": "wallet",
       "frozen": false
     },
@@ -97,7 +97,7 @@
       "rank": 2,
       "address": "0x6ce45dca78f077568906c6c27340ff763ec23e12",
       "balance": "550000000",
-      "sharePct": "12.2813",
+      "sharePct": "12.2821",
       "kind": "wallet",
       "frozen": false
     },
@@ -105,7 +105,7 @@
       "rank": 3,
       "address": "0x90ef96bcfb3e798c6565cbba6a587f14b58003d3",
       "balance": "422878868.7451188648694726",
-      "sharePct": "9.4427",
+      "sharePct": "9.4433",
       "kind": "contract",
       "frozen": false
     },
@@ -113,7 +113,7 @@
       "rank": 4,
       "address": "0x563fccce456ec9efe5ae2a89a9973c55a10df1d4",
       "balance": "114038448.199999998574564282",
-      "sharePct": "2.5464",
+      "sharePct": "2.5466",
       "kind": "contract",
       "frozen": false
     },
@@ -121,7 +121,7 @@
       "rank": 5,
       "address": "0x47d60c6e5f48cd75581fa85488a80f06116b718e",
       "balance": "98658107",
-      "sharePct": "2.2030",
+      "sharePct": "2.2031",
       "kind": "contract",
       "frozen": false
     },
@@ -216,8 +216,8 @@
     {
       "rank": 17,
       "address": "0xd3a9a43332a8e718fc0cd85ea21917c45a9f3789",
-      "balance": "8782771",
-      "sharePct": "0.1961",
+      "balance": "8486333",
+      "sharePct": "0.1895",
       "kind": "wallet",
       "frozen": false
     },
@@ -257,7 +257,7 @@
       "rank": 22,
       "address": "0xedaba4f43b23fd039caf54f023079adf6f8d61eb",
       "balance": "6285136.98",
-      "sharePct": "0.1403",
+      "sharePct": "0.1404",
       "kind": "contract",
       "frozen": false
     },

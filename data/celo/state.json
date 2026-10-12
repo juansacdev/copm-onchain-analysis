@@ -2,8 +2,8 @@
   "schema": 1,
   "chain": "celo",
   "address": "0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606",
-  "lastBlock": 79872373,
-  "lastBlockTime": 1791773131,
+  "lastBlock": 79880086,
+  "lastBlockTime": 1791780844,
   "minted": "5281673083219653188086304764",
   "burned": "4863087948591542995207235322",
   "totalSupply": "418585134628110192879069442",
@@ -14,5 +14,5 @@
     "block": 79746323,
     "logs": 2
   },
-  "updatedAt": "2026-10-12T02:46:16.566Z"
+  "updatedAt": "2026-10-12T04:54:37.773Z"
 }
