@@ -45,6 +45,12 @@ jobs:
 
       - run: npm test
 
+      # One fetch for both chains: every USD figure divides by the TRM of its own
+      # day. If the portal is down and the committed file already covers the
+      # series, the step warns and the job goes on.
+      - name: Fetch the daily exchange rates (TRM)
+        run: node pipeline/cli.js rates
+
       - name: Scan, snapshot holders, aggregate, build the dashboard file and validate
         run: |
           for chain in polygon celo; do

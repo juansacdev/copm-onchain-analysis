@@ -26,7 +26,7 @@ const navItems = navigation(lang, page).map((item) => ({ ...item, label: dict.na
 
 // `astro build` runs from site/; the data lives one level up.
 const dataDir = fileURLToPath(new URL('../data', pathToFileURL(`${process.cwd()}/`)));
-const data = loadAnalysisData({ dataDir, copPerUsd: Number(process.env.COP_PER_USD ?? 4000) });
+const data = loadAnalysisData({ dataDir });
 const serial = serialLine(Object.values(data.chains));
 ---
 

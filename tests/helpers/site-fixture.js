@@ -5,12 +5,14 @@ import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-export const COP_PER_USD = 4000;
+// The rate of a day is 4,000 unless a plan says otherwise (plan.rateByMonth).
+const DEFAULT_RATE = 4000;
 const SUPPLY_COPM = 1_000_000;
 const WEI = 10n ** 18n;
 
 const HEADER =
-  "day,supply_end_copm,transfers,unique_txs,active_addresses,gross_volume_copm,net_volume_copm,mint_copm,burn_copm,mint_count,burn_count,approvals";
+  "day,supply_end_copm,transfers,unique_txs,active_addresses,gross_volume_copm,net_volume_copm,mint_copm,burn_copm,mint_count,burn_count,approvals," +
+  "cop_per_usd,supply_end_usd,gross_volume_usd,net_volume_usd,mint_usd,burn_usd";
 
 function daysBetween(from, to) {
   const out = [];
@@ -23,14 +25,19 @@ function daysBetween(from, to) {
 // overrides[chain].plan replaces keys of the default plan; overrides[chain].validation
 // replaces the validation file.
 // plan: { from, to, usdPerDay: {"2025-01": 10}, txPerDay: {"2025-01": 10},
+//         rateByMonth: {"2025-03": 2000},
 //         overrides: {"2025-03-15": { usd: 500, tx: 200 }} }
+// The USD column is the plan's amount; the COPM column is that amount at the
+// day's rate, so a loader that divides COPM by one rate gets it wrong.
 function dailyCsv(plan) {
   const rows = daysBetween(plan.from, plan.to).map((day) => {
     const month = day.slice(0, 7);
     const over = plan.overrides?.[day] ?? {};
     const usd = over.usd ?? plan.usdPerDay[month];
     const tx = over.tx ?? plan.txPerDay[month];
-    return `${day},${SUPPLY_COPM},${tx},${tx},${tx},${usd * COP_PER_USD},0,0,0,0,0,0`;
+    const rate = plan.rateByMonth?.[month] ?? DEFAULT_RATE;
+    const supplyUsd = Math.round((SUPPLY_COPM / rate) * 100) / 100;
+    return `${day},${SUPPLY_COPM},${tx},${tx},${tx},${usd * rate},0,0,0,0,0,0,${rate},${supplyUsd},${usd},0,0,0`;
   });
   return [HEADER, ...rows].join("\n") + "\n";
 }

@@ -16,7 +16,7 @@ function readJson(dataDir, chain, name, command) {
   }
 }
 
-export function loadDashboardData({ dataDir, copPerUsd }) {
+export function loadDashboardData({ dataDir }) {
   const chains = {};
   for (const key of CHAIN_KEYS) {
     const dashboard = readJson(dataDir, key, "dashboard.json", "dashboard");
@@ -32,18 +32,32 @@ export function loadDashboardData({ dataDir, copPerUsd }) {
     }
     chains[key] = { key, label: manifest.chainLabel, address: manifest.address, dashboard, validation, state };
   }
-  return { copPerUsd, chains };
+  return { fx: rateOf(chains), chains };
 }
 
-// The part of the data the browser needs to draw and filter: the six daily
-// series, the lists and the headline figures. Governance, monthly tables and
+// The TRM behind the dollar figures, from the two series: the rate on the
+// latest day any of them reaches, and the lowest and highest over the token's
+// life. Each dashboard.json states its own; the page only reports them.
+function rateOf(chains) {
+  const fxs = Object.values(chains).map((c) => c.dashboard.fx);
+  const latest = fxs.reduce((a, b) => (b.latestDay > a.latestDay ? b : a));
+  return {
+    latest: latest.latest,
+    latestDay: latest.latestDay,
+    min: Math.min(...fxs.map((x) => x.min)),
+    max: Math.max(...fxs.map((x) => x.max)),
+  };
+}
+
+// The part of the data the browser needs to draw and filter: the daily
+// series (COPM and USD), the lists and the headline figures. Governance, monthly tables and
 // the validation rules are rendered on the server and stay out of the page's
 // JSON.
 export function clientPayload(data) {
   const chains = {};
   for (const [key, c] of Object.entries(data.chains)) {
     const d = c.dashboard;
-    const { day, transfers, volume, mint, burn, supply } = d.daily;
+    const { day, transfers, volume, mint, burn, supply, volumeUsd, mintUsd, burnUsd, supplyUsd } = d.daily;
     chains[key] = {
       key,
       label: c.label,
@@ -52,11 +66,11 @@ export function clientPayload(data) {
       flows: d.flows,
       supplyPeak: d.supplyPeak,
       activity: d.activity,
-      daily: { day, transfers, volume, mint, burn, supply },
+      daily: { day, transfers, volume, mint, burn, supply, volumeUsd, mintUsd, burnUsd, supplyUsd },
       sizes: d.sizes.map(({ min, count }) => ({ min, count })),
       holders: { count: d.holders.count, contracts: d.holders.contracts, top1Pct: d.holders.top1Pct, top10Pct: d.holders.top10Pct, top: d.holders.top },
       largest: d.largest,
     };
   }
-  return { copPerUsd: data.copPerUsd, chains };
+  return { fx: data.fx, chains };
 }

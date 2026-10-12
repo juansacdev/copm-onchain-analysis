@@ -12,20 +12,20 @@ The data in this document doesn't come from a dashboard or a third party. It com
 | :--- | :--- |
 | **Audited period** | <!-- copm:polygon.firstDay -->2023-09-21<!-- /copm --> → <!-- copm:polygon.lastDay -->2026-10-12<!-- /copm --> (<!-- copm:polygon.totalDays -->1,118<!-- /copm --> days, ~<!-- copm:polygon.years -->3.1<!-- /copm --> years) |
 | **`Transfer` events** | **<!-- copm:polygon.transfers -->241,876<!-- /copm -->** |
-| **Gross volume moved** | <!-- copm:polygon.grossVolumeCopm -->8.661T<!-- /copm --> COPM ≈ **<!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> USD** |
-| **Net volume** (excl. mints/burns) | <!-- copm:polygon.netVolumeCopm -->6.164T<!-- /copm --> COPM ≈ **<!-- copm:polygon.netVolumeUsd -->$1.54B<!-- /copm --> USD** |
-| **Total issued (mints)** | <!-- copm:polygon.minted -->1.251T<!-- /copm --> COPM ≈ <!-- copm:polygon.mintedUsd -->$312.7M<!-- /copm --> USD |
-| **Total redeemed (burns)** | <!-- copm:polygon.burned -->1.246T<!-- /copm --> COPM ≈ <!-- copm:polygon.burnedUsd -->$311.5M<!-- /copm --> USD |
-| **Daily average** | <!-- copm:polygon.avgDailyTransfers -->216<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->$1.9M<!-- /copm --> USD |
-| **Average ticket per transfer** | ~<!-- copm:polygon.avgTicketUsd -->$8,952<!-- /copm --> USD |
+| **Gross volume moved** | <!-- copm:polygon.grossVolumeCopm -->8.661T<!-- /copm --> COPM ≈ **<!-- copm:polygon.grossVolumeUsd -->$2.27B<!-- /copm --> USD** |
+| **Net volume** (excl. mints/burns) | <!-- copm:polygon.netVolumeCopm -->6.164T<!-- /copm --> COPM ≈ **<!-- copm:polygon.netVolumeUsd -->$1.61B<!-- /copm --> USD** |
+| **Total issued (mints)** | <!-- copm:polygon.minted -->1.251T<!-- /copm --> COPM ≈ <!-- copm:polygon.mintedUsd -->$327.1M<!-- /copm --> USD |
+| **Total redeemed (burns)** | <!-- copm:polygon.burned -->1.246T<!-- /copm --> COPM ≈ <!-- copm:polygon.burnedUsd -->$326.1M<!-- /copm --> USD |
+| **Daily average** | <!-- copm:polygon.avgDailyTransfers -->216<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->$2M<!-- /copm --> USD |
+| **Average ticket per transfer** | ~<!-- copm:polygon.avgTicketUsd -->$9,368<!-- /copm --> USD |
 | **Peak transfers in one day** | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
-| **Peak volume in one day** | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
-| **Peak month** | **<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->: <!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** |
-| **Supply peak** | <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM ≈ <!-- copm:polygon.peakSupplyUsd -->$2.8M<!-- /copm --> USD (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->) |
-| **Current supply** | <!-- copm:polygon.supply -->4,478,360,707.75<!-- /copm --> COPM ≈ <!-- copm:polygon.supplyUsd -->$1.1M<!-- /copm --> USD |
+| **Peak volume in one day** | **<!-- copm:polygon.peakVolumeUsd -->$40.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
+| **Peak month** | **<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->: <!-- copm:polygon.peakMonthUsd -->$337.1M<!-- /copm --> USD** |
+| **Supply peak** | <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM ≈ <!-- copm:polygon.peakSupplyUsd -->$3.1M<!-- /copm --> USD (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->) |
+| **Current supply** | <!-- copm:polygon.supply -->4,478,360,707.75<!-- /copm --> COPM ≈ <!-- copm:polygon.supplyUsd -->$1.4M<!-- /copm --> USD |
 | **Holders with a balance** | <!-- copm:polygon.holders -->582<!-- /copm --> (the largest holds <!-- copm:polygon.top1Pct -->65.7%<!-- /copm -->, the top 10 hold <!-- copm:polygon.top10Pct -->95.6%<!-- /copm -->) |
 
-> **FX rate:** 1 USD = <!-- copm:fx.copPerUsd -->4,000<!-- /copm --> COP, constant. The real rate moved over the period, so USD figures carry a ±5% margin. Configurable when reproducing.
+> **Exchange rate:** USD figures value every day at that day's TRM (the official daily rate of the Superintendencia Financiera de Colombia, read from datos.gov.co): the latest is <!-- copm:fx.latestRate -->3,194.44<!-- /copm --> COP per USD (<!-- copm:fx.latestDate -->2026-10-12<!-- /copm -->), and it ranged from <!-- copm:fx.minRate -->3,048.12<!-- /copm --> to <!-- copm:fx.maxRate -->4,478.21<!-- /copm --> over the token's life.
 
 Unfamiliar with a term? It's in the [glossary](../GLOSSARY.md).
 
@@ -33,9 +33,9 @@ Unfamiliar with a term? It's in the [glossary](../GLOSSARY.md).
 
 ## The story the chain tells
 
-### Over <!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> moved. No pause, ever.
+### Over <!-- copm:polygon.grossVolumeUsd -->$2.27B<!-- /copm --> moved. No pause, ever.
 
-<!-- copm:polygon.grossVolumeCopm -->8.661T<!-- /copm --> COPM changed hands in <!-- copm:polygon.totalDays -->1,118<!-- /copm --> days: **~<!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> USD** gross, **<!-- copm:polygon.netVolumeUsd -->$1.54B<!-- /copm -->** net between wallets. The `PAUSER_ROLE` can stop every transfer; its `Paused` event was emitted <!-- copm:polygon.events.Paused -->0<!-- /copm --> times. There was activity on <!-- copm:polygon.activeDays -->911<!-- /copm --> of the <!-- copm:polygon.totalDays -->1,118<!-- /copm --> audited days (<!-- copm:polygon.activeDaysPct -->81%<!-- /copm -->).
+<!-- copm:polygon.grossVolumeCopm -->8.661T<!-- /copm --> COPM changed hands in <!-- copm:polygon.totalDays -->1,118<!-- /copm --> days: **~<!-- copm:polygon.grossVolumeUsd -->$2.27B<!-- /copm --> USD** gross, **<!-- copm:polygon.netVolumeUsd -->$1.61B<!-- /copm -->** net between wallets. The `PAUSER_ROLE` can stop every transfer; its `Paused` event was emitted <!-- copm:polygon.events.Paused -->0<!-- /copm --> times. There was activity on <!-- copm:polygon.activeDays -->911<!-- /copm --> of the <!-- copm:polygon.totalDays -->1,118<!-- /copm --> audited days (<!-- copm:polygon.activeDaysPct -->81%<!-- /copm -->).
 
 ![Daily gross volume USD](../../charts/polygon/02-daily-volume-usd.svg)
 
@@ -49,7 +49,7 @@ That gap tells you how a B2B settlement layer scales: not through retail user ac
 
 ### <!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->: the month that changed everything.
 
-**<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD in a single month. <!-- copm:polygon.peakMonthTransfers -->30,983<!-- /copm --> transfers.** The record day for activity is <!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->: **<!-- copm:polygon.topTx.1.usd -->$38.6M<!-- /copm -->** across **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transfers**. The record day for volume is <!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->, with **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm -->**.
+**<!-- copm:polygon.peakMonthUsd -->$337.1M<!-- /copm --> USD in a single month. <!-- copm:polygon.peakMonthTransfers -->30,983<!-- /copm --> transfers.** The record day for activity is <!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->: **<!-- copm:polygon.topTx.1.usd -->$40.6M<!-- /copm -->** across **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transfers**. The record day for volume is <!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->, with **<!-- copm:polygon.peakVolumeUsd -->$40.6M<!-- /copm -->**.
 
 Nearly all of the 10 highest-transfer days in the token's entire history happened between October and November 2025 (see the table below). That's not noise: it's the signature of a major integration or a new use case entering production.
 
@@ -61,31 +61,31 @@ Monthly gross volume, from the peak on:
 
 | Month | Gross volume | Transfers |
 | :--- | ---: | ---: |
-| <!-- copm:polygon.peakMonth -->November 2025<!-- /copm --> (peak) | <!-- copm:polygon.month.2025-11.usd -->$318.4M<!-- /copm --> | <!-- copm:polygon.month.2025-11.transfers -->30,983<!-- /copm --> |
-| December 2025 | <!-- copm:polygon.month.2025-12.usd -->$88.3M<!-- /copm --> | <!-- copm:polygon.month.2025-12.transfers -->15,140<!-- /copm --> |
-| January 2026 | <!-- copm:polygon.month.2026-01.usd -->$82.1M<!-- /copm --> | <!-- copm:polygon.month.2026-01.transfers -->6,950<!-- /copm --> |
-| February 2026 | <!-- copm:polygon.month.2026-02.usd -->$67.7M<!-- /copm --> | <!-- copm:polygon.month.2026-02.transfers -->4,884<!-- /copm --> |
-| March 2026 | <!-- copm:polygon.month.2026-03.usd -->$61.7M<!-- /copm --> | <!-- copm:polygon.month.2026-03.transfers -->5,616<!-- /copm --> |
-| April 2026 | <!-- copm:polygon.month.2026-04.usd -->$96.9M<!-- /copm --> | <!-- copm:polygon.month.2026-04.transfers -->5,309<!-- /copm --> |
-| May 2026 (rebound) | <!-- copm:polygon.month.2026-05.usd -->$189.9M<!-- /copm --> | <!-- copm:polygon.month.2026-05.transfers -->18,813<!-- /copm --> |
-| June 2026 | <!-- copm:polygon.month.2026-06.usd -->$48.3M<!-- /copm --> | <!-- copm:polygon.month.2026-06.transfers -->13,985<!-- /copm --> |
-| July 2026 | <!-- copm:polygon.month.2026-07.usd -->$34.3M<!-- /copm --> | <!-- copm:polygon.month.2026-07.transfers -->12,717<!-- /copm --> |
-| August 2026 | <!-- copm:polygon.month.2026-08.usd -->$26.1M<!-- /copm --> | <!-- copm:polygon.month.2026-08.transfers -->9,913<!-- /copm --> |
-| September 2026 | <!-- copm:polygon.month.2026-09.usd -->$22.3M<!-- /copm --> | <!-- copm:polygon.month.2026-09.transfers -->9,118<!-- /copm --> |
-| October 2026 (to <!-- copm:polygon.lastDay -->2026-10-12<!-- /copm -->) | <!-- copm:polygon.month.2026-10.usd -->$6M<!-- /copm --> | <!-- copm:polygon.month.2026-10.transfers -->3,041<!-- /copm --> |
+| <!-- copm:polygon.peakMonth -->November 2025<!-- /copm --> (peak) | <!-- copm:polygon.month.2025-11.usd -->$337.1M<!-- /copm --> | <!-- copm:polygon.month.2025-11.transfers -->30,983<!-- /copm --> |
+| December 2025 | <!-- copm:polygon.month.2025-12.usd -->$92.9M<!-- /copm --> | <!-- copm:polygon.month.2025-12.transfers -->15,140<!-- /copm --> |
+| January 2026 | <!-- copm:polygon.month.2026-01.usd -->$89.3M<!-- /copm --> | <!-- copm:polygon.month.2026-01.transfers -->6,950<!-- /copm --> |
+| February 2026 | <!-- copm:polygon.month.2026-02.usd -->$73.9M<!-- /copm --> | <!-- copm:polygon.month.2026-02.transfers -->4,884<!-- /copm --> |
+| March 2026 | <!-- copm:polygon.month.2026-03.usd -->$66.3M<!-- /copm --> | <!-- copm:polygon.month.2026-03.transfers -->5,616<!-- /copm --> |
+| April 2026 | <!-- copm:polygon.month.2026-04.usd -->$107.5M<!-- /copm --> | <!-- copm:polygon.month.2026-04.transfers -->5,309<!-- /copm --> |
+| May 2026 (rebound) | <!-- copm:polygon.month.2026-05.usd -->$203.8M<!-- /copm --> | <!-- copm:polygon.month.2026-05.transfers -->18,813<!-- /copm --> |
+| June 2026 | <!-- copm:polygon.month.2026-06.usd -->$55.1M<!-- /copm --> | <!-- copm:polygon.month.2026-06.transfers -->13,985<!-- /copm --> |
+| July 2026 | <!-- copm:polygon.month.2026-07.usd -->$41.9M<!-- /copm --> | <!-- copm:polygon.month.2026-07.transfers -->12,717<!-- /copm --> |
+| August 2026 | <!-- copm:polygon.month.2026-08.usd -->$33.3M<!-- /copm --> | <!-- copm:polygon.month.2026-08.transfers -->9,913<!-- /copm --> |
+| September 2026 | <!-- copm:polygon.month.2026-09.usd -->$27.8M<!-- /copm --> | <!-- copm:polygon.month.2026-09.transfers -->9,118<!-- /copm --> |
+| October 2026 (to <!-- copm:polygon.lastDay -->2026-10-12<!-- /copm -->) | <!-- copm:polygon.month.2026-10.usd -->$7.4M<!-- /copm --> | <!-- copm:polygon.month.2026-10.transfers -->3,041<!-- /copm --> |
 
-Volume settled between December and April, jumped in May 2026, and has declined every month since. The second-highest volume day in the token's history, **<!-- copm:polygon.topVol.2.day -->2026-05-05<!-- /copm -->** (<!-- copm:polygon.topVol.2.usd -->$31.5M<!-- /copm -->), belongs to that rebound. The supply followed: it peaked at <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM on <!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm --> and stands at <!-- copm:polygon.supplyCompact -->4.48B<!-- /copm --> COPM at the checkpoint.
+Volume settled between December and April, jumped in May 2026, and has declined every month since. The second-highest volume day in the token's history, **<!-- copm:polygon.topVol.2.day -->2026-05-05<!-- /copm -->** (<!-- copm:polygon.topVol.2.usd -->$34M<!-- /copm -->), belongs to that rebound. The supply followed: it peaked at <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM on <!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm --> and stands at <!-- copm:polygon.supplyCompact -->4.48B<!-- /copm --> COPM at the checkpoint.
 
 | Window | Gross volume |
 | :--- | :--- |
-| <!-- copm:polygon.peakMonth -->November 2025<!-- /copm --> (peak month) | <!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> |
-| Last 90 days | <!-- copm:polygon.last90GrossUsd -->$74.5M<!-- /copm --> |
-| Last 30 days | <!-- copm:polygon.last30GrossUsd -->$21.2M<!-- /copm --> |
+| <!-- copm:polygon.peakMonth -->November 2025<!-- /copm --> (peak month) | <!-- copm:polygon.peakMonthUsd -->$337.1M<!-- /copm --> |
+| Last 90 days | <!-- copm:polygon.last90GrossUsd -->$93.5M<!-- /copm --> |
+| Last 30 days | <!-- copm:polygon.last30GrossUsd -->$26.3M<!-- /copm --> |
 
 ### Supply turns over ~<!-- copm:polygon.turnoverMonthly -->13.8<!-- /copm --> times a month. That's a payment rail, not a vault.
 
 - Average supply (last 30 days): ~<!-- copm:polygon.last30AvgSupply -->6.15B<!-- /copm --> COPM
-- Gross volume (last 30 days): ~<!-- copm:polygon.last30GrossUsd -->$21.2M<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.75B<!-- /copm --> COPM
+- Gross volume (last 30 days): ~<!-- copm:polygon.last30GrossUsd -->$26.3M<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.75B<!-- /copm --> COPM
 - **Implied turnover: ~<!-- copm:polygon.turnoverMonthly -->13.8<!-- /copm -->x per month, ~<!-- copm:polygon.turnoverYearly -->168<!-- /copm -->x per year**
 
 For reference: USDT and USDC turn over on the order of 10–20x **per year**. COPM rotates its supply roughly an order of magnitude faster than that range. The reading is direct: nobody holds COPM for long — the average COPM changes hands ~<!-- copm:polygon.turnoverYearly -->168<!-- /copm --> times a year. That is the behavior of a *settlement rail*, not a store of value.
@@ -118,31 +118,31 @@ The six roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_ROL
 
 | Day | Transfers | Gross volume |
 | :--- | ---: | ---: |
-| **<!-- copm:polygon.topTx.1.day -->2025-11-24<!-- /copm -->** | **<!-- copm:polygon.topTx.1.transfers -->2,597<!-- /copm -->** | <!-- copm:polygon.topTx.1.usd -->$38.6M<!-- /copm --> |
-| <!-- copm:polygon.topTx.2.day -->2025-11-25<!-- /copm --> | <!-- copm:polygon.topTx.2.transfers -->2,404<!-- /copm --> | <!-- copm:polygon.topTx.2.usd -->$21.8M<!-- /copm --> |
-| <!-- copm:polygon.topTx.3.day -->2025-11-20<!-- /copm --> | <!-- copm:polygon.topTx.3.transfers -->2,323<!-- /copm --> | <!-- copm:polygon.topTx.3.usd -->$21.5M<!-- /copm --> |
-| <!-- copm:polygon.topTx.4.day -->2025-10-08<!-- /copm --> | <!-- copm:polygon.topTx.4.transfers -->1,972<!-- /copm --> | <!-- copm:polygon.topTx.4.usd -->$22.1M<!-- /copm --> |
-| <!-- copm:polygon.topTx.5.day -->2025-11-21<!-- /copm --> | <!-- copm:polygon.topTx.5.transfers -->1,959<!-- /copm --> | <!-- copm:polygon.topTx.5.usd -->$25.5M<!-- /copm --> |
-| <!-- copm:polygon.topTx.6.day -->2025-10-22<!-- /copm --> | <!-- copm:polygon.topTx.6.transfers -->1,944<!-- /copm --> | <!-- copm:polygon.topTx.6.usd -->$12.8M<!-- /copm --> |
-| <!-- copm:polygon.topTx.7.day -->2025-10-14<!-- /copm --> | <!-- copm:polygon.topTx.7.transfers -->1,889<!-- /copm --> | <!-- copm:polygon.topTx.7.usd -->$17.3M<!-- /copm --> |
-| <!-- copm:polygon.topTx.8.day -->2025-11-18<!-- /copm --> | <!-- copm:polygon.topTx.8.transfers -->1,885<!-- /copm --> | <!-- copm:polygon.topTx.8.usd -->$14.6M<!-- /copm --> |
-| <!-- copm:polygon.topTx.9.day -->2025-11-11<!-- /copm --> | <!-- copm:polygon.topTx.9.transfers -->1,871<!-- /copm --> | <!-- copm:polygon.topTx.9.usd -->$21.3M<!-- /copm --> |
-| <!-- copm:polygon.topTx.10.day -->2025-12-09<!-- /copm --> | <!-- copm:polygon.topTx.10.transfers -->1,864<!-- /copm --> | <!-- copm:polygon.topTx.10.usd -->$11M<!-- /copm --> |
+| **<!-- copm:polygon.topTx.1.day -->2025-11-24<!-- /copm -->** | **<!-- copm:polygon.topTx.1.transfers -->2,597<!-- /copm -->** | <!-- copm:polygon.topTx.1.usd -->$40.6M<!-- /copm --> |
+| <!-- copm:polygon.topTx.2.day -->2025-11-25<!-- /copm --> | <!-- copm:polygon.topTx.2.transfers -->2,404<!-- /copm --> | <!-- copm:polygon.topTx.2.usd -->$22.9M<!-- /copm --> |
+| <!-- copm:polygon.topTx.3.day -->2025-11-20<!-- /copm --> | <!-- copm:polygon.topTx.3.transfers -->2,323<!-- /copm --> | <!-- copm:polygon.topTx.3.usd -->$23.1M<!-- /copm --> |
+| <!-- copm:polygon.topTx.4.day -->2025-10-08<!-- /copm --> | <!-- copm:polygon.topTx.4.transfers -->1,972<!-- /copm --> | <!-- copm:polygon.topTx.4.usd -->$22.9M<!-- /copm --> |
+| <!-- copm:polygon.topTx.5.day -->2025-11-21<!-- /copm --> | <!-- copm:polygon.topTx.5.transfers -->1,959<!-- /copm --> | <!-- copm:polygon.topTx.5.usd -->$27.3M<!-- /copm --> |
+| <!-- copm:polygon.topTx.6.day -->2025-10-22<!-- /copm --> | <!-- copm:polygon.topTx.6.transfers -->1,944<!-- /copm --> | <!-- copm:polygon.topTx.6.usd -->$13.2M<!-- /copm --> |
+| <!-- copm:polygon.topTx.7.day -->2025-10-14<!-- /copm --> | <!-- copm:polygon.topTx.7.transfers -->1,889<!-- /copm --> | <!-- copm:polygon.topTx.7.usd -->$17.6M<!-- /copm --> |
+| <!-- copm:polygon.topTx.8.day -->2025-11-18<!-- /copm --> | <!-- copm:polygon.topTx.8.transfers -->1,885<!-- /copm --> | <!-- copm:polygon.topTx.8.usd -->$15.5M<!-- /copm --> |
+| <!-- copm:polygon.topTx.9.day -->2025-11-11<!-- /copm --> | <!-- copm:polygon.topTx.9.transfers -->1,871<!-- /copm --> | <!-- copm:polygon.topTx.9.usd -->$22.6M<!-- /copm --> |
+| <!-- copm:polygon.topTx.10.day -->2025-12-09<!-- /copm --> | <!-- copm:polygon.topTx.10.transfers -->1,864<!-- /copm --> | <!-- copm:polygon.topTx.10.usd -->$11.5M<!-- /copm --> |
 
 ### By volume
 
 | Day | Gross volume | Transfers |
 | :--- | ---: | ---: |
-| **<!-- copm:polygon.topVol.1.day -->2025-11-24<!-- /copm -->** | **<!-- copm:polygon.topVol.1.usd -->$38.6M<!-- /copm -->** | <!-- copm:polygon.topVol.1.transfers -->2,597<!-- /copm --> |
-| <!-- copm:polygon.topVol.2.day -->2026-05-05<!-- /copm --> | <!-- copm:polygon.topVol.2.usd -->$31.5M<!-- /copm --> | <!-- copm:polygon.topVol.2.transfers -->1,620<!-- /copm --> |
-| <!-- copm:polygon.topVol.3.day -->2025-08-19<!-- /copm --> | <!-- copm:polygon.topVol.3.usd -->$27.8M<!-- /copm --> | <!-- copm:polygon.topVol.3.transfers -->1,155<!-- /copm --> |
-| <!-- copm:polygon.topVol.4.day -->2025-09-19<!-- /copm --> | <!-- copm:polygon.topVol.4.usd -->$27.7M<!-- /copm --> | <!-- copm:polygon.topVol.4.transfers -->1,202<!-- /copm --> |
-| <!-- copm:polygon.topVol.5.day -->2025-11-21<!-- /copm --> | <!-- copm:polygon.topVol.5.usd -->$25.5M<!-- /copm --> | <!-- copm:polygon.topVol.5.transfers -->1,959<!-- /copm --> |
-| <!-- copm:polygon.topVol.6.day -->2025-09-18<!-- /copm --> | <!-- copm:polygon.topVol.6.usd -->$24.7M<!-- /copm --> | <!-- copm:polygon.topVol.6.transfers -->1,422<!-- /copm --> |
-| <!-- copm:polygon.topVol.7.day -->2025-08-27<!-- /copm --> | <!-- copm:polygon.topVol.7.usd -->$23M<!-- /copm --> | <!-- copm:polygon.topVol.7.transfers -->1,629<!-- /copm --> |
-| <!-- copm:polygon.topVol.8.day -->2025-08-12<!-- /copm --> | <!-- copm:polygon.topVol.8.usd -->$22.5M<!-- /copm --> | <!-- copm:polygon.topVol.8.transfers -->702<!-- /copm --> |
-| <!-- copm:polygon.topVol.9.day -->2025-10-08<!-- /copm --> | <!-- copm:polygon.topVol.9.usd -->$22.1M<!-- /copm --> | <!-- copm:polygon.topVol.9.transfers -->1,972<!-- /copm --> |
-| <!-- copm:polygon.topVol.10.day -->2025-08-15<!-- /copm --> | <!-- copm:polygon.topVol.10.usd -->$21.9M<!-- /copm --> | <!-- copm:polygon.topVol.10.transfers -->796<!-- /copm --> |
+| **<!-- copm:polygon.topVol.1.day -->2025-11-24<!-- /copm -->** | **<!-- copm:polygon.topVol.1.usd -->$40.6M<!-- /copm -->** | <!-- copm:polygon.topVol.1.transfers -->2,597<!-- /copm --> |
+| <!-- copm:polygon.topVol.2.day -->2026-05-05<!-- /copm --> | <!-- copm:polygon.topVol.2.usd -->$34M<!-- /copm --> | <!-- copm:polygon.topVol.2.transfers -->1,620<!-- /copm --> |
+| <!-- copm:polygon.topVol.3.day -->2025-09-19<!-- /copm --> | <!-- copm:polygon.topVol.3.usd -->$28.5M<!-- /copm --> | <!-- copm:polygon.topVol.3.transfers -->1,202<!-- /copm --> |
+| <!-- copm:polygon.topVol.4.day -->2025-08-19<!-- /copm --> | <!-- copm:polygon.topVol.4.usd -->$27.7M<!-- /copm --> | <!-- copm:polygon.topVol.4.transfers -->1,155<!-- /copm --> |
+| <!-- copm:polygon.topVol.5.day -->2025-11-21<!-- /copm --> | <!-- copm:polygon.topVol.5.usd -->$27.3M<!-- /copm --> | <!-- copm:polygon.topVol.5.transfers -->1,959<!-- /copm --> |
+| <!-- copm:polygon.topVol.6.day -->2025-09-18<!-- /copm --> | <!-- copm:polygon.topVol.6.usd -->$25.5M<!-- /copm --> | <!-- copm:polygon.topVol.6.transfers -->1,422<!-- /copm --> |
+| <!-- copm:polygon.topVol.7.day -->2026-05-07<!-- /copm --> | <!-- copm:polygon.topVol.7.usd -->$23.3M<!-- /copm --> | <!-- copm:polygon.topVol.7.transfers -->1,114<!-- /copm --> |
+| <!-- copm:polygon.topVol.8.day -->2025-11-20<!-- /copm --> | <!-- copm:polygon.topVol.8.usd -->$23.1M<!-- /copm --> | <!-- copm:polygon.topVol.8.transfers -->2,323<!-- /copm --> |
+| <!-- copm:polygon.topVol.9.day -->2025-11-25<!-- /copm --> | <!-- copm:polygon.topVol.9.usd -->$22.9M<!-- /copm --> | <!-- copm:polygon.topVol.9.transfers -->2,404<!-- /copm --> |
+| <!-- copm:polygon.topVol.10.day -->2025-10-08<!-- /copm --> | <!-- copm:polygon.topVol.10.usd -->$22.9M<!-- /copm --> | <!-- copm:polygon.topVol.10.transfers -->1,972<!-- /copm --> |
 
 ![Top 10 days by gross volume](../../charts/polygon/05-top10-volume-days.svg)
 
@@ -150,7 +150,7 @@ The six roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_ROL
 
 ## Validation
 
-No number in this audit is reported unverified. The validation step ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) is strict and offline, runs <!-- copm:polygon.checksTotal -->19<!-- /copm --> rules with no tolerance, and <!-- copm:polygon.checksPassed -->19<!-- /copm --> passed (validated on <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
+No number in this audit is reported unverified. The validation step ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) is strict and offline, runs <!-- copm:polygon.checksTotal -->20<!-- /copm --> rules with no tolerance, and <!-- copm:polygon.checksPassed -->20<!-- /copm --> passed (validated on <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Rule | Result |
 | :--- | :--- | :--- |
@@ -183,17 +183,18 @@ The pipeline is a handful of steps, each a command of `node pipeline/cli.js`, wi
 1. **Discover** — finds the deploy block (block <!-- copm:polygon.deployBlock -->47,747,145<!-- /copm -->) by binary search over `eth_getCode` and reads the token metadata.
 2. **Scan** — downloads every event of the contract with `eth_getLogs` in stages, with a canary and a head check in every batch, confirmation of empty ranges, and an exact reconciliation against `totalSupply()` before the checkpoint advances. Transfers are stored by month with their exact block timestamp; approvals are counted per day and per spender.
 3. **Holders** — computes every balance from the ledger and checks each one against `balanceOf` at the checkpoint block.
-4. **Aggregate** — replays the events in order and builds the daily series: volume, mints, burns, derived supply.
-5. **Charts** — renders the SVGs with no canvas and no headless browser.
-6. **Validate** — the <!-- copm:polygon.checksTotal -->19<!-- /copm --> strict rules above.
-7. **Reports** — fills every figure of these documents from the data.
+4. **Rates** — reads the TRM of every day from the open data portal (`datos.gov.co`, dataset `32sa-8pi3`, no key) into `data/rates/cop-usd.csv`, one rate per UTC day, ascending and without gaps.
+5. **Aggregate** — replays the events in order and builds the daily series: volume, mints, burns, derived supply. Every USD amount is that day's COPM divided by that day's TRM (1 COPM is treated as 1 COP), and every USD total is the sum of the daily amounts. A day later than the last published rate uses the last known one and is marked provisional until its own is published.
+6. **Charts** — renders the SVGs with no canvas and no headless browser.
+7. **Validate** — the <!-- copm:polygon.checksTotal -->20<!-- /copm --> strict rules above.
+8. **Reports** — fills every figure of these documents from the data.
 
-**Single source: one RPC endpoint.** No indexers, no third-party APIs, no explorers. Any provider works — a paid one (faster) or a public one (free, with rate limits the scanner handles on its own).
+**Single source for the chain: one RPC endpoint.** No indexers, no third-party APIs, no explorers. Any provider works — a paid one (faster) or a public one (free, with rate limits the scanner handles on its own). The only other input is the TRM, used only to express COPM in dollars.
 
 ## Limitations
 
 1. **Polygon only.** Celo activity is audited separately in [its own audit](./celo.md), and both are consolidated in the [unified audit](../AUDIT.md).
-2. **Fixed rate of <!-- copm:fx.copPerUsd -->4,000<!-- /copm --> COP/USD.** ±5% margin on USD figures depending on the day.
+2. **USD figures are an estimate.** They treat 1 COPM as 1 COP and use the official TRM of each day; the TRM is not the rate any given payment was settled at.
 3. **Internal addresses not filtered.** "Net" volume excludes mints and burns but doesn't distinguish movements between the issuer's corporate wallets.
 4. **Addresses are not entities.** <!-- copm:polygon.contracts -->244<!-- /copm --> of the <!-- copm:polygon.holders -->582<!-- /copm --> holders are contracts, and one entity can control several wallets, so the concentration figures describe addresses, not owners.
 5. **Transfers are not payments.** A single payment can emit several transfers (through a router, for example), so gross volume and transfer counts measure on-chain movement, not the number of payments.

@@ -15,7 +15,7 @@ import { clientPayload, loadDashboardData } from '../../lib/dashboard-data.js';
 import { buildInsights } from '../../lib/dashboard-insights.js';
 import { CHAIN_CHOICES, DEFAULT_STATE, PERIOD_CHOICES, UNIT_CHOICES } from '../../lib/dashboard-filters.js';
 import { PERIOD_DAYS, granularityFor, largestRows, tilesFor } from '../../lib/dashboard-view.js';
-import { amountCompact, amountFull, arrowFor, changeText, eventArgText, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rowAmount, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
 import { formatDate, formatDecimal, formatInt, formatMonthShort, rangeLabels } from '../../lib/format.js';
 import { formatSerialBlock } from '../../lib/serial.js';
 import {
@@ -37,8 +37,7 @@ const t = dashboardDictionaries[lang];
 
 // `astro build` runs from site/; the data lives one level up.
 const dataDir = fileURLToPath(new URL('../data', pathToFileURL(`${process.cwd()}/`)));
-const rate = Number(process.env.COP_PER_USD ?? 4000);
-const data = loadDashboardData({ dataDir, copPerUsd: rate });
+const data = loadDashboardData({ dataDir });
 const payload = clientPayload(data);
 const keys = Object.keys(data.chains);
 const chainLabel = (key: string) => data.chains[key].label;
@@ -59,7 +58,6 @@ const names = { polygon: chainLabel('polygon'), celo: chainLabel('celo'), all: t
 const insights = buildInsights({
   chains: Object.fromEntries(keys.map((k) => [k, data.chains[k].dashboard])),
   validations: Object.fromEntries(keys.map((k) => [k, data.chains[k].validation])),
-  copPerUsd: rate,
   lang,
   names,
   notAvailable: t.insights.na,
@@ -78,15 +76,15 @@ const serial = tiles.blocks.map((b) => `${b.chain === 'polygon' ? 'POL' : 'CELO'
 const latestTime = Math.max(...tiles.blocks.map((b) => b.time));
 const notes = tileNotes({ tiles, t, lang });
 const tileList = [
-  { id: 'supply', k: t.tiles.supply.k, v: amountCompact(tiles.supply.value, state.unit, lang, rate), d: deltaText(tiles.supply.changePct, 'vsStart'), n: notes.supply },
-  { id: 'volume', k: t.tiles.volume.k, v: amountCompact(tiles.volume.current, state.unit, lang, rate), d: deltaText(tiles.volume.changePct, 'vsPeriod'), n: notes.volume },
+  { id: 'supply', k: t.tiles.supply.k, v: amountCompact(tiles.supply.value, state.unit, lang), d: deltaText(tiles.supply.changePct, 'vsStart'), n: notes.supply },
+  { id: 'volume', k: t.tiles.volume.k, v: amountCompact(tiles.volume.current, state.unit, lang), d: deltaText(tiles.volume.changePct, 'vsPeriod'), n: notes.volume },
   { id: 'transfers', k: t.tiles.transfers.k, v: formatInt(tiles.transfers.current, lang), d: deltaText(tiles.transfers.changePct, 'vsPeriod'), n: notes.transfers },
   { id: 'holders', k: t.tiles.holders.k, v: formatInt(tiles.holders, lang), d: '', n: notes.holders },
   { id: 'block', k: t.tiles.block.k, v: serial, d: utcDateTime(latestTime), n: notes.block },
 ];
 
 // What every reader needs to read the figures, in the HTML whatever the
-// filters do: the fixed rate and where each chain's periods end.
+// filters do: where the dollar rate comes from and where each chain's periods end.
 const basisItems = keys
   .map((k) => {
     const d = data.chains[k].dashboard;
@@ -117,11 +115,11 @@ const monthlyRows = keys.flatMap((key) => {
   return m.month.map((month: string, i: number) => ({
     chain: key,
     month: formatMonthShort(month, lang),
-    supply: amountCompact(m.supply[i], 'copm', lang, rate),
-    minted: amountCompact(m.mint[i], 'copm', lang, rate),
-    burned: amountCompact(m.burn[i], 'copm', lang, rate),
+    supply: amountCompact(m.supply[i], 'copm', lang),
+    minted: amountCompact(m.mint[i], 'copm', lang),
+    burned: amountCompact(m.burn[i], 'copm', lang),
     transfers: formatInt(m.transfers[i], lang),
-    gross: amountCompact(m.volume[i], 'copm', lang, rate),
+    gross: amountCompact(m.volume[i], 'copm', lang),
   }));
 });
 
@@ -165,7 +163,7 @@ const clientData = { ...payload, t: clientText };
 ---
 
 <Base lang={lang} page="dashboard" title={t.meta.title} description={t.meta.description}>
-  <main id="main" class="dash" data-dashboard data-lang={lang} data-rate={rate}>
+  <main id="main" class="dash" data-dashboard data-lang={lang}>
     <section class="dash-head" aria-labelledby="dash-title">
       <p class="dash-eyebrow">{t.header.eyebrow}</p>
       <h1 id="dash-title">{t.header.title}</h1>
@@ -175,7 +173,7 @@ const clientData = { ...payload, t: clientText };
     </section>
 
     <div class="dash-basis" data-basis>
-      <p>{interpolate(t.basis.rate, { rate: formatInt(rate, lang) })}</p>
+      <p>{interpolate(t.basis.rate, { rate: formatDecimal(data.fx.latest, 2, lang, { trim: true }), date: formatDate(data.fx.latestDay, lang) })}</p>
       <p>{interpolate(t.basis.complete, { items: basisItems })}</p>
     </div>
 
@@ -306,7 +304,7 @@ const clientData = { ...payload, t: clientText };
                 <tr>
                   <th scope="row">{chainLabel(h.chain)} · {h.rank}</th>
                   <td><a class="addr" href={explorerAddressUrl(h.chain, h.address)} title={h.address} target="_blank" rel="noopener noreferrer">{middleEllipsis(h.address, 6, 4)}</a></td>
-                  <td class="num">{amountFull(h.balance, 'copm', lang, rate)}</td>
+                  <td class="num">{amountFull(h.balance, 'copm', lang)}</td>
                   <td class="num">{pct(h.share, 1)}</td>
                 </tr>
               ))}
@@ -370,7 +368,7 @@ const clientData = { ...payload, t: clientText };
                 <th scope="row">{formatDate(r.day, lang)}</th>
                 <td>{chainLabel(r.chain)}</td>
                 <td>{t.columns.kindValue[r.kind as 'mint']}</td>
-                <td class="num">{amountFull(r.amount, state.unit, lang, rate)}</td>
+                <td class="num">{amountFull(rowAmount(r, state.unit), state.unit, lang)}</td>
                 <td><a class="addr" href={explorerAddressUrl(r.chain, r.from)} title={r.from} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.from, 6, 4)}</a></td>
                 <td><a class="addr" href={explorerAddressUrl(r.chain, r.to)} title={r.to} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.to, 6, 4)}</a></td>
                 <td><a class="addr" href={explorerTxUrl(r.chain, r.tx)} title={r.tx} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.tx, 8, 6)}</a></td>

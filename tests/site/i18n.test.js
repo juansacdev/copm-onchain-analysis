@@ -4,12 +4,12 @@ import { dictionaries, flattenDictionary, renderDictionary } from "../../site/sr
 import { buildVars } from "../../site/src/features/analysis/vars.js";
 import { loadAnalysisData } from "../../site/src/lib/analysis-data.js";
 import { placeholdersOf } from "../../site/src/lib/template.js";
-import { COP_PER_USD, writeSiteFixture } from "../helpers/site-fixture.js";
+import { writeSiteFixture } from "../helpers/site-fixture.js";
 
 const PRESS_MONTH = "2025-03";
 
 function fixtureData(overrides) {
-  return loadAnalysisData({ dataDir: writeSiteFixture(overrides), copPerUsd: COP_PER_USD });
+  return loadAnalysisData({ dataDir: writeSiteFixture(overrides) });
 }
 
 test("both dictionaries have exactly the same keys", () => {
@@ -128,4 +128,38 @@ test("the page refuses to build a claim the data no longer supports", () => {
     () => buildVars(fixtureData(failing), "es", { pressMonth: PRESS_MONTH }),
     /supply|validation/i,
   );
+});
+
+/* The exchange rate ---------------------------------------------------------- */
+
+// The name of the old placeholder, built in pieces so that a search for the
+// removed fixed-rate setting finds nothing.
+const OLD_PLACEHOLDER = ["cop", "PerUsd"].join("");
+
+test("no dictionary of the analysis page states a constant rate, and none keeps the old placeholder", () => {
+  for (const lang of ["es", "en"]) {
+    for (const [key, value] of Object.entries(flattenDictionary(dictionaries[lang]))) {
+      assert.doesNotMatch(value, /fixed\s+rate|tasa\s+fija|±\s?5/i, `${lang}:${key}`);
+      assert.ok(!value.includes(`{${OLD_PLACEHOLDER}}`), `${lang}:${key}`);
+    }
+  }
+});
+
+test("the analysis page says, in one sentence, where the USD rate comes from, and shows the latest rate and its day", () => {
+  const data = fixtureData({ polygon: { plan: { rateByMonth: { "2025-06": 3194.44 } } } });
+  for (const lang of ["es", "en"]) {
+    const vars = buildVars(data, lang, { pressMonth: PRESS_MONTH });
+    const rendered = flattenDictionary(renderDictionary(dictionaries[lang], vars));
+    const mentions = Object.entries(rendered).filter(([, v]) => /datos\.gov\.co/.test(v));
+    assert.ok(mentions.length >= 2, `${lang}: the limitations and the footer name the source`);
+    for (const [key, value] of mentions) {
+      assert.match(value, /TRM/, `${lang}:${key}`);
+      assert.match(value, /Superintendencia Financiera de Colombia/, `${lang}:${key}`);
+    }
+    assert.ok(mentions.some(([, v]) => v.includes(lang === "es" ? "3.194,44" : "3,194.44")), `${lang}: the latest rate`);
+  }
+  const en = buildVars(data, "en", { pressMonth: PRESS_MONTH });
+  assert.equal(en.rateLatest, "3,194.44");
+  assert.equal(en.rateLatestDate, "June 15, 2025");
+  assert.equal(buildVars(data, "es", { pressMonth: PRESS_MONTH }).rateLatestDate, "15 de junio de 2025");
 });

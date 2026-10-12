@@ -63,3 +63,16 @@ test("every role has a meaning, and every admin event of the contract has one", 
     }
   }
 });
+
+test("the dashboard says where the dollar rate comes from, with the latest rate and its day, and states no constant rate", () => {
+  for (const lang of ["es", "en"]) {
+    const rate = dashboardDictionaries[lang].basis.rate;
+    assert.deepEqual(placeholdersOf(rate).sort(), ["date", "rate"], lang);
+    assert.match(rate, /TRM/, lang);
+    assert.match(rate, /Superintendencia Financiera de Colombia/, lang);
+    assert.match(rate, /datos\.gov\.co/, lang);
+    for (const [key, value] of Object.entries(flat(lang))) {
+      assert.doesNotMatch(value, /fixed\s+rate|tasa\s+fija/i, `${lang}:${key}`);
+    }
+  }
+});

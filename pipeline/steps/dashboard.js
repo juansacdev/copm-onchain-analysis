@@ -2,12 +2,13 @@
 // draw the dashboard. It is a pure function of what `scan`, `holders` and
 // `aggregate` already wrote, with no clock and no network, so running it twice
 // produces the same bytes. The logic lives in domain/dashboard.js.
-import { dataDir } from "../config/chains.js";
+import { dataDir, ratesDir } from "../config/chains.js";
+import { requireRatesTable } from "../adapters/rates.js";
 import { createStore, writeText } from "../adapters/store.js";
 import { buildDashboard } from "../domain/dashboard.js";
 
 // Everything comes from `store`, so tests run it against a temporary directory.
-export function buildDashboardFor({ store, chainKey }) {
+export function buildDashboardFor({ store, chainKey, rates }) {
   const state = store.readState();
   if (!state) throw new Error(`no state.json for ${chainKey}: run "scan --chain ${chainKey}" first`);
   if (store.listPartitions().length === 0) {
@@ -29,11 +30,12 @@ export function buildDashboardFor({ store, chainKey }) {
     adminEvents: store.readAdminEvents(),
     approvals: store.readApprovals(),
     holders,
+    rates,
   });
 }
 
-export function writeDashboard({ store, dirUrl, chainKey, log = console.log }) {
-  const dashboard = buildDashboardFor({ store, chainKey });
+export function writeDashboard({ store, dirUrl, chainKey, rates, log = console.log }) {
+  const dashboard = buildDashboardFor({ store, chainKey, rates });
   const text = `${JSON.stringify(dashboard)}\n`;
   writeText(new URL("dashboard.json", dirUrl), text);
   log(`wrote dashboard.json (${text.length} bytes) at block ${dashboard.checkpoint.block}`);
@@ -42,5 +44,10 @@ export function writeDashboard({ store, dirUrl, chainKey, log = console.log }) {
 
 export async function run({ chainKey }) {
   console.log(`chain: ${chainKey}`);
-  writeDashboard({ store: createStore(dataDir(chainKey)), dirUrl: dataDir(chainKey), chainKey });
+  writeDashboard({
+    store: createStore(dataDir(chainKey)),
+    dirUrl: dataDir(chainKey),
+    chainKey,
+    rates: requireRatesTable(ratesDir()),
+  });
 }

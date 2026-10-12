@@ -5,6 +5,7 @@ import {
   granularityFor,
   heatCells,
   largestRows,
+  measureKey,
   sliceDaily,
   tilesFor,
   valueAt,
@@ -19,7 +20,7 @@ function chain(key, { from = "2025-01-01", count = 100, endDay = null, holders =
   const day = days(from, count);
   return {
     key,
-    checkpoint: { block: 1000, time: 1, totalSupply: count * 5, firstDay: day[0], lastDay: day.at(-1) },
+    checkpoint: { block: 1000, time: 1, totalSupply: count * 5, totalSupplyUsd: (count * 5) / 4, firstDay: day[0], lastDay: day.at(-1) },
     activity: { endDay: endDay ?? day.at(-1), days: 30 },
     daily: {
       day,
@@ -28,6 +29,11 @@ function chain(key, { from = "2025-01-01", count = 100, endDay = null, holders =
       mint: day.map(() => 5),
       burn: day.map(() => 0),
       supply: day.map((_, k) => (k + 1) * 5),
+      // USD at a rate that moves: 2 for the first fifty days, 4 after.
+      volumeUsd: day.map((_, k) => (k < 50 ? 5 : 2.5)),
+      mintUsd: day.map((_, k) => (k < 50 ? 2.5 : 1.25)),
+      burnUsd: day.map(() => 0),
+      supplyUsd: day.map((_, k) => ((k + 1) * 5) / (k < 50 ? 2 : 4)),
     },
     holders: { count: holders },
     largest: { d30: [], d90: [], d365: [], all: [], ...largest },
@@ -157,4 +163,45 @@ test("period turnover is only reported when the period minted a material share o
   assert.equal(periodTurnover({ gross: 1214, minted: 2.7 }), null);
   assert.equal(periodTurnover({ gross: 500, minted: 0 }), null);
   assert.equal(periodTurnover({ gross: 0, minted: 0 }), null);
+});
+
+/* USD ------------------------------------------------------------------------ */
+
+test("measureKey names the daily array of a measure in the chosen unit", () => {
+  assert.equal(measureKey("volume", "copm"), "volume");
+  assert.equal(measureKey("volume", "usd"), "volumeUsd");
+  assert.equal(measureKey("supply", "usd"), "supplyUsd");
+});
+
+test("buckets add the USD of each day, so a bar is not its COPM over one rate", () => {
+  const s = sliceDaily(chain("polygon").daily, "2025-02-15", "2025-03-05"); // days 46..64: rate changes on 2025-02-20
+  const b = bucketize(s, "month");
+  // February 15..28 = 14 days: days 46..50 (index 45..49) at 5 USD, the other nine at 2.5
+  assert.equal(b.volumeUsd[0], 5 * 5 + 9 * 2.5);
+  assert.equal(b.volume[0], 140);
+  assert.notEqual(b.volumeUsd[0], b.volume[0] / 2);
+  assert.equal(b.supplyUsd[1], 320 / 4, "the supply of a bucket is its last day's, at that day's rate");
+});
+
+test("tiles in USD sum the daily USD amounts and read the supply in USD", () => {
+  const chains = { polygon: chain("polygon") };
+  const copm = tilesFor(chains, { chain: "polygon", period: "all", unit: "copm" });
+  const usd = tilesFor(chains, { chain: "polygon", period: "all", unit: "usd" });
+  assert.equal(copm.volume.current, 1000);
+  assert.equal(usd.volume.current, 50 * 5 + 50 * 2.5);
+  assert.equal(usd.supply.value, 125);
+  assert.equal(copm.transfers.current, usd.transfers.current, "counts do not depend on the unit");
+});
+
+test("tiles in USD compare windows in USD and the supply with the day before at that day's rate", () => {
+  const chains = { polygon: chain("polygon") };
+  const t = tilesFor(chains, { chain: "polygon", period: "30d", unit: "usd" });
+  assert.equal(t.volume.current, 30 * 2.5);
+  assert.equal(t.volume.previous, 20 * 2.5 + 10 * 5 - 0);
+  assert.equal(t.supply.previous, 350 / 4);
+});
+
+test("the largest transfers keep their COPM order whatever the unit", () => {
+  const rows = (unit) => largestRows({ polygon: chain("polygon", { largest: { d30: [{ ...big("p", 9), usd: 1 }, { ...big("p", 3), usd: 5 }] } }) }, { chain: "polygon", period: "30d", unit }, 25);
+  assert.deepEqual(rows("usd").map((r) => r.amount), [9, 3]);
 });

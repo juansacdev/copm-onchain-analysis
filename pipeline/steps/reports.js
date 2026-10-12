@@ -8,7 +8,7 @@
 // can only say what the data says. The locale of a file comes from its name:
 // *.es.md is Spanish, anything else English.
 import { existsSync } from "node:fs";
-import { CHAIN_KEYS, copPerUsd as configuredCopPerUsd, repoRoot } from "../config/chains.js";
+import { CHAIN_KEYS, repoRoot } from "../config/chains.js";
 import { readJson, readJsonl, readText, writeText } from "../adapters/store.js";
 import { parseDailyCsv } from "../charts/chartlib.js";
 import { buildFigures, rewriteMarkers } from "../domain/report.js";
@@ -60,12 +60,11 @@ export function loadChainData(root, chainKey) {
 export function runReports({
   root = repoRoot(),
   files = REPORT_FILES,
-  copPerUsd = configuredCopPerUsd(),
   check = false,
   log = console.log,
 } = {}) {
   const chains = Object.fromEntries(CHAIN_KEYS.map((key) => [key, loadChainData(root, key)]));
-  const figures = buildFigures({ copPerUsd, chains });
+  const figures = buildFigures({ chains });
 
   const updates = [];
   for (const file of files) {
@@ -93,7 +92,7 @@ export function runReports({
   return { changes };
 }
 
-export async function run({ check = false, env = process.env }) {
-  const { changes } = runReports({ check, copPerUsd: configuredCopPerUsd(env) });
+export async function run({ check = false }) {
+  const { changes } = runReports({ check });
   return { exitCode: check && changes.length > 0 ? 1 : 0 };
 }

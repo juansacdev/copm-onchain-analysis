@@ -8,6 +8,7 @@ const STEPS = {
   discover: "./steps/discover.js",
   scan: "./steps/scan.js",
   holders: "./steps/holders.js",
+  rates: "./steps/rates.js",
   aggregate: "./steps/aggregate.js",
   dashboard: "./steps/dashboard.js",
   charts: "./steps/charts.js",

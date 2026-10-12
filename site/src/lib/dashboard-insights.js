@@ -12,14 +12,15 @@ import { shortAddress } from "./links.js";
 const CHAIN_KEYS = ["polygon", "celo"];
 const DOMINANT_SHARE = 50;
 
-function makeFormatters(lang, copPerUsd) {
+function makeFormatters(lang) {
   const percent = (n, { digits = 0, trim = true, sign = false } = {}) => {
     const body = formatDecimal(sign ? Math.abs(n) : n, digits, lang, { trim });
     const prefix = sign ? (n > 0 ? "+" : n < 0 ? "-" : "") : "";
     return `${prefix}${body}${lang === "es" ? " %" : "%"}`;
   };
   return {
-    usd: (copm) => formatUsd(copm / copPerUsd, lang, "long", { trim: true }),
+    // Amounts arrive in USD, valued day by day by the pipeline.
+    usd: (amount) => formatUsd(amount, lang, "long", { trim: true }),
     int: (n) => formatInt(n, lang),
     decimal: (n, digits) => formatDecimal(n, digits, lang),
     date: (iso) => formatDate(iso, lang),
@@ -33,8 +34,8 @@ const countEvents = (events, name) => events.filter((e) => e.name === name);
 // chains: { polygon: dashboard.json, celo: dashboard.json }
 // validations: { polygon: validation.json, celo: validation.json }
 // names: { polygon, celo, all } display names. render(key, vars) -> text.
-export function buildInsights({ chains, validations, copPerUsd, lang, names, render, notAvailable = "n/a" }) {
-  const f = makeFormatters(lang, copPerUsd);
+export function buildInsights({ chains, validations, lang, names, render, notAvailable = "n/a" }) {
+  const f = makeFormatters(lang);
   const out = [];
   const keys = CHAIN_KEYS.filter((key) => chains[key]);
   const add = (id, section, show, key, vars) => out.push({ id, section, show, key, vars, text: render(key, vars) });
@@ -42,28 +43,36 @@ export function buildInsights({ chains, validations, copPerUsd, lang, names, ren
   const asOfOf = (key) => f.date(new Date(chains[key].checkpoint.time * 1000).toISOString().slice(0, 10));
 
   // How much is there?
-  const turnoverVars = (name, flows) => ({
+  // The dollar amounts are the pipeline's per-day sums (flows.usd); the
+  // turnover is a ratio of COPM and does not depend on the rate.
+  const turnoverVars = (name, usd, turnover) => ({
     chain: name,
-    gross: f.usd(flows.gross),
-    minted: f.usd(flows.minted),
-    burned: f.usd(flows.burned),
-    wallet: f.usd(flows.wallet),
-    turnover: f.decimal(flows.turnover, 1),
+    gross: f.usd(usd.gross),
+    minted: f.usd(usd.minted),
+    burned: f.usd(usd.burned),
+    wallet: f.usd(usd.wallet),
+    turnover: f.decimal(turnover, 1),
   });
   const sum = (pick) => keys.reduce((total, key) => total + pick(chains[key]), 0);
-  const all = { minted: sum((c) => c.flows.minted), burned: sum((c) => c.flows.burned), wallet: sum((c) => c.flows.wallet), gross: sum((c) => c.flows.gross) };
-  if (keys.length > 1 && all.minted > 0) {
-    add("turnover-all", "supply", ["both"], "turnover", turnoverVars(names.all, { ...all, turnover: all.gross / all.minted }));
+  const allCopm = { minted: sum((c) => c.flows.minted), gross: sum((c) => c.flows.gross) };
+  const allUsd = {
+    minted: sum((c) => c.flows.usd.minted),
+    burned: sum((c) => c.flows.usd.burned),
+    wallet: sum((c) => c.flows.usd.wallet),
+    gross: sum((c) => c.flows.usd.gross),
+  };
+  if (keys.length > 1 && allCopm.minted > 0) {
+    add("turnover-all", "supply", ["both"], "turnover", turnoverVars(names.all, allUsd, allCopm.gross / allCopm.minted));
   }
   for (const key of keys) {
     const flows = chains[key].flows;
-    if (flows.turnover !== null) add(`turnover-${key}`, "supply", [key], "turnover", turnoverVars(names[key], flows));
+    if (flows.turnover !== null) add(`turnover-${key}`, "supply", [key], "turnover", turnoverVars(names[key], flows.usd, flows.turnover));
   }
   for (const key of keys) {
     const { supplyPeak, checkpoint } = chains[key];
     if (!supplyPeak) continue;
     const current = checkpoint.totalSupply;
-    const vars = { chain: names[key], asOf: asOfOf(key), current: f.usd(current), peak: f.usd(supplyPeak.copm), date: f.date(supplyPeak.day) };
+    const vars = { chain: names[key], asOf: asOfOf(key), current: f.usd(checkpoint.totalSupplyUsd), peak: f.usd(supplyPeak.usd), date: f.date(supplyPeak.day) };
     if (current >= supplyPeak.copm) add(`supply-${key}`, "supply", perChain(key), "supplyAtPeak", vars);
     else add(`supply-${key}`, "supply", perChain(key), "supplyBelowPeak", { ...vars, pct: f.percent((current / supplyPeak.copm) * 100) });
   }
@@ -88,7 +97,7 @@ export function buildInsights({ chains, validations, copPerUsd, lang, names, ren
       date: f.date(activity.endDay),
       days: f.int(activity.days),
       transfers: f.int(transfers.current),
-      volume: f.usd(volume.current),
+      volume: f.usd(activity.volumeUsd.current),
       previousTransfers: f.int(transfers.previous),
     };
     if (transfers.changePct === null) {

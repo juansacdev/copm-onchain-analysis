@@ -10,6 +10,7 @@
 // against it. Sums are done in BigInt first and converted once.
 import { buildDailySeries } from "./aggregate.js";
 import { monthKey } from "./partition.js";
+import { cents, sumUsd, usdAt } from "./rates.js";
 import { ZERO_ADDRESS, dayOf, toCOPM } from "./units.js";
 
 const DAY_SECONDS = 86_400;
@@ -158,12 +159,14 @@ export function flowParties(transfers, kind, n) {
 export function supplyPeak(series) {
   if (series.length === 0) return null;
   const peak = series.reduce((a, b) => (b.supplyEnd > a.supplyEnd ? b : a));
-  return { day: peak.day, copm: toCOPM(peak.supplyEnd) };
+  return { day: peak.day, copm: toCOPM(peak.supplyEnd), usd: peak.supplyEndUsd };
 }
 
 // The n biggest transfers, optionally limited to days fromDay..toDay (both
 // inclusive). Equal amounts: earlier block first, then earlier log index.
-export function largestTransfers(transfers, { n = 25, fromDay = null, toDay = null } = {}) {
+// Each row also carries its amount in USD at the rate of its own day.
+export function largestTransfers(transfers, { n = 25, fromDay = null, toDay = null, rates } = {}) {
+  if (!rates?.at) throw new Error("largestTransfers needs the rates (data/rates/cop-usd.csv)");
   return transfers
     .filter((t) => {
       const day = dayOf(t.ts);
@@ -180,6 +183,7 @@ export function largestTransfers(transfers, { n = 25, fromDay = null, toDay = nu
       ts: t.ts,
       block: t.b,
       amount: toCOPM(BigInt(t.v)),
+      usd: usdAt(toCOPM(BigInt(t.v)), rates.at(dayOf(t.ts)).rate),
       kind: kindOf(t),
       from: t.f,
       to: t.r,
@@ -216,6 +220,13 @@ function dailyArrays(series, transfers) {
     supply: series.map((r) => toCOPM(r.supplyEnd)),
     active: series.map((r) => active.get(r.day)?.size ?? 0),
     approvals: series.map((r) => r.approvals),
+    // The same measures in USD, each day at its own rate.
+    rate: series.map((r) => r.rate),
+    volumeUsd: series.map((r) => r.grossUsd),
+    walletUsd: series.map((r) => r.netUsd),
+    mintUsd: series.map((r) => r.mintUsd),
+    burnUsd: series.map((r) => r.burnUsd),
+    supplyUsd: series.map((r) => r.supplyEndUsd),
   };
 }
 
@@ -227,7 +238,10 @@ function monthlyArrays(series, transfers) {
   const months = new Map();
   for (const r of series) {
     const key = r.day.slice(0, 7);
-    const m = months.get(key) ?? { transfers: 0, volume: 0n, wallet: 0n, mint: 0n, burn: 0n, supply: 0n, approvals: 0 };
+    const m = months.get(key) ?? {
+      transfers: 0, volume: 0n, wallet: 0n, mint: 0n, burn: 0n, supply: 0n, approvals: 0,
+      volumeUsd: [], walletUsd: [], mintUsd: [], burnUsd: [], supplyUsd: 0,
+    };
     m.transfers += r.transfers;
     m.volume += r.grossVolume;
     m.wallet += r.netVolume;
@@ -235,6 +249,11 @@ function monthlyArrays(series, transfers) {
     m.burn += r.burnVolume;
     m.supply = r.supplyEnd;
     m.approvals += r.approvals;
+    m.volumeUsd.push(r.grossUsd);
+    m.walletUsd.push(r.netUsd);
+    m.mintUsd.push(r.mintUsd);
+    m.burnUsd.push(r.burnUsd);
+    m.supplyUsd = r.supplyEndUsd;
     months.set(key, m);
   }
   const keys = [...months.keys()];
@@ -249,6 +268,12 @@ function monthlyArrays(series, transfers) {
     supply: pick("supply", toCOPM),
     active: keys.map((k) => active.get(k)?.size ?? 0),
     approvals: pick("approvals"),
+    // USD: a month is the sum of its days' amounts; the supply is the last day's.
+    volumeUsd: pick("volumeUsd", sumUsd),
+    walletUsd: pick("walletUsd", sumUsd),
+    mintUsd: pick("mintUsd", sumUsd),
+    burnUsd: pick("burnUsd", sumUsd),
+    supplyUsd: pick("supplyUsd"),
   };
 }
 
@@ -307,16 +332,20 @@ function counterparties(transfers) {
 
 // `state` is state.json, `holders` is holders.json, `transfers` are all rows
 // with their exact timestamp.
-export function buildDashboard({ chainKey, state, transfers, adminEvents, approvals, holders }) {
-  const { series, totals } = buildDailySeries(transfers, approvals.daily);
+export function buildDashboard({ chainKey, state, transfers, adminEvents, approvals, holders, rates }) {
+  const { series, totals } = buildDailySeries(transfers, approvals.daily, rates);
   if (series.length === 0) throw new Error(`no transfers for ${chainKey}: nothing to show`);
 
   const daily = dailyArrays(series, transfers);
   const endDay = windowEndDay(state.lastBlockTime);
-  const windows = (measure) => compareWindows({ day: daily.day, v: daily[measure] }, endDay, ACTIVITY_DAYS);
+  const windows = (measure) => {
+    const w = compareWindows({ day: daily.day, v: daily[measure] }, endDay, ACTIVITY_DAYS);
+    // Sums of cents carry a floating-point tail; the figures are cents.
+    return measure.endsWith("Usd") ? { ...w, current: cents(w.current), previous: cents(w.previous) } : w;
+  };
 
   const largest = (days) =>
-    largestTransfers(transfers, { n: LARGEST_SIZE, fromDay: addDays(endDay, -(days - 1)), toDay: endDay });
+    largestTransfers(transfers, { n: LARGEST_SIZE, fromDay: addDays(endDay, -(days - 1)), toDay: endDay, rates });
 
   const walletWei = totals.gross - totals.mint - totals.burn;
   return {
@@ -326,6 +355,8 @@ export function buildDashboard({ chainKey, state, transfers, adminEvents, approv
       block: state.lastBlock,
       time: state.lastBlockTime,
       totalSupply: toCOPM(BigInt(state.totalSupply)),
+      // Valued at the rate of the last day of the series, where that supply stands.
+      totalSupplyUsd: series.at(-1).supplyEndUsd,
       firstDay: series[0].day,
       lastDay: series.at(-1).day,
     },
@@ -335,9 +366,30 @@ export function buildDashboard({ chainKey, state, transfers, adminEvents, approv
       wallet: toCOPM(walletWei),
       gross: toCOPM(totals.gross),
       turnover: turnover(totals.gross, totals.mint),
+      usd: {
+        minted: sumUsd(daily.mintUsd),
+        burned: sumUsd(daily.burnUsd),
+        wallet: sumUsd(daily.walletUsd),
+        gross: sumUsd(daily.volumeUsd),
+      },
+    },
+    // The TRM behind every USD figure; `provisionalFrom` is the first day that
+    // uses the last known rate because its own is not published yet.
+    fx: {
+      latestDay: series.at(-1).day,
+      latest: series.at(-1).rate,
+      min: Math.min(...daily.rate),
+      max: Math.max(...daily.rate),
+      provisionalFrom: series.find((r) => r.provisional)?.day ?? null,
     },
     supplyPeak: supplyPeak(series),
-    activity: { endDay, days: ACTIVITY_DAYS, transfers: windows("transfers"), volume: windows("volume") },
+    activity: {
+      endDay,
+      days: ACTIVITY_DAYS,
+      transfers: windows("transfers"),
+      volume: windows("volume"),
+      volumeUsd: windows("volumeUsd"),
+    },
     daily,
     monthly: monthlyArrays(series, transfers),
     sizes: sizeCounts(transfers).map((count, k) => ({ label: SIZE_BINS[k].label, min: SIZE_BINS[k].min, count })),
@@ -350,7 +402,7 @@ export function buildDashboard({ chainKey, state, transfers, adminEvents, approv
       d30: largest(30),
       d90: largest(90),
       d365: largest(365),
-      all: largestTransfers(transfers, { n: LARGEST_SIZE }),
+      all: largestTransfers(transfers, { n: LARGEST_SIZE, rates }),
     },
     holders: holdersSection(holders),
     governance: governanceSection(holders, adminEvents),

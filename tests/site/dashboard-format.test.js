@@ -1,22 +1,26 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { amountCompact, amountFull, arrowFor, changeText, eventArgText, tileNotes, utcDateTime } from "../../site/src/lib/dashboard-format.js";
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rowAmount, tileNotes, utcDateTime } from "../../site/src/lib/dashboard-format.js";
 
-const RATE = 4000;
-
-test("compact amounts follow the unit: COPM through the shared formatter, USD at the fixed rate", () => {
-  assert.equal(amountCompact(8_000_000_000, "usd", "en", RATE), "$2M");
-  assert.equal(amountCompact(2_000_000_000_000, "copm", "en", RATE), "2T COPM");
-  assert.equal(amountCompact(8_000_000_000, "usd", "es", RATE), "US$2 M");
-  assert.equal(amountCompact(2_500_000_000_000, "copm", "es", RATE), "2,5 billones COPM");
-  assert.equal(amountCompact(0, "copm", "en", RATE), "0 COPM");
+test("compact amounts follow the unit: COPM through the shared formatter, USD as the value already in dollars", () => {
+  assert.equal(amountCompact(2_000_000, "usd", "en"), "$2M");
+  assert.equal(amountCompact(2_000_000_000_000, "copm", "en"), "2T COPM");
+  assert.equal(amountCompact(2_000_000, "usd", "es"), "US$2 M");
+  assert.equal(amountCompact(2_500_000_000_000, "copm", "es"), "2,5 billones COPM");
+  assert.equal(amountCompact(0, "copm", "en"), "0 COPM");
 });
 
 test("full amounts are whole numbers with the language's separators", () => {
-  assert.equal(amountFull(154_473_254_726.26, "copm", "es", RATE), "154.473.254.726 COPM");
-  assert.equal(amountFull(154_473_254_726.26, "copm", "en", RATE), "154,473,254,726 COPM");
-  assert.equal(amountFull(8_000_000, "usd", "en", RATE), "$2,000");
-  assert.equal(amountFull(8_000_000, "usd", "es", RATE), "US$2.000");
+  assert.equal(amountFull(154_473_254_726.26, "copm", "es"), "154.473.254.726 COPM");
+  assert.equal(amountFull(154_473_254_726.26, "copm", "en"), "154,473,254,726 COPM");
+  assert.equal(amountFull(2000.4, "usd", "en"), "$2,000");
+  assert.equal(amountFull(2000.4, "usd", "es"), "US$2.000");
+});
+
+test("the amount of a row follows the unit: its own COPM, or its USD at its own day's rate", () => {
+  const row = { amount: 8_000_000, usd: 2500 };
+  assert.equal(rowAmount(row, "copm"), 8_000_000);
+  assert.equal(rowAmount(row, "usd"), 2500);
 });
 
 test("a change is a signed percentage with one decimal; no base gives nothing to print", () => {

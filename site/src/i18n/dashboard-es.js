@@ -27,7 +27,7 @@ export const dashboardEs = {
     window: "Período mostrado: del {from} al {to} (último día completo).",
   },
   basis: {
-    rate: "Los montos en dólares usan una tasa fija: 1 US$ = {rate} COP.",
+    rate: "Los montos en dólares usan la TRM de cada día de la Superintendencia Financiera de Colombia (vía datos.gov.co); la última es 1 US$ = {rate} COP, del {date}.",
     complete:
       "Cada período termina el último día completo, porque el día del punto de control está a medias. Hasta dónde llega cada cadena: {items}.",
     item: "{chain}, hasta el {day} (punto de control: bloque {block}, {time})",
@@ -244,6 +244,7 @@ export const dashboardEs = {
       "admin-events-ordered": "Los eventos administrativos están en orden y sin duplicados.",
       "admin-events-count": "El número de eventos administrativos es el del punto de control.",
       "approvals-consistent": "El conteo de aprobaciones del punto de control es igual a la suma por día y a la suma por spender.",
+      "rates-cover-series": "El archivo de tasas cubre todos los días de la serie, con tasas positivas.",
       "daily-matches-ledger": "La serie diaria es exactamente lo que dan las transferencias.",
       "series-length": "La serie diaria cubre todos los días del resumen.",
       "series-continuous": "La serie diaria no tiene días faltantes.",

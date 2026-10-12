@@ -116,7 +116,9 @@ export function buildVars(data, locale, { pressMonth = PRESS_MONTH } = {}) {
   return {
     ...chainVars("polygon", polygon, locale),
     ...chainVars("celo", celo, locale),
-    copPerUsd: formatInt(data.copPerUsd, locale),
+    // The TRM the USD figures use: the latest rate of the data and its day.
+    rateLatest: formatDecimal(data.fx.latest, 2, locale, { trim: true }),
+    rateLatestDate: formatDate(data.fx.latestDay, locale),
     asOf: formatDate(all.asOf, locale),
     chainCount: formatInt(all.chainCount, locale),
     allEvents: formatInt(all.events, locale),

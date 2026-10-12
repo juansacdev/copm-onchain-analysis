@@ -61,3 +61,32 @@ test("every rebase is followed by a push attempt, and success stops the loop", (
   assert.deepEqual(calls, ["push", "pull", "push", "pull", "push", "pull", "push", "pull", "push"]);
   assert.equal(run(1).calls.length, 1);
 });
+
+/* The exchange rate is fetched once, before anything is valued ---------------- */
+
+test("the daily job fetches the rates once, before the per-chain loop that aggregates", () => {
+  const rates = workflow.indexOf("node pipeline/cli.js rates");
+  const loop = workflow.indexOf("for chain in polygon celo; do");
+  const aggregate = workflow.indexOf("node pipeline/cli.js aggregate");
+  assert.ok(rates > 0, "the workflow runs the rates command");
+  assert.equal(workflow.split("node pipeline/cli.js rates").length - 1, 1, "once, not per chain");
+  assert.ok(rates < loop && loop < aggregate, "rates run before the loop, which runs aggregate");
+});
+
+test("the workflow commits the rates with the rest of the data", () => {
+  assert.match(workflow, /git add data /);
+});
+
+test("package.json has a rates script and the audit flow runs it before aggregate", () => {
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(pkg.scripts.rates, "node pipeline/cli.js rates");
+  const audit = pkg.scripts.audit;
+  assert.ok(audit.indexOf("npm run rates") >= 0);
+  assert.ok(audit.indexOf("npm run rates") < audit.indexOf("npm run aggregate"));
+  assert.doesNotMatch(JSON.stringify(pkg.scripts), new RegExp(["COP", "PER", "USD"].join("_")));
+});
+
+test(".env.example no longer offers a constant rate", () => {
+  const env = readFileSync(new URL("../.env.example", import.meta.url), "utf8");
+  assert.doesNotMatch(env, new RegExp(["COP", "PER", "USD"].join("_")));
+});

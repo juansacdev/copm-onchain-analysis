@@ -14,6 +14,7 @@ import {
   formatUsd,
   formatUsdFull,
 } from "./format.js";
+import { sumUsd } from "./rates.js";
 
 const MONTHS = {
   en: [
@@ -179,21 +180,21 @@ function monthlyTotals(daily) {
   const months = new Map();
   for (const r of daily) {
     const key = r.day.slice(0, 7);
-    const acc = months.get(key) ?? { key, grossCOPM: 0, transfers: 0 };
+    const acc = months.get(key) ?? { key, grossCOPM: 0, grossUSD: 0, transfers: 0 };
     acc.grossCOPM += r.grossCOPM;
+    acc.grossUSD = sumUsd([acc.grossUSD, r.grossUSD]);
     acc.transfers += r.transfers;
     months.set(key, acc);
   }
   return [...months.values()];
 }
 
-function chainFigures(p, d, copPerUsd) {
+function chainFigures(p, d) {
   const { summary, state, holders, manifest, validation } = d;
   const totals = summary.totals;
   const peaks = summary.peaks;
   const f = {};
   const set = (key, figure) => (f[`${p}.${key}`] = figure);
-  const usdOf = (copm) => copm / copPerUsd;
 
   const minted = BigInt(state.minted);
   const burned = BigInt(state.burned);
@@ -234,11 +235,12 @@ function chainFigures(p, d, copPerUsd) {
   // supply, exact from the checkpoint
   set("supply", fig.copmFull(supply));
   set("supplyCompact", fig.copm(supply));
-  set("supplyUsd", fig.usd(usdOf(weiToCopm(supply))));
+  // USD figures are sums of daily amounts, each day at its own rate (aggregate).
+  set("supplyUsd", fig.usd(totals.currentSupplyUSD));
   set("minted", fig.copm(minted));
-  set("mintedUsd", fig.usd(usdOf(weiToCopm(minted))));
+  set("mintedUsd", fig.usd(totals.totalMintedUSD));
   set("burned", fig.copm(burned));
-  set("burnedUsd", fig.usd(usdOf(weiToCopm(burned))));
+  set("burnedUsd", fig.usd(totals.totalBurnedUSD));
   set("burnedPct", fig.pct(minted === 0n ? 0 : Number((burned * 10000n) / minted) / 100, 1));
 
   // volume, averages, peaks
@@ -260,7 +262,7 @@ function chainFigures(p, d, copPerUsd) {
   // the daily series
   const daily = d.daily;
   const months = monthlyTotals(daily);
-  const peakVolumeMonth = months.reduce((a, b) => (b.grossCOPM > a.grossCOPM ? b : a));
+  const peakVolumeMonth = months.reduce((a, b) => (b.grossUSD > a.grossUSD ? b : a));
   const peakTxMonth = months.reduce((a, b) => (b.transfers > a.transfers ? b : a));
   const active = daily.filter((r) => r.transfers > 0).length;
   const above100 = daily.find((r) => r.transfers > 100);
@@ -269,13 +271,13 @@ function chainFigures(p, d, copPerUsd) {
   set("activeDaysPct", fig.pct((active / daily.length) * 100, 0));
   set("peakMonth", fig.month(peakVolumeMonth.key));
   set("peakMonthShort", fig.monthShort(peakVolumeMonth.key));
-  set("peakMonthUsd", fig.usd(usdOf(peakVolumeMonth.grossCOPM)));
+  set("peakMonthUsd", fig.usd(peakVolumeMonth.grossUSD));
   set("peakMonthTransfers", fig.int(peakVolumeMonth.transfers));
   set("peakTxMonth", fig.month(peakTxMonth.key));
   set("peakTxMonthShort", fig.monthShort(peakTxMonth.key));
   set("peakTxMonthCount", fig.int(peakTxMonth.transfers));
   for (const m of months) {
-    set(`month.${m.key}.usd`, fig.usd(usdOf(m.grossCOPM)));
+    set(`month.${m.key}.usd`, fig.usd(m.grossUSD));
     set(`month.${m.key}.transfers`, fig.int(m.transfers));
   }
 
@@ -284,8 +286,8 @@ function chainFigures(p, d, copPerUsd) {
   const gross30 = sum(last30, (r) => r.grossCOPM);
   const avgSupply30 = sum(last30, (r) => r.supplyEnd) / last30.length;
   const monthlyTurnover = avgSupply30 === 0 ? 0 : gross30 / avgSupply30;
-  set("last30GrossUsd", fig.usd(usdOf(gross30)));
-  set("last90GrossUsd", fig.usd(usdOf(sum(last90, (r) => r.grossCOPM))));
+  set("last30GrossUsd", fig.usd(sumUsd(last30.map((r) => r.grossUSD))));
+  set("last90GrossUsd", fig.usd(sumUsd(last90.map((r) => r.grossUSD))));
   set("last30GrossCopm", fig.copm(gross30));
   set("last30AvgSupply", fig.copm(avgSupply30));
   set("turnoverMonthly", fig.dec(monthlyTurnover, 1));
@@ -294,11 +296,11 @@ function chainFigures(p, d, copPerUsd) {
   ranking(daily, "transfers").forEach((r, i) => {
     set(`topTx.${i + 1}.day`, fig.date(r.day));
     set(`topTx.${i + 1}.transfers`, fig.int(r.transfers));
-    set(`topTx.${i + 1}.usd`, fig.usd(usdOf(r.grossCOPM)));
+    set(`topTx.${i + 1}.usd`, fig.usd(r.grossUSD));
   });
-  ranking(daily, "grossCOPM").forEach((r, i) => {
+  ranking(daily, "grossUSD").forEach((r, i) => {
     set(`topVol.${i + 1}.day`, fig.date(r.day));
-    set(`topVol.${i + 1}.usd`, fig.usd(usdOf(r.grossCOPM)));
+    set(`topVol.${i + 1}.usd`, fig.usd(r.grossUSD));
     set(`topVol.${i + 1}.transfers`, fig.int(r.transfers));
   });
 
@@ -310,13 +312,22 @@ function chainFigures(p, d, copPerUsd) {
   return f;
 }
 
-// data: { copPerUsd, chains: { polygon: ChainData, celo: ChainData } } where
+// data: { chains: { polygon: ChainData, celo: ChainData } } where
 // ChainData holds the parsed summary, state, holders, manifest, validation,
 // adminEvents (array) and daily (rows of chartlib's parseDailyCsv).
 // Returns a flat object: key -> figure. Pure.
-export function buildFigures({ copPerUsd, chains }) {
-  const figures = { "fx.copPerUsd": fig.int(copPerUsd) };
-  for (const [name, d] of Object.entries(chains)) Object.assign(figures, chainFigures(name, d, copPerUsd));
+export function buildFigures({ chains }) {
+  const figures = {};
+  for (const [name, d] of Object.entries(chains)) Object.assign(figures, chainFigures(name, d));
+
+  // The TRM behind every USD figure: the rate on the latest day any series
+  // reaches, and the lowest and highest over the token's life.
+  const fxs = Object.values(chains).map((d) => d.summary.fx);
+  const latest = fxs.reduce((a, b) => (b.latestDay > a.latestDay ? b : a));
+  figures["fx.latestRate"] = fig.dec(latest.latestCopPerUsd, 2);
+  figures["fx.latestDate"] = fig.date(latest.latestDay);
+  figures["fx.minRate"] = fig.dec(Math.min(...fxs.map((x) => x.minCopPerUsd)), 2);
+  figures["fx.maxRate"] = fig.dec(Math.max(...fxs.map((x) => x.maxCopPerUsd)), 2);
 
   const all = Object.values(chains);
   const total = (pick) => sum(all, pick);
@@ -328,7 +339,7 @@ export function buildFigures({ copPerUsd, chains }) {
   c("grossVolumeUsd", fig.usd(total((d) => d.summary.totals.grossVolumeUSD)));
   c("netVolumeUsd", fig.usd(total((d) => d.summary.totals.netVolumeUSD)));
   c("supply", fig.copm(supply));
-  c("supplyUsd", fig.usd(weiToCopm(supply) / copPerUsd));
+  c("supplyUsd", fig.usd(sumUsd(all.map((d) => d.summary.totals.currentSupplyUSD))));
   c("checksPassed", fig.int(total((d) => d.validation.passed)));
   c("checksTotal", fig.int(total((d) => d.validation.checks.length)));
   return figures;

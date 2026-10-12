@@ -35,6 +35,7 @@ test("accepts every documented command", () => {
     "discover",
     "scan",
     "holders",
+    "rates",
     "aggregate",
     "dashboard",
     "charts",

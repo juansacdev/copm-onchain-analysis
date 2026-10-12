@@ -174,7 +174,7 @@ export const en = {
         },
         {
           title: "Documented limitations.",
-          body: "Fixed rate of {copPerUsd} COP/USD (±5%). Celo's history was assembled by merging several scans, because the public endpoint would not let a single one finish; it was certified with the same checks. The details are in the README.",
+          body: "USD amounts use the TRM of each day, the official exchange rate of the Superintendencia Financiera de Colombia published at datos.gov.co; the latest is {rateLatest} COP per USD, from {rateLatestDate}. Celo's history was assembled by merging several scans, because the public endpoint would not let a single one finish; it was certified with the same checks. The details are in the README.",
         },
       ],
       reproComment: "# reproduce everything with your own eyes",
@@ -219,6 +219,6 @@ export const en = {
       press: "La República article",
       github: "GitHub — @juansacdev",
     },
-    credit: "Built by Juan Sebastián Agudelo (Juanse) · Data as of {asOf}, updated daily · Rate: 1 USD = {copPerUsd} COP (±5%)",
+    credit: "Built by Juan Sebastián Agudelo (Juanse) · Data as of {asOf}, updated daily · USD at the TRM of each day (Superintendencia Financiera de Colombia, datos.gov.co): latest {rateLatest} COP on {rateLatestDate}",
   },
 };

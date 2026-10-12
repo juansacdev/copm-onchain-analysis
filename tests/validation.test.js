@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { strictChecks } from "../pipeline/domain/validation.js";
-import { A, fixture } from "./helpers/validation-fixture.js";
+import { checkRatesCoverSeries, loadRatesText, strictChecks } from "../pipeline/domain/validation.js";
+import { A, fixture, fixtureRatesText } from "./helpers/validation-fixture.js";
 
 const results = (fx) => Object.fromEntries(strictChecks(fx).map((c) => [c.id, c]));
 const failing = (fx) => strictChecks(fx).filter((c) => !c.ok).map((c) => c.id);
@@ -23,6 +23,7 @@ test("a consistent dataset passes every rule, in report order", () => {
     "admin-events-ordered",
     "admin-events-count",
     "approvals-consistent",
+    "rates-cover-series",
     "daily-matches-ledger",
     "series-length",
     "series-continuous",
@@ -340,4 +341,76 @@ test("approvals-consistent: fails when approvals.json is ahead of the checkpoint
   const fx = fixture();
   fx.approvals.block = fx.state.lastBlock + 1;
   assert.ok(failing(fx).includes("approvals-consistent"));
+});
+
+/* rates-cover-series ------------------------------------------------------ */
+
+const withRates = (lines) => ({ ...fixture(), ratesText: `day,cop_per_usd\n${lines.join("\n")}\n` });
+const range = (from, to, rate = 4000) => {
+  const days = [];
+  for (let d = Date.parse(`${from}T00:00:00Z`); d <= Date.parse(`${to}T00:00:00Z`); d += 864e5) {
+    days.push(`${new Date(d).toISOString().slice(0, 10)},${rate}`);
+  }
+  return days;
+};
+
+test("rates-cover-series: passes when every day of daily.csv has a rate", () => {
+  assert.equal(results(fixture())["rates-cover-series"].ok, true);
+  assert.match(results(fixture())["rates-cover-series"].detail, /provisional=0/);
+});
+
+test("rates-cover-series: fails when the rates file is missing", () => {
+  const fx = { ...fixture(), ratesText: null };
+  assert.ok(failing(fx).includes("rates-cover-series"));
+  assert.match(results(fx)["rates-cover-series"].detail, /run "rates"/);
+  assert.ok(failing(fx).includes("daily-matches-ledger"), "the daily series cannot be rebuilt without rates");
+  assert.ok(failing(fx).includes("dashboard-matches-ledger"));
+});
+
+test("rates-cover-series: fails when the rates start after the first day of the series", () => {
+  const fx = withRates(range("2024-02-01", "2024-02-10"));
+  assert.ok(failing(fx).includes("rates-cover-series"));
+  assert.match(results(fx)["rates-cover-series"].detail, /2024-01-31/);
+});
+
+test("rates-cover-series: fails on a rate that is zero or negative", () => {
+  for (const bad of ["0", "-3000"]) {
+    const lines = range("2024-01-01", "2024-02-10");
+    lines[5] = `2024-01-06,${bad}`;
+    assert.ok(failing(withRates(lines)).includes("rates-cover-series"), `rate ${bad}`);
+  }
+});
+
+test("rates-cover-series: fails on a file that is out of order or has a gap", () => {
+  const lines = range("2024-01-01", "2024-02-10");
+  const swapped = [...lines];
+  [swapped[3], swapped[4]] = [swapped[4], swapped[3]];
+  assert.ok(failing(withRates(swapped)).includes("rates-cover-series"));
+  assert.ok(failing(withRates(lines.filter((_, k) => k !== 10))).includes("rates-cover-series"));
+});
+
+test("rates-cover-series: the trailing days after the last rate are provisional, up to a week", () => {
+  // The series is 2024-01-31 and 2024-02-01: both lie after the last rate.
+  const two = withRates(range("2024-01-01", "2024-01-30"));
+  assert.equal(results(two)["rates-cover-series"].ok, true);
+  assert.match(results(two)["rates-cover-series"].detail, /provisional=2/);
+
+  const days = (from, to) => range(from, to).map((line) => line.slice(0, 10));
+  const rates = loadRatesText(`day,cop_per_usd\n${range("2024-01-01", "2024-01-10").join("\n")}\n`);
+  const seven = checkRatesCoverSeries(rates, days("2024-01-05", "2024-01-17"));
+  assert.equal(seven.ok, true);
+  assert.match(seven.detail, /provisional=7/);
+  const eight = checkRatesCoverSeries(rates, days("2024-01-05", "2024-01-18"));
+  assert.equal(eight.ok, false);
+  assert.match(eight.detail, /provisional=8/);
+});
+
+test("daily-matches-ledger and dashboard-matches-ledger use the rates file: a changed rate makes both fail", () => {
+  const fx = fixture();
+  fx.ratesText = fixtureRatesText().replace("2024-01-31,4200", "2024-01-31,4201");
+  assert.notEqual(fx.ratesText, fixtureRatesText());
+  const bad = failing(fx);
+  assert.ok(bad.includes("daily-matches-ledger"));
+  assert.ok(bad.includes("dashboard-matches-ledger"));
+  assert.ok(!bad.includes("rates-cover-series"));
 });

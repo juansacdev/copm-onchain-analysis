@@ -8,14 +8,22 @@ const NAMES = { polygon: "Polygon", celo: "Celo", all: "Polygon + Celo" };
 
 function chainData(overrides = {}) {
   return {
-    flows: { minted: 100e6, burned: 90e6, wallet: 500e6, gross: 690e6, turnover: 6.9 },
-    supplyPeak: { day: "2025-05-01", copm: 40e6 },
-    checkpoint: { block: 1234, time: 1791760950, totalSupply: 10e6 },
+    flows: {
+      minted: 100e6,
+      burned: 90e6,
+      wallet: 500e6,
+      gross: 690e6,
+      turnover: 6.9,
+      usd: { minted: 30e3, burned: 27e3, wallet: 150e3, gross: 207e3 },
+    },
+    supplyPeak: { day: "2025-05-01", copm: 40e6, usd: 12e3 },
+    checkpoint: { block: 1234, time: 1791760950, totalSupply: 10e6, totalSupplyUsd: 3e3 },
     activity: {
       endDay: "2025-06-10",
       days: 30,
       transfers: { current: 120, previous: 100, changePct: 20 },
       volume: { current: 5e6, previous: 4e6, changePct: 25 },
+      volumeUsd: { current: 1500, previous: 1200, changePct: 25 },
     },
     issuance: {
       mint: { addresses: 1, topSharePct: 100, top: [{ address: A }] },
@@ -49,7 +57,6 @@ function run(chains, validations = { polygon: validation(), celo: validation() }
   return buildInsights({
     chains,
     validations,
-    copPerUsd: 4000,
     lang: "en",
     names: NAMES,
     render: (key, vars) => `${key} ${JSON.stringify(vars)}`,
@@ -79,7 +86,7 @@ test("turnover states how many times each minted peso is counted, from the data"
 });
 
 test("turnover disappears when nothing was minted", () => {
-  const empty = chainData({ flows: { minted: 0, burned: 0, wallet: 5, gross: 5, turnover: null } });
+  const empty = chainData({ flows: { minted: 0, burned: 0, wallet: 5, gross: 5, turnover: null, usd: { minted: 0, burned: 0, wallet: 1, gross: 1 } } });
   const list = run({ polygon: empty, celo: empty });
   assert.equal(find(list, "turnover-all"), undefined);
   assert.equal(find(list, "turnover-polygon"), undefined);
@@ -89,7 +96,7 @@ test("supply: below the peak it gives the share of the peak, at the peak it says
   const below = find(run(both()), "supply-polygon");
   assert.equal(below.key, "supplyBelowPeak");
   assert.equal(below.vars.pct, "25%");
-  const atPeak = find(run({ polygon: chainData({ supplyPeak: { day: "2025-05-01", copm: 10e6 } }), celo: chainData() }), "supply-polygon");
+  const atPeak = find(run({ polygon: chainData({ supplyPeak: { day: "2025-05-01", copm: 10e6, usd: 3e3 } }), celo: chainData() }), "supply-polygon");
   assert.equal(atPeak.key, "supplyAtPeak");
 });
 
@@ -115,11 +122,11 @@ test("trend: signed change against the previous window; new activity and no acti
   assert.equal(trend.vars.date, "June 10, 2025");
 
   const fresh = chainData();
-  fresh.activity = { ...fresh.activity, transfers: { current: 5, previous: 0, changePct: null }, volume: { current: 9, previous: 0, changePct: null } };
+  fresh.activity = { ...fresh.activity, transfers: { current: 5, previous: 0, changePct: null }, volume: { current: 9, previous: 0, changePct: null }, volumeUsd: { current: 1, previous: 0, changePct: null } };
   assert.equal(find(run({ polygon: fresh, celo: chainData() }), "trend-polygon").key, "trendNew");
 
   const quiet = chainData();
-  quiet.activity = { ...quiet.activity, transfers: { current: 0, previous: 0, changePct: null }, volume: { current: 0, previous: 0, changePct: null } };
+  quiet.activity = { ...quiet.activity, transfers: { current: 0, previous: 0, changePct: null }, volume: { current: 0, previous: 0, changePct: null }, volumeUsd: { current: 0, previous: 0, changePct: null } };
   assert.equal(find(run({ polygon: quiet, celo: chainData() }), "trend-polygon"), undefined);
 
   const drop = chainData();
@@ -211,4 +218,21 @@ test("supply sentences name the checkpoint date, and holder sentences give the n
   const list = run(both());
   assert.equal(find(list, "supply-polygon").vars.asOf, "October 11, 2026");
   assert.equal(find(list, "concentration-polygon").vars.contracts, "7");
+});
+
+test("every dollar amount comes from the USD figures of the data, valued day by day, never from COPM over a rate", () => {
+  const list = run(both());
+  const turnover = find(list, "turnover-polygon").vars;
+  assert.equal(turnover.gross, "US$207 thousand");
+  assert.equal(turnover.minted, "US$30 thousand");
+  assert.equal(turnover.wallet, "US$150 thousand");
+  const supply = find(list, "supply-polygon").vars;
+  assert.equal(supply.current, "US$3 thousand");
+  assert.equal(supply.peak, "US$12 thousand");
+  assert.equal(find(list, "trend-polygon").vars.volume, "US$1.5 thousand");
+  assert.equal(find(list, "turnover-all").vars.gross, "US$414 thousand");
+});
+
+test("the share of the supply peak is a ratio of COPM, whatever the rates did", () => {
+  assert.equal(find(run(both()), "supply-polygon").vars.pct, "25%");
 });

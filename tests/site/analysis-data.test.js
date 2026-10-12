@@ -1,10 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { loadAnalysisData } from "../../site/src/lib/analysis-data.js";
-import { COP_PER_USD, writeSiteFixture } from "../helpers/site-fixture.js";
+import { writeSiteFixture } from "../helpers/site-fixture.js";
 
-const load = (overrides) =>
-  loadAnalysisData({ dataDir: writeSiteFixture(overrides), copPerUsd: COP_PER_USD });
+const load = (overrides) => loadAnalysisData({ dataDir: writeSiteFixture(overrides) });
 
 test("loader passes through checkpoint, counts, holders and contract facts per chain", () => {
   const { chains } = load();
@@ -26,8 +25,7 @@ test("loader passes through checkpoint, counts, holders and contract facts per c
 });
 
 test("loader combines both chains", () => {
-  const { combined, chains, copPerUsd } = load();
-  assert.equal(copPerUsd, 4000);
+  const { combined, chains } = load();
   assert.equal(combined.chainCount, 2);
   assert.equal(combined.transfers, 1300);
   assert.equal(combined.approvals, 500);
@@ -51,19 +49,30 @@ test("loader counts validation rules and reads the exact-supply result", () => {
 test("loader fails loudly when a data file is missing", () => {
   const dir = writeSiteFixture();
   assert.throws(
-    () => loadAnalysisData({ dataDir: `${dir}/nowhere`, copPerUsd: COP_PER_USD }),
+    () => loadAnalysisData({ dataDir: `${dir}/nowhere` }),
     /polygon[\s\S]*summary\.json|ENOENT/,
   );
 });
 
-test("loader derives volume in USD from the daily series at the given rate", () => {
+test("loader sums the USD of each day of the daily series", () => {
   const { chains, combined } = load();
   assert.equal(chains.polygon.grossUsd, 8120);
   assert.equal(chains.celo.grossUsd, 48);
   assert.equal(chains.polygon.avgTicketUsd, 8.12);
   assert.equal(combined.grossUsd, 8168);
-  const halved = loadAnalysisData({ dataDir: writeSiteFixture(), copPerUsd: 2 * COP_PER_USD });
-  assert.equal(halved.chains.polygon.grossUsd, 4060);
+});
+
+test("a rate that moves does not change the USD: every day is valued at its own rate, not at one", () => {
+  // March at 2,000 COP per USD instead of 4,000: the COPM of March halves, the USD stays.
+  const moved = load({ polygon: { plan: { rateByMonth: { "2025-03": 2000 } } } }).chains.polygon;
+  assert.equal(moved.grossUsd, 8120);
+  assert.deepEqual(moved.peakMonth, { key: "2025-03", usd: 3500, transfers: 800 });
+  assert.deepEqual(moved.recordVolume, { day: "2025-03-15", usd: 500, transfers: 200 });
+});
+
+test("loader reports the latest rate, its day and the range over both series", () => {
+  const fx = load({ polygon: { plan: { rateByMonth: { "2025-03": 2000, "2025-06": 4400 } } } }).fx;
+  assert.deepEqual(fx, { latest: 4400, latestDay: "2025-06-15", min: 2000, max: 4400 });
 });
 
 test("loader finds the peak month, the record days and the rankings", () => {

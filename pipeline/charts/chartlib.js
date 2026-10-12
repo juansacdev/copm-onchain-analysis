@@ -9,6 +9,8 @@
 //           surface, the chain colors (Polygon, Celo) and mint / burn colors
 //           of the site tokens. Series never color text, so the badge text
 //           uses `badgeText`.
+import { sumUsd } from "../domain/rates.js";
+
 export const PALETTES = {
   dark: {
     base: {
@@ -521,6 +523,9 @@ export function stackedBarChart({
 export function parseDailyCsv(csvText) {
   const lines = csvText.trim().split("\n");
   const header = lines[0].split(",");
+  for (const name of ["cop_per_usd", "gross_volume_usd"]) {
+    if (!header.includes(name)) throw new Error(`daily.csv has no "${name}" column: run "rates" and then "aggregate"`);
+  }
   return lines.slice(1).map((l) => {
     const c = l.split(",");
     const o = {};
@@ -534,6 +539,13 @@ export function parseDailyCsv(csvText) {
       netCOPM: Number(o.net_volume_copm),
       mintCOPM: Number(o.mint_copm),
       burnCOPM: Number(o.burn_copm),
+      // The rate of the day and the USD amounts at that rate.
+      rate: Number(o.cop_per_usd),
+      supplyUSD: Number(o.supply_end_usd),
+      grossUSD: Number(o.gross_volume_usd),
+      netUSD: Number(o.net_volume_usd),
+      mintUSD: Number(o.mint_usd),
+      burnUSD: Number(o.burn_usd),
     };
   });
 }
@@ -543,9 +555,10 @@ export function toMonthly(rows) {
   for (const r of rows) {
     const m = r.day.slice(0, 7);
     if (!monthly.has(m))
-      monthly.set(m, { month: m, gross: 0, net: 0, transfers: 0, mint: 0, burn: 0 });
+      monthly.set(m, { month: m, gross: 0, grossUSD: 0, net: 0, transfers: 0, mint: 0, burn: 0 });
     const acc = monthly.get(m);
     acc.gross += r.grossCOPM;
+    acc.grossUSD = sumUsd([acc.grossUSD, r.grossUSD]);
     acc.net += r.netCOPM;
     acc.transfers += r.transfers;
     acc.mint += r.mintCOPM;

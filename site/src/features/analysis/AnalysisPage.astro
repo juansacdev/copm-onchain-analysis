@@ -36,7 +36,7 @@ const { lang, page = 'analysis' } = Astro.props;
 
 // `astro build` runs from site/; the data lives one level up.
 const dataDir = fileURLToPath(new URL('../data', pathToFileURL(`${process.cwd()}/`)));
-const data = loadAnalysisData({ dataDir, copPerUsd: Number(process.env.COP_PER_USD ?? 4000) });
+const data = loadAnalysisData({ dataDir });
 const vars = buildVars(data, lang);
 const t = renderDictionary(dictionaries[lang], vars);
 const { chapters: ch } = t;

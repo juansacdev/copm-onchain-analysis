@@ -16,6 +16,11 @@ import {
   windowSum,
 } from "../pipeline/domain/dashboard.js";
 import { ZERO_ADDRESS } from "../pipeline/domain/units.js";
+import { flatRates, rateTable } from "./helpers/rates.js";
+
+// Four days at four different rates: the USD figure of a day depends on that
+// day's rate alone.
+const RATES = rateTable("2024-01-01", [100, 50, 25, 20]);
 
 const COPM = (n) => BigInt(n) * 10n ** 18n;
 const A = `0x${"a1".repeat(20)}`;
@@ -170,12 +175,12 @@ test("flow parties: nothing minted gives an empty, well-formed answer", () => {
 
 test("supply peak: the highest end-of-day supply and the first day it was reached", () => {
   const series = [
-    { day: "2024-01-01", supplyEnd: COPM(10) },
-    { day: "2024-01-02", supplyEnd: COPM(50) },
-    { day: "2024-01-03", supplyEnd: COPM(50) },
-    { day: "2024-01-04", supplyEnd: COPM(20) },
+    { day: "2024-01-01", supplyEnd: COPM(10), supplyEndUsd: 1 },
+    { day: "2024-01-02", supplyEnd: COPM(50), supplyEndUsd: 5 },
+    { day: "2024-01-03", supplyEnd: COPM(50), supplyEndUsd: 9 },
+    { day: "2024-01-04", supplyEnd: COPM(20), supplyEndUsd: 2 },
   ];
-  assert.deepEqual(supplyPeak(series), { day: "2024-01-02", copm: 50 });
+  assert.deepEqual(supplyPeak(series), { day: "2024-01-02", copm: 50, usd: 5 });
   assert.equal(supplyPeak([]), null);
 });
 
@@ -190,7 +195,7 @@ test("largest transfers: biggest first, equal amounts ordered by block then log 
     row(t, ZERO_ADDRESS, A, COPM(7)),
     row(t, B, ZERO_ADDRESS, COPM(6)),
   ];
-  const out = largestTransfers(rows, { n: 4 });
+  const out = largestTransfers(rows, { n: 4, rates: flatRates(1) });
   assert.deepEqual(out.map((r) => r.amount), [50, 7, 6, 5]);
   assert.deepEqual(out.map((r) => r.kind), ["transfer", "mint", "burn", "transfer"]);
   assert.equal(out[0].day, "2024-03-10");
@@ -207,7 +212,7 @@ test("largest transfers: the 90-day cut includes day 89 and drops day 90 and the
     row(dayTs("2026-10-11"), A, B, COPM(2000)), // partial day: outside
     row(dayTs("2026-10-10"), A, B, COPM(2)), // end day: inside
   ];
-  const out = largestTransfers(rows, { n: 10, fromDay: "2026-07-13", toDay: end });
+  const out = largestTransfers(rows, { n: 10, fromDay: "2026-07-13", toDay: end, rates: flatRates(1) });
   assert.deepEqual(out.map((r) => r.amount), [2, 1]);
 });
 
@@ -243,14 +248,28 @@ function input() {
     row(at(2024, 1, 2, 18), B, ZERO_ADDRESS, COPM(10)),
     row(at(2024, 1, 4), A, B, COPM(5)),
   ];
-  return { chainKey: "celo", state, transfers, adminEvents, approvals, holders };
+  return { chainKey: "celo", state, transfers, adminEvents, approvals, holders, rates: RATES };
 }
 
 test("dashboard: checkpoint, flows and aligned daily arrays come from the transfers", () => {
   const d = buildDashboard(input());
   assert.equal(d.chain, "celo");
-  assert.deepEqual(d.checkpoint, { block: 500, time: state.lastBlockTime, totalSupply: 90, firstDay: "2024-01-01", lastDay: "2024-01-04" });
-  assert.deepEqual(d.flows, { minted: 100, burned: 10, wallet: 35, gross: 145, turnover: 1.45 });
+  assert.deepEqual(d.checkpoint, {
+    block: 500,
+    time: state.lastBlockTime,
+    totalSupply: 90,
+    totalSupplyUsd: 4.5,
+    firstDay: "2024-01-01",
+    lastDay: "2024-01-04",
+  });
+  assert.deepEqual(d.flows, {
+    minted: 100,
+    burned: 10,
+    wallet: 35,
+    gross: 145,
+    turnover: 1.45,
+    usd: { minted: 1, burned: 0.2, wallet: 0.85, gross: 2.05 },
+  });
   assert.deepEqual(d.daily.day, ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"]);
   assert.deepEqual(d.daily.transfers, [1, 2, 0, 1]);
   assert.deepEqual(d.daily.mint, [100, 0, 0, 0]);
@@ -308,7 +327,7 @@ test("dashboard: issuance, peak and counterparties are present and consistent", 
   const d = buildDashboard(input());
   assert.equal(d.issuance.mint.addresses, 1);
   assert.equal(d.issuance.burn.addresses, 1);
-  assert.deepEqual(d.supplyPeak, { day: "2024-01-01", copm: 100 });
+  assert.deepEqual(d.supplyPeak, { day: "2024-01-01", copm: 100, usd: 1 });
   assert.deepEqual(d.counterparties.senders.map((s) => [s.address, s.volume]), [[A, 35]]);
   assert.deepEqual(d.counterparties.receivers.map((s) => [s.address, s.volume]), [[B, 35]]);
   assert.equal(d.sizes.reduce((s, b) => s + b.count, 0), 2);
@@ -323,4 +342,53 @@ test("dashboard: deterministic. The same inputs give byte-identical output, what
   reversed.transfers.reverse();
   assert.equal(JSON.stringify(buildDashboard(reversed)), one);
   assert.doesNotMatch(one, /updatedAt|generatedAt/);
+});
+
+/* Rates -------------------------------------------------------------------- */
+
+test("dashboard: the USD arrays are valued at the rate of each day, aligned with the COPM ones", () => {
+  const d = buildDashboard(input());
+  assert.deepEqual(d.daily.rate, [100, 50, 25, 20]);
+  assert.deepEqual(d.daily.volumeUsd, [1, 0.8, 0, 0.25]);
+  assert.deepEqual(d.daily.walletUsd, [0, 0.6, 0, 0.25]);
+  assert.deepEqual(d.daily.mintUsd, [1, 0, 0, 0]);
+  assert.deepEqual(d.daily.burnUsd, [0, 0.2, 0, 0]);
+  assert.deepEqual(d.daily.supplyUsd, [1, 1.8, 3.6, 4.5], "supply uses the rate of the day it refers to");
+  for (const values of Object.values(d.daily)) assert.equal(values.length, 4);
+});
+
+test("dashboard: USD flows and windows are sums of daily amounts, not COPM over one rate", () => {
+  const d = buildDashboard(input());
+  assert.equal(d.flows.usd.gross, 2.05);
+  assert.notEqual(d.flows.usd.gross, 145 / 20);
+  assert.equal(d.activity.volumeUsd.current, 2.05);
+  assert.deepEqual(d.monthly.volumeUsd, [2.05]);
+  assert.deepEqual(d.monthly.supplyUsd, [4.5]);
+  assert.deepEqual(d.monthly.mintUsd, [1]);
+});
+
+test("dashboard: each of the largest transfers carries its USD amount at its own day's rate", () => {
+  const d = buildDashboard(input());
+  assert.deepEqual(
+    d.largest.all.map((r) => [r.day, r.amount, r.usd]),
+    [
+      ["2024-01-01", 100, 1],
+      ["2024-01-02", 30, 0.6],
+      ["2024-01-02", 10, 0.2],
+      ["2024-01-04", 5, 0.25],
+    ],
+  );
+});
+
+test("dashboard: states the rate it ends on and where the rates turn provisional", () => {
+  const d = buildDashboard(input());
+  assert.deepEqual(d.fx, { latestDay: "2024-01-04", latest: 20, min: 20, max: 100, provisionalFrom: null });
+  const short = buildDashboard({ ...input(), rates: rateTable("2024-01-01", [100, 50]) });
+  assert.equal(short.fx.provisionalFrom, "2024-01-03");
+  assert.deepEqual(short.daily.rate, [100, 50, 50, 50]);
+});
+
+test("dashboard: building it without rates fails", () => {
+  const { rates: _rates, ...withoutRates } = input();
+  assert.throws(() => buildDashboard(withoutRates), /rates/);
 });

@@ -4,17 +4,21 @@
 import { formatCopmCompact, formatCopmExact, formatDate, formatDecimal, formatInt, formatUsd, formatUsdFull } from "./format.js";
 import { interpolate } from "./template.js";
 
-// Compact: tiles and axes. COPM keeps its name; USD is at the fixed rate.
-export function amountCompact(copm, unit, lang, rate) {
-  return unit === "usd" ? formatUsd(copm / rate, lang, "short", { trim: true }) : `${formatCopmCompact(copm, lang)} COPM`;
+// Amounts arrive already in the chosen unit: the pipeline values every day at
+// that day's rate, and the page never converts. Compact: tiles and axes. COPM
+// keeps its name.
+export function amountCompact(value, unit, lang) {
+  return unit === "usd" ? formatUsd(value, lang, "short", { trim: true }) : `${formatCopmCompact(value, lang)} COPM`;
 }
 
 // Whole units in full: tables.
-export function amountFull(copm, unit, lang, rate) {
-  return unit === "usd"
-    ? formatUsdFull(Math.round(copm / rate), lang)
-    : `${formatInt(Math.round(copm), lang)} COPM`;
+export function amountFull(value, unit, lang) {
+  return unit === "usd" ? formatUsdFull(Math.round(value), lang) : `${formatInt(Math.round(value), lang)} COPM`;
 }
+
+// A row of the largest-transfers list in the chosen unit: its own COPM amount,
+// or its USD at the rate of the day it happened.
+export const rowAmount = (row, unit) => (unit === "usd" ? row.usd : row.amount);
 
 const PRECISION = 0.05;
 

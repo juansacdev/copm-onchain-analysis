@@ -6,11 +6,19 @@
 // `chains` is { polygon, celo }, each a (trimmed) dashboard.json. Plain JS, no
 // DOM and no Astro imports.
 import { addDays, compareWindows, windowSum } from "../../../pipeline/domain/dashboard.js";
+import { cents } from "../../../pipeline/domain/rates.js";
 
 export const PERIOD_DAYS = { "30d": 30, "90d": 90, "1y": 365, all: null };
 const CHAIN_ORDER = ["polygon", "celo"];
 const DAY_MS = 86_400_000;
-const MEASURES = ["transfers", "volume", "mint", "burn", "supply"];
+const MEASURES = ["transfers", "volume", "mint", "burn", "supply", "volumeUsd", "mintUsd", "burnUsd", "supplyUsd"];
+
+// The daily array of a measure in the chosen unit: "volume" or "volumeUsd".
+// Counts (transfers) have no USD form and are asked for without a unit.
+export const measureKey = (name, unit) => (unit === "usd" ? `${name}Usd` : name);
+
+const isUsd = (name) => name.endsWith("Usd");
+const isSupply = (name) => name.startsWith("supply");
 
 export const granularityFor = (period) => (period === "30d" || period === "90d" ? "week" : "month");
 
@@ -71,7 +79,9 @@ const BOUNDS = {
 export function bucketize(slice, granularity) {
   const bounds = BOUNDS[granularity];
   const out = { bucket: [], partial: [] };
-  for (const m of MEASURES) out[m] = [];
+  // A dashboard.json written before the daily rate has no USD arrays.
+  const measures = MEASURES.filter((m) => m in slice);
+  for (const m of measures) out[m] = [];
   let current = null;
   slice.day.forEach((day, k) => {
     const { key, start, end } = bounds(day);
@@ -79,13 +89,14 @@ export function bucketize(slice, granularity) {
       current = key;
       out.bucket.push(granularity === "week" ? day : key);
       out.partial.push(day !== start);
-      for (const m of MEASURES) out[m].push(0);
+      for (const m of measures) out[m].push(0);
     }
     const last = out.bucket.length - 1;
     if (k === slice.day.length - 1 && day !== end) out.partial[last] = true;
-    for (const m of MEASURES) {
-      if (m === "supply") out.supply[last] = slice.supply[k];
-      else out[m][last] += slice[m][k];
+    for (const m of measures) {
+      if (isSupply(m)) out[m][last] = slice[m][k];
+      // Dollars are cents: the sum of days carries no floating-point tail.
+      else out[m][last] = isUsd(m) ? cents(out[m][last] + slice[m][k]) : out[m][last] + slice[m][k];
     }
   });
   return out;
@@ -100,22 +111,30 @@ export function tilesFor(chains, state) {
   const selected = selectedChains(chains, state);
   const { fromDay, toDay, days } = viewWindow(chains, state);
 
-  const sum = (measure) => {
-    const current = selected.reduce((t, c) => t + windowSum({ day: c.daily.day, v: c.daily[measure] }, toDay, days ?? 36_500), 0);
+  // `money` measures follow the unit; counts do not.
+  const sum = (name, { money = false } = {}) => {
+    const measure = money ? measureKey(name, state.unit) : name;
+    const round = isUsd(measure) ? cents : (n) => n;
+    const current = round(selected.reduce((t, c) => t + windowSum({ day: c.daily.day, v: c.daily[measure] }, toDay, days ?? 36_500), 0));
     const comparable = days !== null && selected.every((c) => addDays(fromDay, -days) >= c.checkpoint.firstDay);
     if (!comparable) return { current, previous: null, changePct: null };
-    const previous = selected.reduce((t, c) => t + compareWindows({ day: c.daily.day, v: c.daily[measure] }, toDay, days).previous, 0);
+    const previous = round(selected.reduce((t, c) => t + compareWindows({ day: c.daily.day, v: c.daily[measure] }, toDay, days).previous, 0));
     return { current, previous, changePct: change(current, previous) };
   };
 
-  const supplyNow = selected.reduce((t, c) => t + c.checkpoint.totalSupply, 0);
+  // The supply of each chain at its checkpoint, valued at the rate of that day;
+  // the day before the window is read from the daily array in the same unit.
+  const supplyField = state.unit === "usd" ? "totalSupplyUsd" : "totalSupply";
+  const supplyNow = selected.reduce((t, c) => t + c.checkpoint[supplyField], 0);
   const comparable = days !== null && selected.every((c) => addDays(fromDay, -1) >= c.checkpoint.firstDay);
-  const supplyBefore = comparable ? selected.reduce((t, c) => t + valueAt(c.daily, "supply", addDays(fromDay, -1)), 0) : null;
+  const supplyBefore = comparable
+    ? selected.reduce((t, c) => t + valueAt(c.daily, measureKey("supply", state.unit), addDays(fromDay, -1)), 0)
+    : null;
 
   return {
     window: { fromDay, toDay, days },
     supply: { value: supplyNow, previous: supplyBefore, changePct: change(supplyNow, supplyBefore) },
-    volume: sum("volume"),
+    volume: sum("volume", { money: true }),
     transfers: sum("transfers"),
     holders: selected.reduce((t, c) => t + c.holders.count, 0),
     contracts: selected.reduce((t, c) => t + (c.holders.contracts ?? 0), 0),

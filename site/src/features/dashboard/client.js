@@ -5,7 +5,7 @@
 // filters, using the same pure functions the server used.
 import { RENDERERS, flowTotals, readTokens } from "./charts.js";
 import { DEFAULT_STATE, decodeState, encodeState } from "../../lib/dashboard-filters.js";
-import { amountCompact, amountFull, arrowFor, changeText, tileNotes, utcDateTime } from "../../lib/dashboard-format.js";
+import { amountCompact, amountFull, arrowFor, changeText, rowAmount, tileNotes, utcDateTime } from "../../lib/dashboard-format.js";
 import { granularityFor, largestRows, periodTurnover, selectedChains, tilesFor, viewWindow } from "../../lib/dashboard-view.js";
 import { formatDate, formatDecimal, formatInt } from "../../lib/format.js";
 import { middleEllipsis } from "../../lib/links.js";
@@ -66,7 +66,6 @@ export function mountDashboard(doc) {
   const payload = JSON.parse(payloadNode.textContent);
   const { t } = payload;
   const lang = t.lang;
-  const rate = payload.copPerUsd;
   const tok = readTokens();
 
   let state = decodeState(location.hash) ?? { ...DEFAULT_STATE };
@@ -109,8 +108,8 @@ export function mountDashboard(doc) {
       note.textContent = notes[id];
       note.hidden = notes[id] === "";
     };
-    set("supply", amountCompact(tiles.supply.value, state.unit, lang, rate), delta(tiles.supply.changePct, "vsStart"));
-    set("volume", amountCompact(tiles.volume.current, state.unit, lang, rate), delta(tiles.volume.changePct, "vsPeriod"));
+    set("supply", amountCompact(tiles.supply.value, state.unit, lang), delta(tiles.supply.changePct, "vsStart"));
+    set("volume", amountCompact(tiles.volume.current, state.unit, lang), delta(tiles.volume.changePct, "vsPeriod"));
     set("transfers", formatInt(tiles.transfers.current, lang), delta(tiles.transfers.changePct, "vsPeriod"));
     set("holders", formatInt(tiles.holders, lang), "");
     const serial = tiles.blocks.map((b) => `${b.chain === "polygon" ? "POL" : "CELO"} ${formatSerialBlock(b.block)}`).join(" · ");
@@ -158,7 +157,7 @@ export function mountDashboard(doc) {
         day,
         el("td", "", payload.chains[r.chain].label),
         el("td", "", t.columns.kindValue[r.kind]),
-        el("td", "num", amountFull(r.amount, state.unit, lang, rate)),
+        el("td", "num", amountFull(rowAmount(r, state.unit), state.unit, lang)),
         addr(r.from),
         addr(r.to),
         tx,
@@ -170,7 +169,9 @@ export function mountDashboard(doc) {
   function renderTurnover() {
     const line = root.querySelector("[data-turnover]");
     const parts = [];
-    const ctx = { payload, state };
+    // Turnover is a ratio of COPM: the same in either unit, so it is always
+    // computed in COPM.
+    const ctx = { payload, state: { ...state, unit: "copm" } };
     const chains = selectedChains(payload.chains, state);
     for (const chain of chains) {
       const totals = flowTotals(ctx, chain);
@@ -198,7 +199,7 @@ export function mountDashboard(doc) {
       const width = Math.max(300, Math.floor(body.clientWidth || figure.clientWidth - 32));
       let out;
       try {
-        out = noData ? { nodes: [], legend: [], table: { columns: [], rows: [] } } : RENDERERS[id]({ payload, state, t, lang, rate, tok, width: 0 }, columnsWidth(width, id));
+        out = noData ? { nodes: [], legend: [], table: { columns: [], rows: [] } } : RENDERERS[id]({ payload, state, t, lang, tok, width: 0 }, columnsWidth(width, id));
       } catch (error) {
         console.error(`dashboard chart ${id}`, error);
         body.replaceChildren(el("p", "muted dchart-note", t.chartUi.error));

@@ -3,6 +3,7 @@
 // concern (format.js). Plain JS, no Astro imports, so node --test can run it.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { sumUsd } from "../../../pipeline/domain/rates.js";
 
 export const CHAIN_KEYS = ["polygon", "celo"];
 
@@ -22,7 +23,9 @@ const DAY_MS = 86_400_000;
 
 const isoDay = (seconds) => new Date(seconds * 1000).toISOString().slice(0, 10);
 
-// daily.csv -> [{ day, supply, transfers, grossCopm }]
+// daily.csv -> [{ day, supply, transfers, grossCopm, grossUsd, rate }].
+// The USD column is each day valued at its own TRM by the pipeline; the site
+// never converts COPM with a rate of its own.
 function readDaily(dir, chain) {
   const file = join(dir, chain, "daily.csv");
   let text;
@@ -38,7 +41,14 @@ function readDaily(dir, chain) {
     if (index < 0) throw new Error(`${chain}/daily.csv has no column "${name}"`);
     return index;
   };
-  const [day, supply, transfers, gross] = ["day", "supply_end_copm", "transfers", "gross_volume_copm"].map(at);
+  const [day, supply, transfers, gross, grossUsd, rate] = [
+    "day",
+    "supply_end_copm",
+    "transfers",
+    "gross_volume_copm",
+    "gross_volume_usd",
+    "cop_per_usd",
+  ].map(at);
   return lines.map((line) => {
     const cells = line.split(",");
     return {
@@ -46,6 +56,8 @@ function readDaily(dir, chain) {
       supply: Number(cells[supply]),
       transfers: Number(cells[transfers]),
       grossCopm: Number(cells[gross]),
+      grossUsd: Number(cells[grossUsd]),
+      rate: Number(cells[rate]),
     };
   });
 }
@@ -53,16 +65,17 @@ function readDaily(dir, chain) {
 const sumOf = (rows, pick) => rows.reduce((total, row) => total + pick(row), 0);
 const byDescThenDay = (pick) => (a, b) => pick(b) - pick(a) || (a.day < b.day ? -1 : 1);
 
-function monthlyTotals(daily, copPerUsd) {
+// A month in USD is the sum of its days' USD amounts, each at its own rate.
+function monthlyTotals(daily) {
   const months = new Map();
   for (const row of daily) {
     const key = row.day.slice(0, 7);
-    const acc = months.get(key) ?? { key, grossCopm: 0, transfers: 0 };
-    acc.grossCopm += row.grossCopm;
+    const acc = months.get(key) ?? { key, usd: 0, transfers: 0 };
+    acc.usd = sumUsd([acc.usd, row.grossUsd]);
     acc.transfers += row.transfers;
     months.set(key, acc);
   }
-  return [...months.values()].map((m) => ({ key: m.key, usd: m.grossCopm / copPerUsd, transfers: m.transfers }));
+  return [...months.values()];
 }
 
 // Calendar month difference: "2025-05" - "2025-02" = 3.
@@ -107,13 +120,12 @@ function afterPeak(months, peakKey, lastDay) {
   };
 }
 
-function seriesFigures(daily, deployDate, copPerUsd, lastDay) {
-  const usdOf = (copm) => copm / copPerUsd;
-  const months = monthlyTotals(daily, copPerUsd);
+function seriesFigures(daily, deployDate, lastDay) {
+  const months = monthlyTotals(daily);
   const peakMonth = months.reduce((a, b) => (b.usd > a.usd ? b : a));
   const peakTxMonth = months.reduce((a, b) => (b.transfers > a.transfers ? b : a));
 
-  const topVolume = [...daily].sort(byDescThenDay((r) => r.grossCopm)).slice(0, RANKING_SIZE);
+  const topVolume = [...daily].sort(byDescThenDay((r) => r.grossUsd)).slice(0, RANKING_SIZE);
   const topTx = [...daily].sort(byDescThenDay((r) => r.transfers)).slice(0, RANKING_SIZE);
   const windowFrom = previousMonth(peakMonth.key);
   const above = daily.find((r) => r.transfers > TAKEOFF_TRANSFERS);
@@ -122,14 +134,14 @@ function seriesFigures(daily, deployDate, copPerUsd, lastDay) {
   const averageSupply = sumOf(lastWindow, (r) => r.supply) / lastWindow.length;
 
   return {
-    grossUsd: usdOf(sumOf(daily, (r) => r.grossCopm)),
+    grossUsd: sumUsd(daily.map((r) => r.grossUsd)),
     months,
     peakMonth,
     peakTxMonth: { key: peakTxMonth.key, count: peakTxMonth.transfers },
     peakTxMonthsAfterDeploy: monthsBetween(deployDate.slice(0, 7), peakTxMonth.key),
-    recordVolume: { day: topVolume[0].day, usd: usdOf(topVolume[0].grossCopm), transfers: topVolume[0].transfers },
+    recordVolume: { day: topVolume[0].day, usd: topVolume[0].grossUsd, transfers: topVolume[0].transfers },
     recordTx: { day: topTx[0].day, count: topTx[0].transfers },
-    topVolumeDays: topVolume.map((r) => ({ day: r.day, usd: usdOf(r.grossCopm), transfers: r.transfers })),
+    topVolumeDays: topVolume.map((r) => ({ day: r.day, usd: r.grossUsd, transfers: r.transfers })),
     topTxDays: topTx.map((r) => ({ day: r.day, count: r.transfers })),
     topTxWindow: {
       from: windowFrom,
@@ -147,7 +159,7 @@ function seriesFigures(daily, deployDate, copPerUsd, lastDay) {
   };
 }
 
-function loadChain(dataDir, key, copPerUsd) {
+function loadChain(dataDir, key) {
   const summary = readJson(dataDir, key, "summary.json");
   const state = readJson(dataDir, key, "state.json");
   const manifest = readJson(dataDir, key, "manifest.json");
@@ -155,7 +167,7 @@ function loadChain(dataDir, key, copPerUsd) {
   const validation = readJson(dataDir, key, "validation.json");
   const daily = readDaily(dataDir, key);
   const deployDate = manifest.deployTimestamp.slice(0, 10);
-  const series = seriesFigures(daily, deployDate, copPerUsd, summary.range.lastDay);
+  const series = seriesFigures(daily, deployDate, summary.range.lastDay);
 
   return {
     key,
@@ -180,19 +192,32 @@ function loadChain(dataDir, key, copPerUsd) {
     validatedDate: validation.validatedAt.slice(0, 10),
     avgDailyTransfers: summary.averages.avgDailyTransfers,
     avgTicketUsd: series.grossUsd / state.transfers,
+    // The TRM at the end of this series and its range over it.
+    fx: {
+      latest: daily.at(-1).rate,
+      latestDay: daily.at(-1).day,
+      min: Math.min(...daily.map((r) => r.rate)),
+      max: Math.max(...daily.map((r) => r.rate)),
+    },
     ...series,
   };
 }
 
 const sum = (items, pick) => items.reduce((total, item) => total + pick(item), 0);
 
-export function loadAnalysisData({ dataDir, copPerUsd }) {
+export function loadAnalysisData({ dataDir }) {
   const chains = {};
-  for (const key of CHAIN_KEYS) chains[key] = loadChain(dataDir, key, copPerUsd);
+  for (const key of CHAIN_KEYS) chains[key] = loadChain(dataDir, key);
   const all = Object.values(chains);
+  const latest = all.map((c) => c.fx).reduce((a, b) => (b.latestDay > a.latestDay ? b : a));
 
   return {
-    copPerUsd,
+    fx: {
+      latest: latest.latest,
+      latestDay: latest.latestDay,
+      min: Math.min(...all.map((c) => c.fx.min)),
+      max: Math.max(...all.map((c) => c.fx.max)),
+    },
     chains,
     combined: {
       chainCount: all.length,
@@ -201,7 +226,7 @@ export function loadAnalysisData({ dataDir, copPerUsd }) {
       adminEvents: sum(all, (c) => c.adminEvents),
       events: sum(all, (c) => c.events),
       holders: sum(all, (c) => c.holders),
-      grossUsd: sum(all, (c) => c.grossUsd),
+      grossUsd: sumUsd(all.map((c) => c.grossUsd)),
       checksPassed: sum(all, (c) => c.checksPassed),
       checksTotal: sum(all, (c) => c.checksTotal),
       asOf: all.map((c) => c.checkpointDate).sort().at(-1),

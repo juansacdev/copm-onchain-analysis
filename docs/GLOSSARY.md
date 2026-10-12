@@ -23,6 +23,7 @@
 | **Indexer** | A third-party service (The Graph, Dune, block explorers) that pre-processes chain data so you can query it. This audit deliberately avoids them: raw RPC only, so anyone can reproduce the numbers without trusting an intermediary. |
 | **Gross volume** | The sum of **every** transfer, including mints and burns. The broadest measure of on-chain movement. |
 | **Net volume** | Gross volume minus mints and burns — only wallet-to-wallet movements. Closer to "money actually changing hands between users". |
+| **TRM** | Tasa Representativa del Mercado: the official COP per USD rate of each day, certified by the Superintendencia Financiera de Colombia and published as open data on datos.gov.co. One rate covers a range of calendar days (weekends and holidays take the previous business day's). Every USD figure here values each day at that day's TRM and 1 COPM as 1 COP; USD totals are sums of daily amounts. |
 | **Circulating supply** | Tokens that exist right now: all mints minus all burns. Derived here by replaying every event from the deploy block. |
 | **Turnover / velocity** | How many times the supply moves in a period: `volume ÷ supply`. A velocity of 400x/year means each token changed hands ~400 times a year — the signature of a payment rail, not a store of value. |
 | **Settlement layer / rail** | Infrastructure whose job is moving value between parties, rather than holding it. High velocity + balanced mints/burns is what a settlement rail looks like on-chain. |

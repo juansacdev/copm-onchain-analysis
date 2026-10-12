@@ -27,7 +27,7 @@ export const dashboardEn = {
     window: "Period shown: {from} to {to} (last complete day).",
   },
   basis: {
-    rate: "Dollar amounts use a fixed rate: US$1 = {rate} COP.",
+    rate: "Dollar amounts use the TRM of each day from the Superintendencia Financiera de Colombia (via datos.gov.co); the latest is US$1 = {rate} COP, from {date}.",
     complete:
       "Every period ends on the last complete day, because the checkpoint's own day is only half over. How far each chain goes: {items}.",
     item: "{chain}, up to {day} (checkpoint: block {block}, {time})",
@@ -244,6 +244,7 @@ export const dashboardEn = {
       "admin-events-ordered": "Administrative events are in order, with no duplicates.",
       "admin-events-count": "The number of administrative events is the checkpoint's.",
       "approvals-consistent": "The checkpoint's approval count equals the sum by day and the sum by spender.",
+      "rates-cover-series": "The rates file covers every day of the series, with positive rates.",
       "daily-matches-ledger": "The daily series is exactly what the transfers give.",
       "series-length": "The daily series covers every day of the summary.",
       "series-continuous": "The daily series has no missing days.",

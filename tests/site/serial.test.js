@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { formatSerialBlock, serialLine } from "../../site/src/lib/serial.js";
 import { loadAnalysisData } from "../../site/src/lib/analysis-data.js";
-import { COP_PER_USD, writeSiteFixture } from "../helpers/site-fixture.js";
+import { writeSiteFixture } from "../helpers/site-fixture.js";
 
 test("groups a block number in threes, separated by a space", () => {
   assert.equal(formatSerialBlock(95370448), "95 370 448");
@@ -32,7 +32,7 @@ test("an unknown chain or a missing checkpoint fails clearly", () => {
 });
 
 test("reads the checkpoint block of the real loader output", () => {
-  const data = loadAnalysisData({ dataDir: writeSiteFixture(), copPerUsd: COP_PER_USD });
+  const data = loadAnalysisData({ dataDir: writeSiteFixture() });
   const line = serialLine(Object.values(data.chains));
   assert.match(line, /^POL [\d ]+ · CELO [\d ]+$/);
 });

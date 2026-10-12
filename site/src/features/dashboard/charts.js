@@ -14,6 +14,7 @@ import {
   bucketize,
   granularityFor,
   heatCells,
+  measureKey,
   selectedChains,
   sliceDaily,
   viewWindow,
@@ -48,17 +49,20 @@ export function readTokens(root = document.documentElement) {
 /* Formatting ---------------------------------------------------------------- */
 
 function makeFormat(ctx) {
-  const { lang, rate, state } = ctx;
+  const { lang, state } = ctx;
   const usd = state.unit === "usd";
   const monthName = (key) => formatMonthShort(key, lang);
   return {
-    // Axis ticks: the values plotted are already in the chosen unit.
+    // Axis ticks, in the chosen unit.
     axisMoney: (v) => (usd ? formatUsd(v, lang, "short", { trim: true }) : formatCopmCompact(v, lang)),
     axisCount: (v) => formatInt(v, lang),
-    money: (copm) => amountFull(copm, state.unit, lang, rate),
-    moneyShort: (copm) => amountCompact(copm, state.unit, lang, rate),
+    // Amounts are already in the chosen unit: each day was valued at its own
+    // rate by the pipeline, and nothing here converts.
+    money: (value) => amountFull(value, state.unit, lang),
+    moneyShort: (value) => amountCompact(value, state.unit, lang),
+    // The daily array of a measure in the chosen unit.
+    key: (name) => measureKey(name, state.unit),
     count: (n) => formatInt(n, lang),
-    scale: usd ? 1 / rate : 1,
     month: monthName,
     day: (iso) => {
       const [, month, day] = iso.split("-");
@@ -153,21 +157,21 @@ function supply(ctx, width) {
   for (const chain of chainsInView(ctx)) {
     const slice = sliceFor(ctx, chain);
     if (!hasData(slice)) continue;
-    const data = slice.day.map((day, k) => ({ day, d: asDate(day), v: slice.supply[k] }));
+    const data = slice.day.map((day, k) => ({ day, d: asDate(day), v: slice[f.key("supply")][k] }));
     const last = data.at(-1);
     const color = colorOf(ctx, chain.key);
     const plot = Plot.plot({
       ...baseOptions(ctx, width, PLOT_HEIGHT),
       marginLeft: MONEY_MARGIN,
       x: timeAxis(ctx, f, slice, width),
-      y: { grid: true, label: null, tickFormat: f.axisMoney, domain: [0, Math.max(...data.map((r) => r.v)) * f.scale * 1.08] },
+      y: { grid: true, label: null, tickFormat: f.axisMoney, domain: [0, Math.max(...data.map((r) => r.v)) * 1.08] },
       marks: [
         Plot.ruleY([0], { stroke: ctx.tok.line }),
-        Plot.areaY(data, { x: "d", y: (r) => r.v * f.scale, fill: color, fillOpacity: 0.1 }),
-        Plot.lineY(data, { x: "d", y: (r) => r.v * f.scale, stroke: color, strokeWidth: 2 }),
-        Plot.dot([last], { x: "d", y: (r) => r.v * f.scale, r: 4, fill: color, stroke: ctx.tok.panel, strokeWidth: 2 }),
-        Plot.text([last], { x: "d", y: (r) => r.v * f.scale, text: (r) => f.moneyShort(r.v), dy: -12, textAnchor: "end", fill: ctx.tok.text, fontWeight: 600 }),
-        Plot.tip(data, Plot.pointerX({ x: "d", y: (r) => r.v * f.scale, title: (r) => `${f.date(r.day)}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
+        Plot.areaY(data, { x: "d", y: (r) => r.v, fill: color, fillOpacity: 0.1 }),
+        Plot.lineY(data, { x: "d", y: (r) => r.v, stroke: color, strokeWidth: 2 }),
+        Plot.dot([last], { x: "d", y: (r) => r.v, r: 4, fill: color, stroke: ctx.tok.panel, strokeWidth: 2 }),
+        Plot.text([last], { x: "d", y: (r) => r.v, text: (r) => f.moneyShort(r.v), dy: -12, textAnchor: "end", fill: ctx.tok.text, fontWeight: 600 }),
+        Plot.tip(data, Plot.pointerX({ x: "d", y: (r) => r.v, title: (r) => `${f.date(r.day)}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
       ],
     });
     nodes.push(panel(ctx, chain.key, plot));
@@ -208,17 +212,17 @@ function mintBurn(ctx, width) {
     const { granularity, slice, b } = bucketsOf(ctx, chain);
     if (!hasData(slice)) continue;
     const labels = b.bucket.map((key) => f.bucket(key, granularity));
-    const data = b.bucket.map((key, k) => ({ label: labels[k], key, partial: b.partial[k], mint: b.mint[k], burn: b.burn[k] }));
+    const data = b.bucket.map((key, k) => ({ label: labels[k], key, partial: b.partial[k], mint: b[f.key("mint")][k], burn: b[f.key("burn")][k] }));
     const plot = Plot.plot({
       ...baseOptions(ctx, width, PLOT_HEIGHT),
       marginLeft: MONEY_MARGIN,
       x: { type: "band", label: null, domain: labels, tickFormat: thin(labels, width), ...bandBars(width, labels.length) },
       y: { grid: true, label: null, tickFormat: (v) => f.axisMoney(Math.abs(v)) },
       marks: [
-        Plot.barY(data, { x: "label", y: (r) => r.mint * f.scale, fill: ctx.tok.mint, fillOpacity: barOpacity, insetBottom: 1 }),
-        Plot.barY(data, { x: "label", y: (r) => -r.burn * f.scale, fill: ctx.tok.burn, fillOpacity: barOpacity, insetTop: 1 }),
+        Plot.barY(data, { x: "label", y: (r) => r.mint, fill: ctx.tok.mint, fillOpacity: barOpacity, insetBottom: 1 }),
+        Plot.barY(data, { x: "label", y: (r) => -r.burn, fill: ctx.tok.burn, fillOpacity: barOpacity, insetTop: 1 }),
         Plot.ruleY([0], { stroke: ctx.tok.muted }),
-        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.mint * f.scale, title: (r) => `${labelOf(ctx, r)}\n${ctx.t.legend.mint}: ${f.money(r.mint)}\n${ctx.t.legend.burn}: ${f.money(r.burn)}`, ...tipOptions(ctx) })),
+        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.mint, title: (r) => `${labelOf(ctx, r)}\n${ctx.t.legend.mint}: ${f.money(r.mint)}\n${ctx.t.legend.burn}: ${f.money(r.burn)}`, ...tipOptions(ctx) })),
       ],
     });
     nodes.push(panel(ctx, chain.key, plot));
@@ -236,11 +240,17 @@ function mintBurn(ctx, width) {
 // wallets, and the gross volume that is all of them together.
 export function flowTotals(ctx, chain) {
   const slice = sliceFor(ctx, chain);
-  const sum = (key) => slice[key].reduce((a, b) => a + b, 0);
+  const unit = ctx.state.unit;
+  // Sums of the days in the chosen unit; in USD they are sums of daily dollars.
+  const sum = (name) => {
+    const total = slice[measureKey(name, unit)].reduce((a, b) => a + b, 0);
+    return unit === "usd" ? Math.round(total * 100) / 100 : total;
+  };
   const minted = sum("mint");
   const burned = sum("burn");
   const gross = sum("volume");
-  return { minted, burned, gross, wallet: Math.max(0, gross - minted - burned), has: hasData(slice) };
+  const wallet = unit === "usd" ? Math.max(0, Math.round((gross - minted - burned) * 100) / 100) : Math.max(0, gross - minted - burned);
+  return { minted, burned, gross, wallet, has: hasData(slice) };
 }
 
 function flows(ctx, width) {
@@ -262,13 +272,13 @@ function flows(ctx, width) {
       marginRight: 16,
       // Every bar carries its value, so the axis shows only the grid. The
       // domain leaves room on the right for the label of the longest bar.
-      x: { grid: true, label: null, ticks: 3, tickFormat: () => "", tickSize: 0, domain: [0, Math.max(...data.map((r) => r.v)) * f.scale * 1.6 || 1] },
+      x: { grid: true, label: null, ticks: 3, tickFormat: () => "", tickSize: 0, domain: [0, Math.max(...data.map((r) => r.v)) * 1.6 || 1] },
       y: { label: null, domain: data.map((r) => r.name), padding: 0.45 },
       marks: [
-        Plot.barX(data, { y: "name", x: (r) => r.v * f.scale, fill: "fill", insetLeft: 0 }),
-        Plot.text(data, { y: "name", x: (r) => r.v * f.scale, text: (r) => f.moneyShort(r.v), dx: 6, textAnchor: "start", fill: ctx.tok.text }),
+        Plot.barX(data, { y: "name", x: (r) => r.v, fill: "fill", insetLeft: 0 }),
+        Plot.text(data, { y: "name", x: (r) => r.v, text: (r) => f.moneyShort(r.v), dx: 6, textAnchor: "start", fill: ctx.tok.text }),
         Plot.ruleX([0], { stroke: ctx.tok.muted }),
-        Plot.tip(data, Plot.pointer({ y: "name", x: (r) => r.v * f.scale, title: (r) => `${r.name}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
+        Plot.tip(data, Plot.pointer({ y: "name", x: (r) => r.v, title: (r) => `${r.name}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
       ],
     });
     nodes.push(panel(ctx, chain.key, plot));
@@ -325,16 +335,16 @@ function volume(ctx, width) {
     const { granularity, slice, b } = bucketsOf(ctx, chain);
     if (!hasData(slice)) continue;
     const labels = b.bucket.map((key) => f.bucket(key, granularity));
-    const data = b.bucket.map((key, k) => ({ label: labels[k], partial: b.partial[k], v: b.volume[k] }));
+    const data = b.bucket.map((key, k) => ({ label: labels[k], partial: b.partial[k], v: b[f.key("volume")][k] }));
     const plot = Plot.plot({
       ...baseOptions(ctx, width, PLOT_HEIGHT),
       marginLeft: MONEY_MARGIN,
       x: { type: "band", label: null, domain: labels, tickFormat: thin(labels, width), ...bandBars(width, labels.length) },
       y: { grid: true, label: null, tickFormat: f.axisMoney },
       marks: [
-        Plot.barY(data, { x: "label", y: (r) => r.v * f.scale, fill: colorOf(ctx, chain.key), fillOpacity: barOpacity }),
+        Plot.barY(data, { x: "label", y: (r) => r.v, fill: colorOf(ctx, chain.key), fillOpacity: barOpacity }),
         Plot.ruleY([0], { stroke: ctx.tok.muted }),
-        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.v * f.scale, title: (r) => `${labelOf(ctx, r)}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
+        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.v, title: (r) => `${labelOf(ctx, r)}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
       ],
     });
     nodes.push(panel(ctx, chain.key, plot));
