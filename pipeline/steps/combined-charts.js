@@ -47,11 +47,13 @@ export async function run({ env = process.env } = {}) {
     celoTx: cByMonth.get(month)?.transfers ?? 0,
   }));
 
-  // Each chart is rendered twice: dark → charts/combined/ (GitHub docs),
-  // light → charts/combined/light/ (embedded in the site).
+  // Each chart is rendered three times: dark → charts/combined/ (GitHub docs),
+  // light → charts/combined/light/ (alternative variant), site →
+  // charts/combined/site/ (embedded in the site).
   for (const theme of [
     { name: "dark", dir: OUT_DIR, label: "charts/combined" },
     { name: "light", dir: new URL("light/", OUT_DIR), label: "charts/combined/light" },
+    { name: "site", dir: new URL("site/", OUT_DIR), label: "charts/combined/site" },
   ]) {
     setTheme(theme.name);
     ensureDir(theme.dir);
@@ -61,7 +63,7 @@ export async function run({ env = process.env } = {}) {
     });
   }
 
-  console.log("done. 4 charts (dark + light) in charts/combined/");
+  console.log("done. 4 charts (dark + light + site) in charts/combined/");
 
   function renderAll(save) {
     // Palette colors are read here, after setTheme(), so each pass picks up

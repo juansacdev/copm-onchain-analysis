@@ -1,0 +1,128 @@
+/*
+  Design tokens of the "Casa de moneda" identity: a digital Colombian peso set
+  with the vocabulary of banknote security printing. This is the only file of
+  the site that holds literal colors. Components read these properties and
+  never write a color, a spacing value or a type size of their own.
+*/
+:root {
+  color-scheme: dark;
+
+  /* Surfaces (flat, no gradients) */
+  --bg: #131209;
+  --panel: #181818;
+  --panel-2: #1f1f1f;
+  --line: #313131;
+  --line-soft: #272727;
+
+  /* Ink. Contrast against --panel: text 14.6, muted 8.3, faint 6.2 (min 4.5). */
+  --text: #ede9dc;
+  --muted: #b4b2a5;
+  --faint: #9c9a8e;
+
+  /* Accent (brass) for links, focus and the guilloche tint. */
+  --accent: #c9a45c;
+  --accent-strong: #e0c07a;
+  --on-accent: #131209;
+  --focus: #e0c07a;
+  --selection: rgb(201 164 92 / 0.32);
+
+  /* Series colors. Chain color identifies the chain; mint and burn identify
+     the two directions of supply. Text never wears one of them: a small mark
+     in the series color sits beside neutral text. */
+  --polygon: #9085e9;
+  --celo: #199e70;
+  --mint: #3987e5;
+  --burn: #e66767;
+
+  /* State colors, reserved for pass / fail and warnings, never for a series. */
+  --ok: #6dbf8f;
+  --warn: #e2b04a;
+
+  /* Hero heading: the one gradient, applied to text only. */
+  --hero-from: #ffffff;
+  --hero-to: #9b9b9b;
+
+  /* Decoration */
+  --guilloche: rgb(201 164 92 / 0.2);
+  --tagline-dim: rgb(237 233 220 / 0.3);
+  --shadow-none: none;
+
+  /* Spacing scale (landing-page-design B2): nothing between, nothing outside. */
+  --space-0: 0;
+  --space-25: 2px;
+  --space-50: 4px;
+  --space-75: 8px;
+  --space-100: 12px;
+  --space-200: 16px;
+  --space-300: 24px;
+  --space-400: 32px;
+  --space-500: 40px;
+  --space-600: 48px;
+  --space-700: 64px;
+  --space-800: 80px;
+  --space-900: 96px;
+
+  /* Radii (Tailwind values) */
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* Type: families, weights, and the Tailwind scale as size/line-height pairs
+     for the `font` shorthand. No italics, no weight above 700. */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --t-xs: 0.75rem/1rem;
+  --t-sm: 0.875rem/1.25rem;
+  --t-base: 1rem/1.5rem;
+  --t-lg: 1.125rem/1.75rem;
+  --t-xl: 1.25rem/1.75rem;
+  --t-2xl: 1.5rem/2rem;
+  --t-3xl: 1.875rem/2.25rem;
+  --t-4xl: 2.25rem/2.5rem;
+  --t-5xl: 3rem/1;
+  --t-6xl: 3.75rem/1;
+
+  /* Display sizes step up with the viewport (see the media query below). */
+  --t-display: var(--t-4xl);
+  --t-tagline: var(--t-4xl);
+  --t-section: var(--t-2xl);
+  --t-stat: var(--t-xl);
+  --t-serial: var(--t-xs);
+  --serial-track: var(--space-25);
+
+  --track-label: 0.08em;
+  --track-serial: 0.18em;
+
+  /* Layout */
+  --gutter: var(--space-200);
+  --measure: 46rem;
+  --measure-hero: 680px;
+  --measure-wide: 1040px;
+  --tap: var(--space-500);
+
+  /* Motion: custom curves (mass and spring, never the defaults). */
+  --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-base: 300ms;
+  --dur-slow: 800ms;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --gutter: var(--space-300);
+    --t-display: var(--t-6xl);
+    --t-tagline: var(--t-5xl);
+    --t-section: var(--t-3xl);
+    --t-serial: var(--t-sm);
+    --serial-track: var(--track-serial);
+  }
+}

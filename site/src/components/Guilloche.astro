@@ -1,0 +1,14 @@
+---
+// The guilloché band: interlaced sine curves drawn at build time from a pure
+// function (lib/guilloche.js), so it renders without JavaScript. Decoration
+// only: hidden from assistive technology, fixed height, never animated.
+import { guillochePaths } from '../lib/guilloche.js';
+
+const WIDTH = 1200;
+const HEIGHT = 64;
+const paths = guillochePaths({ width: WIDTH, height: HEIGHT, curves: 9, samples: 240 });
+---
+
+<svg class="guilloche" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  {paths.map((d) => <path d={d} />)}
+</svg>

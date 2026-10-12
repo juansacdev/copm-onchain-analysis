@@ -10,6 +10,7 @@ import Chapter from '../../components/Chapter.astro';
 import BigNum from '../../components/BigNum.astro';
 import Note from '../../components/Note.astro';
 import Quote from '../../components/Quote.astro';
+import Tagline from '../../components/Tagline.astro';
 import Steps from '../../components/Steps.astro';
 import Checks from '../../components/Checks.astro';
 import Glossary from '../../components/Glossary.astro';
@@ -20,10 +21,10 @@ import { loadAnalysisData } from '../../lib/analysis-data.js';
 import { AUTHOR_URL, PRESS_URL, REPO_URL, auditDocUrl, explorerTokenUrl, shortAddress } from '../../lib/links.js';
 import { buildVars } from './vars.js';
 
-import polygonMonthly from '../../../../charts/polygon/light/04-monthly-volume-usd.svg?raw';
-import celoMonthly from '../../../../charts/celo/light/04-monthly-volume-usd.svg?raw';
-import transfersByChain from '../../../../charts/combined/light/02-monthly-transfers-by-chain.svg?raw';
-import cumulativeByChain from '../../../../charts/combined/light/03-cumulative-volume-by-chain.svg?raw';
+import polygonMonthly from '../../../../charts/polygon/site/04-monthly-volume-usd.svg?raw';
+import celoMonthly from '../../../../charts/celo/site/04-monthly-volume-usd.svg?raw';
+import transfersByChain from '../../../../charts/combined/site/02-monthly-transfers-by-chain.svg?raw';
+import cumulativeByChain from '../../../../charts/combined/site/03-cumulative-volume-by-chain.svg?raw';
 
 interface Props {
   lang: 'es' | 'en';
@@ -61,6 +62,12 @@ const explorerLinks = [polygon, celo].map((c) => ({
 ---
 
 <Base lang={lang} page={page} title={t.meta.title} description={t.meta.description}>
+  <!-- Reveals are an enhancement: the class is set before first paint, and only
+       when the visitor has not asked for reduced motion. -->
+  <script is:inline slot="head">
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('js-reveal');
+  </script>
+  <div id="progress" slot="before-header" role="presentation"></div>
   <SideNav label={t.a11y.chaptersLabel} items={navItems} />
 
   <Hero eyebrow={t.hero.eyebrow} stats={t.hero.stats} scrollHint={t.hero.scrollHint}>
@@ -68,7 +75,7 @@ const explorerLinks = [polygon, celo].map((c) => ({
     <Fragment slot="sub">{t.hero.sub}</Fragment>
   </Hero>
 
-  <main>
+  <main id="main">
     <Chapter id="problema" label={ch.problema.label}>
       <Fragment slot="title">{ch.problema.title}</Fragment>
       <p class="lead" set:html={ch.problema.lead} />
@@ -83,13 +90,13 @@ const explorerLinks = [polygon, celo].map((c) => ({
       <p set:html={ch.copm.p1} />
       <p>{ch.copm.p2}</p>
       <div class="duo">
-        <article class="card pol">
+        <article class="card mint">
           <h4>{ch.copm.mint.title}</h4>
-          <p class="small" style="margin:0" set:html={ch.copm.mint.body} />
+          <p class="small flush" set:html={ch.copm.mint.body} />
         </article>
-        <article class="card cel">
+        <article class="card burn">
           <h4>{ch.copm.burn.title}</h4>
-          <p class="small" style="margin:0" set:html={ch.copm.burn.body} />
+          <p class="small flush" set:html={ch.copm.burn.body} />
         </article>
       </div>
       <p set:html={ch.copm.p3} />
@@ -102,6 +109,8 @@ const explorerLinks = [polygon, celo].map((c) => ({
       <Steps steps={ch.metodo.steps} />
     </Chapter>
 
+    <Tagline text={t.tagline.text} />
+
     <Chapter id="polygon" label={ch.polygon.label}>
       <Fragment slot="title" set:html={ch.polygon.title} />
       <p class="lead">{ch.polygon.lead}</p>
@@ -111,7 +120,7 @@ const explorerLinks = [polygon, celo].map((c) => ({
       <p set:html={ch.polygon.act2} />
       <p set:html={ch.polygon.act3} />
       <ChartFigure svg={polygonMonthly} caption={ch.polygon.chartCaption} />
-      <Note><Fragment set:html={ch.polygon.note} /></Note>
+      <Note variant="polygon"><Fragment set:html={ch.polygon.note} /></Note>
     </Chapter>
 
     <Chapter id="celo" label={ch.celo.label}>
@@ -121,7 +130,7 @@ const explorerLinks = [polygon, celo].map((c) => ({
       <p set:html={ch.celo.p1} />
       <p set:html={ch.celo.p2} />
       <ChartFigure svg={celoMonthly} caption={ch.celo.chartCaption} />
-      <Note variant="green"><Fragment set:html={ch.celo.note} /></Note>
+      <Note variant="celo"><Fragment set:html={ch.celo.note} /></Note>
     </Chapter>
 
     <Chapter id="duo" label={ch.duo.label}>
@@ -129,24 +138,26 @@ const explorerLinks = [polygon, celo].map((c) => ({
       <p class="lead">{ch.duo.lead}</p>
       <ChartFigure svg={transfersByChain} caption={ch.duo.transfersCaption} />
       <p set:html={ch.duo.relay} />
-      <table class="tbl">
-        <thead><tr><th>{ch.duo.table.metric}</th><th>{ch.duo.table.polygon}</th><th>{ch.duo.table.celo}</th></tr></thead>
-        <tbody>
-          {ch.duo.table.rows.slice(0, 1).map((row) => (
-            <tr><td>{row.label}</td><td class="mono">{row.polygon}</td><td class="mono">{row.celo}</td></tr>
-          ))}
-          <tr>
-            <td>{ch.duo.table.explorer}</td>
-            {explorerLinks.map((link) => (
-              <td class="mono"><a href={link.href} target="_blank" rel="noopener noreferrer">{link.text} ↗</a></td>
+      <div class="table-scroll" role="region" aria-label={ch.duo.title} tabindex="0">
+        <table class="tbl">
+          <thead><tr><th scope="col">{ch.duo.table.metric}</th><th scope="col">{ch.duo.table.polygon}</th><th scope="col">{ch.duo.table.celo}</th></tr></thead>
+          <tbody>
+            {ch.duo.table.rows.slice(0, 1).map((row) => (
+              <tr><th scope="row">{row.label}</th><td class="mono">{row.polygon}</td><td class="mono">{row.celo}</td></tr>
             ))}
-          </tr>
-          {ch.duo.table.rows.slice(1).map((row) => (
-            <tr><td set:html={row.label} /><td class="mono">{row.polygon}</td><td class="mono">{row.celo}</td></tr>
-          ))}
-          <tr class="hl"><td><strong>{ch.duo.table.combined}</strong></td><td class="mono" colspan="2" style="text-align:center"><strong>{ch.duo.table.combinedValue}</strong></td></tr>
-        </tbody>
-      </table>
+            <tr>
+              <th scope="row">{ch.duo.table.explorer}</th>
+              {explorerLinks.map((link) => (
+                <td class="mono"><a href={link.href} target="_blank" rel="noopener noreferrer">{link.text} ↗</a></td>
+              ))}
+            </tr>
+            {ch.duo.table.rows.slice(1).map((row) => (
+              <tr><th scope="row" set:html={row.label} /><td class="mono">{row.polygon}</td><td class="mono">{row.celo}</td></tr>
+            ))}
+            <tr class="hl"><th scope="row">{ch.duo.table.combined}</th><td class="mono center" colspan="2"><strong>{ch.duo.table.combinedValue}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
       <ChartFigure svg={cumulativeByChain} caption={ch.duo.cumulativeCaption} />
     </Chapter>
 
@@ -154,11 +165,11 @@ const explorerLinks = [polygon, celo].map((c) => ({
       <Fragment slot="title">{ch.confianza.title}</Fragment>
       <p>{ch.confianza.intro}</p>
       <Checks items={ch.confianza.checks} />
-      <pre class="repro"><code><span class="c">{ch.confianza.reproComment}</span>
+      <pre class="repro" tabindex="0"><code><span class="c">{ch.confianza.reproComment}</span>
 git clone {REPO_URL}.git
 cd copm-onchain-analysis && cp .env.example .env
 npm install && npm run audit:all</code></pre>
-      <p class="muted" style="font-size:.92rem">{ch.confianza.more}</p>
+      <p class="muted small">{ch.confianza.more}</p>
     </Chapter>
 
     <Chapter id="prensa" label={ch.prensa.label}>
@@ -179,3 +190,51 @@ npm install && npm run audit:all</code></pre>
 
   <SiteFooter navLabel={t.a11y.linksLabel} links={footerLinks} credit={t.footer.credit} />
 </Base>
+
+<script>
+  // Everything below is an enhancement of the analysis page: the content is
+  // readable without it, and nothing moves for visitors who ask for less motion.
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Reading progress, throttled through requestAnimationFrame.
+  const bar = document.getElementById('progress');
+  let frame = 0;
+  function paint() {
+    frame = 0;
+    if (!bar) return;
+    const root = document.documentElement;
+    const max = root.scrollHeight - root.clientHeight;
+    bar.style.transform = `scaleX(${max > 0 ? root.scrollTop / max : 0})`;
+  }
+  addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(paint); }, { passive: true });
+  paint();
+
+  if (!reduced) {
+    // Chapters rise and sharpen as they enter the viewport.
+    const reveal = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('visible');
+          reveal.unobserve(entry.target);
+        });
+      },
+      { rootMargin: '0px 0px -10% 0px' }
+    );
+    document.querySelectorAll('.reveal').forEach((el) => reveal.observe(el));
+
+    // Tagline: each word lights up, in reading order, as it crosses a trigger
+    // line 40% above the bottom of the viewport; scrolling back dims it again.
+    const words = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const below = entry.boundingClientRect.top > (entry.rootBounds?.bottom ?? 0);
+          // Inside the lit zone or already scrolled past: lit. Still below the line: dim.
+          entry.target.classList.toggle('lit', entry.isIntersecting || !below);
+        });
+      },
+      { rootMargin: '0px 0px -40% 0px' }
+    );
+    document.querySelectorAll('.tagline .w').forEach((el) => words.observe(el));
+  }
+</script>

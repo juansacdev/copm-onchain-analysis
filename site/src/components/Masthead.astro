@@ -1,0 +1,34 @@
+---
+// Site header shared by every page: brand, main navigation, language switch,
+// the guilloché band and the serial number (verified checkpoint block of each
+// chain, read from state.json through the data loader).
+import Guilloche from './Guilloche.astro';
+import LangSwitch from './LangSwitch.astro';
+import SiteNav from './SiteNav.astro';
+
+interface Props {
+  homeHref: string;
+  navLabel: string;
+  navItems: { label: string; href: string; current: boolean }[];
+  langLabel: string;
+  langItems: { lang: string; href: string; current: boolean }[];
+  serial: string;
+  serialLabel: string;
+}
+
+const { homeHref, navLabel, navItems, langLabel, langItems, serial, serialLabel } = Astro.props;
+---
+
+<header class="masthead">
+  <div class="masthead-bar">
+    <a class="brand" href={homeHref}>COPM</a>
+    <SiteNav label={navLabel} items={navItems} />
+    <LangSwitch label={langLabel} items={langItems} />
+  </div>
+  <div class="masthead-band">
+    <Guilloche />
+    <div class="masthead-band-inner">
+      <p class="serial" role="group" aria-label={serialLabel}>{serial}</p>
+    </div>
+  </div>
+</header>

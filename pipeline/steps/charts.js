@@ -33,11 +33,13 @@ export async function run({ chainKey, env = process.env }) {
 
   console.log(`chain: ${chainKey} — ${rows.length} days, ${monthlyRows.length} months`);
 
-  // Each chart is rendered twice: dark → charts/<chain>/ (GitHub docs),
-  // light → charts/<chain>/light/ (embedded in the site).
+  // Each chart is rendered three times: dark → charts/<chain>/ (GitHub docs),
+  // light → charts/<chain>/light/ (alternative variant), site →
+  // charts/<chain>/site/ (embedded in the site).
   for (const theme of [
     { name: "dark", dir: CHARTS_DIR, label: `charts/${chainKey}` },
     { name: "light", dir: new URL("light/", CHARTS_DIR), label: `charts/${chainKey}/light` },
+    { name: "site", dir: new URL("site/", CHARTS_DIR), label: `charts/${chainKey}/site` },
   ]) {
     setTheme(theme.name);
     ensureDir(theme.dir);
@@ -47,7 +49,7 @@ export async function run({ chainKey, env = process.env }) {
     });
   }
 
-  console.log(`done. 6 charts (dark + light) in charts/${chainKey}/`);
+  console.log(`done. 6 charts (dark + light + site) in charts/${chainKey}/`);
 
   function renderAll(save) {
     // Palette colors are read here, after setTheme(), so each pass picks up

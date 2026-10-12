@@ -2,14 +2,14 @@
 interface Props {
   value: string;
   desc: string;
-  /** p = Polygon, c = Celo, g = gradiente combinado */
+  /** p = Polygon, c = Celo, g = combined (accent). The mark beside the number takes the color. */
   variant: 'p' | 'c' | 'g';
 }
 
 const { value, desc, variant } = Astro.props;
 ---
 
-<p class="bignum">
-  <strong class:list={['n', variant]}>{value}</strong>
+<p class:list={['bignum', variant]}>
+  <strong class="n">{value}</strong>
   <span class="d">{desc}</span>
 </p>
