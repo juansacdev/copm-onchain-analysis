@@ -115,3 +115,24 @@ test("scan, holders and aggregate output validate end to end", async () => {
   assert.deepEqual(failed, []);
   assert.equal(result.exitCode, 0);
 });
+
+test("re-validating unchanged data keeps validation.json byte-identical, so a second run commits nothing", () => {
+  const { url, store } = tempStore();
+  writeFixture(store, url, fixture());
+
+  validate(url);
+  const first = readFileSync(new URL("validation.json", url), "utf8");
+  validate(url, { clock: () => new Date("2026-02-02T00:00:00.000Z") });
+  assert.equal(readFileSync(new URL("validation.json", url), "utf8"), first);
+});
+
+test("a changed result is written with the time of the new run", () => {
+  const { url, store } = tempStore();
+  const fx = fixture();
+  writeFixture(store, url, fx);
+  validate(url);
+
+  writeJson(new URL("state.json", url), { ...fx.state, totalSupply: (BigInt(fx.state.totalSupply) + 1n).toString() }, 2);
+  validate(url, { clock: () => new Date("2026-02-02T00:00:00.000Z") });
+  assert.equal(report(url).validatedAt, "2026-02-02T00:00:00.000Z");
+});

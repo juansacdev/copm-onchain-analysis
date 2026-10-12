@@ -150,7 +150,7 @@ Los seis roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_RO
 
 ## Validación
 
-Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->17<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->17<!-- /copm --> pasaron (última corrida <!-- copm:polygon.validatedDate -->2026-10-11<!-- /copm -->):
+Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->17<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->17<!-- /copm --> pasaron (última corrida <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |

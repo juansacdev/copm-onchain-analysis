@@ -116,6 +116,24 @@ npm run audit:all      # both + combined charts + report figures
 
 The first `scan` walks the whole history from the deploy block; later runs only scan the blocks added since the checkpoint. Requires Node.js 22+; `npm test` runs the unit tests (no network needed).
 
+## Daily automation
+
+Two GitHub Actions workflows keep the data current and checked:
+
+- **`.github/workflows/daily-scan.yml`** runs every day at 09:17 UTC (04:17 in Colombia) and on demand. For each chain it runs `scan`, `holders`, `aggregate` and `validate`, then commits `data/`. The scan only covers the blocks added since the committed checkpoint, so a run takes a couple of minutes. If supply does not reconcile, a balance differs from `balanceOf`, or any validation rule fails, the job fails and commits nothing.
+- **`.github/workflows/ci.yml`** runs on every pull request and push to `main`: unit tests, the strict validation of the committed data, and the site build. It needs no RPC endpoint.
+
+Charts and the figures in these documents are regenerated on the first day of each month (or when the workflow is started by hand with `month_close`), so the reports are a coherent monthly cut while the data and the dashboard move daily.
+
+Setup, once:
+
+```bash
+gh secret set POLYGON_RPC_URL   # required: the public Polygon endpoints do not serve log history reliably
+gh secret set CELO_RPC_URL      # optional: without it the public endpoint is used
+```
+
+The workflow pushes to the default branch with the repository token, so that branch must accept pushes from GitHub Actions. On a public repository standard runners are free. GitHub disables scheduled workflows after 60 days without repository activity; the daily commit counts as activity.
+
 ## Repository layout
 
 ```

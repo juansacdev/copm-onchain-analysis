@@ -47,18 +47,17 @@ export function validateChain({
   for (const c of checks) log(`[${c.ok ? "PASS" : "FAIL"}] ${c.id} — ${c.detail}`);
 
   const failed = checks.filter((c) => !c.ok).length;
-  writeJson(
-    new URL("validation.json", dir),
-    {
-      chain: chainKey,
-      block: state.lastBlock,
-      validatedAt: clock().toISOString(),
-      checks,
-      passed: checks.length - failed,
-      failed,
-    },
-    2
-  );
+  const result = { chain: chainKey, block: state.lastBlock, checks, passed: checks.length - failed, failed };
+
+  // validatedAt is the first time this exact result was obtained. Re-running
+  // on unchanged data leaves the file as it is, so CI and the daily job do not
+  // produce a diff (or a stale report figure) just because time passed.
+  const url = new URL("validation.json", dir);
+  const { validatedAt: _previousTime, ...previous } = existsSync(url) ? readJson(url) : {};
+  if (JSON.stringify(previous) !== JSON.stringify(result)) {
+    const { chain, block, ...rest } = result;
+    writeJson(url, { chain, block, validatedAt: clock().toISOString(), ...rest }, 2);
+  }
   log(`\n${failed === 0 ? "ALL CHECKS PASSED" : `${failed} CHECK(S) FAILED`} — data/${chainKey}/validation.json written`);
   return { exitCode: failed === 0 ? 0 : 1 };
 }
