@@ -70,7 +70,7 @@ export function createFakeChain({
   const chain = {
     head,
     logs: [...logs],
-    // hooks: getLogs, head, header, supply, callError, and `read`, called for
+    // hooks: getLogs, head, header, headerNumber, supply, callError, and `read`, called for
     // every eth_call / eth_getCode / eth_getStorageAt with
     // { method, selector, data, block, attempt } and answering an Error (the
     // item fails), a string (the forced result) or nothing (the real answer).
@@ -181,7 +181,10 @@ export function createFakeChain({
         chain.seen.headerCalls++;
         const block = Number(call.params[0]);
         if (chain.faults.header?.({ block })) return { ok: true, result: null };
-        return { ok: true, result: { number: hex(block), timestamp: hex(tsOf(block)) } };
+        // `headerNumber` answers a header for another block, as a backend that
+        // serves the wrong one would (its timestamp belongs to that block).
+        const served = chain.faults.headerNumber?.({ block }) ?? block;
+        return { ok: true, result: { number: hex(served), timestamp: hex(tsOf(served)) } };
       }
       default:
         return { ok: false, error: `unsupported ${call.method}` };

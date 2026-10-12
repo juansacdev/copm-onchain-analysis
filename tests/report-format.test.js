@@ -37,6 +37,32 @@ test("compact dollars in Spanish use words and US$", () => {
   assert.equal(es(fig.usd(96.4)), "US$96");
 });
 
+test("compact amounts that round up to 1,000 of a unit move to the next unit", () => {
+  assert.equal(en(fig.usd(999_999)), "$1M");
+  assert.equal(en(fig.usd(999_999_999)), "$1B");
+  assert.equal(en(fig.usd(999.6)), "$1K");
+  assert.equal(en(fig.usd(99_999)), "$100K");
+  assert.equal(es(fig.usd(999_999)), "US$1 millones");
+  assert.equal(es(fig.usd(999.6)), "US$1 mil");
+  assert.equal(es(fig.usd(999_999_999)), "US$1.000 millones");
+
+  assert.equal(en(fig.copm(999_999_999.6)), "1B");
+  assert.equal(en(fig.copm(999_999.6)), "1M");
+  assert.equal(en(fig.copm(999_999_999_999.6)), "1T");
+  assert.equal(es(fig.copm(999_999.6)), "1 millones");
+  assert.equal(es(fig.copm(999_999_999_999.6)), "1 billones");
+  assert.equal(es(fig.copm(999_999_999.6)), "1.000 millones");
+  assert.equal(en(fig.copm(999.6)), "1,000");
+});
+
+test("a negative compact amount keeps its sign before the currency symbol", () => {
+  assert.equal(en(fig.usd(-1500)), "-$1.5K");
+  assert.equal(es(fig.usd(-1500)), "-US$1,5 mil");
+  assert.equal(en(fig.usd(-999_999)), "-$1M");
+  assert.equal(en(fig.usd(-0.4)), "$0");
+  assert.equal(en(fig.copm(-2_500_000)), "-2.5M");
+});
+
 test("full dollars are grouped integers", () => {
   assert.equal(en(fig.usdFull(10336.4)), "$10,336");
   assert.equal(es(fig.usdFull(10336.4)), "US$10.336");

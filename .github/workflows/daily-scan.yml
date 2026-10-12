@@ -79,4 +79,23 @@ jobs:
             exit 0
           fi
           git commit -m "data: daily scan $(date -u +%F)"
-          git push
+
+          # Someone may push to the branch while the scan runs, and a plain
+          # push would then be rejected as non-fast-forward and lose the day's
+          # data. This job only adds generated files, so a rebase onto the
+          # remote is safe; if it conflicts, a person edited generated files
+          # and the job must fail loudly instead of guessing.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "push rejected (attempt $attempt of 5), rebasing onto origin/$GITHUB_REF_NAME"
+            sleep $((attempt * 5))
+            if ! git pull --rebase origin "$GITHUB_REF_NAME"; then
+              git rebase --abort || true
+              echo "::error::rebase conflict: generated files were edited by hand; resolve it manually"
+              exit 1
+            fi
+          done
+          echo "::error::could not push after 5 attempts"
+          exit 1

@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
-import { CHAIN_KEYS, SCAN_SETTING_KEYS } from "./config/chains.js";
+import { CHAIN_KEYS, SCAN_SETTING_KEYS, getChain } from "./config/chains.js";
+import { scrubUrl } from "./adapters/rpc.js";
 
 // command -> step module. Steps are imported on demand so that a command
 // only loads (and only needs the environment of) the step it runs.
@@ -79,6 +80,17 @@ export function parseArgs(argv, env = process.env) {
   return { command, chain, fresh, check, overrides };
 }
 
+// R6 at the boundary. Whatever a step throws (viem puts the full endpoint URL
+// in its messages), no configured RPC URL of any chain may reach the terminal.
+export function scrubConfiguredUrls(text, env = process.env) {
+  let out = String(text);
+  for (const key of CHAIN_KEYS) {
+    const url = env[getChain(key).rpcEnv];
+    if (url) out = scrubUrl(out, url);
+  }
+  return out;
+}
+
 export async function main(argv, env = process.env) {
   let args;
   try {
@@ -103,7 +115,7 @@ export async function main(argv, env = process.env) {
     });
     return result?.exitCode ?? 0;
   } catch (err) {
-    console.error(`error: ${err.message}`);
+    console.error(`error: ${scrubConfiguredUrls(err?.message ?? err, env)}`);
     return 1;
   }
 }

@@ -121,7 +121,7 @@ El primer `scan` recorre todo el historial desde el deploy block; las corridas s
 Dos workflows de GitHub Actions mantienen los datos al día y verificados:
 
 - **`.github/workflows/daily-scan.yml`** corre todos los días a las 09:17 UTC (04:17 en Colombia) y a demanda. Para cada chain ejecuta `scan`, `holders`, `aggregate` y `validate`, y luego hace commit de `data/`. El scan solo cubre los bloques agregados desde el checkpoint versionado, así que una corrida toma un par de minutos. Si el supply no reconcilia, un saldo difiere de `balanceOf` o falla cualquier regla de validación, el job falla y no hace commit de nada.
-- **`.github/workflows/ci.yml`** corre en cada pull request y en cada push a `main`: tests unitarios, la validación estricta de los datos versionados y el build del sitio. No necesita endpoint RPC.
+- **`.github/workflows/ci.yml`** corre en cada pull request y en los pushes a `main` hechos por personas: tests unitarios, la validación estricta de los datos versionados y el build del sitio. No necesita endpoint RPC. Los pushes hechos con el token del repositorio no disparan otros workflows, así que `ci.yml` no revisa los commits diarios de datos; el job diario los revisa por su cuenta antes de hacer commit, con los tests unitarios y la validación estricta.
 
 Los charts y las cifras de estos documentos se regeneran el primer día de cada mes (o cuando el workflow se lanza a mano con `month_close`), así los reportes son un corte mensual coherente mientras los datos y el dashboard se mueven a diario.
 

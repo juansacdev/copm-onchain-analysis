@@ -224,6 +224,67 @@ test("block timestamps come from headers when the log carries 0x0, retrying null
   );
 });
 
+test("a range item answered null or with a non-array rejects the batch and is asked again", async () => {
+  for (const bad of [null, "0x", { logs: [] }]) {
+    const { fake, store, scan } = setup();
+    const realBatch = fake.rpc.batch;
+    let spoiled = false;
+    fake.rpc.batch = async (calls) => {
+      const results = await realBatch(calls);
+      if (!spoiled && calls.length > 2) {
+        spoiled = true;
+        results[2] = { ok: true, result: bad }; // first range of the first batch
+      }
+      return results;
+    };
+    const result = await scan();
+    assert.ok(result.stats.rejectedError > 0, `${JSON.stringify(bad)} was not rejected`);
+    assert.equal(store.readTransfers().length, 5);
+    assert.equal(result.stats.emptyAnswers, result.stats.emptyAnswers);
+  }
+});
+
+test("a block header for another block than the one asked is retried, never used", async () => {
+  const { fake, store, scan } = setup({ zeroTimestamps: true });
+  const lied = new Set();
+  fake.faults.headerNumber = ({ block }) => {
+    if (lied.has(block)) return undefined;
+    lied.add(block);
+    return block + 1; // first answer for every block is the next block's header
+  };
+  await scan();
+  assert.ok(store.readTransfers().every((r) => r.ts === tsOf(r.b)));
+  assert.equal(store.readState().lastBlockTime, tsOf(2200));
+});
+
+test("admin events above the checkpoint are trimmed even when the new stage has none", async () => {
+  // Crash on the third state write: stage 3's admin event (block 2100) is on
+  // disk, the checkpoint still points at the end of stage 2.
+  const dir = mkdtempSync(join(tmpdir(), "copm-trim-"));
+  const real = createStore(pathToFileURL(`${dir}/`));
+  let stateWrites = 0;
+  const crashing = {
+    ...real,
+    writeState(state) {
+      if (++stateWrites === 3) throw new Error("simulated crash");
+      real.writeState(state);
+    },
+  };
+  const fake = createFakeChain({ logs: history(), head: 2205 });
+  const run = (store) =>
+    runScan({ chain: CHAIN, settings: SETTINGS, rpc: fake.rpc, store, clock: CLOCK, log: () => {}, sleep: async () => {} });
+
+  await assert.rejects(run(crashing), /simulated crash/);
+  assert.equal(real.readState().lastBlock, 1999);
+  assert.ok(real.readAdminEvents().some((e) => e.b === 2100), "the leftover admin event exists");
+
+  // The chain no longer reports that event (e.g. it was in a replaced block).
+  fake.logs = fake.logs.filter((l) => l.b !== 2100);
+  await run(real);
+  assert.ok(!real.readAdminEvents().some((e) => e.b > 1999), "stale admin events survived");
+  assert.equal(real.readState().adminEvents, real.readAdminEvents().length);
+});
+
 test("a transient eth_call error on the supply read is retried", async () => {
   const { fake, store, scan } = setup();
   let failures = 0;

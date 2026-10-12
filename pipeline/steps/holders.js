@@ -194,15 +194,21 @@ export async function runHolders({
   /* Labels ------------------------------------------------------------------- */
 
   const holderAddresses = addresses.filter((address) => balances.get(address) > 0n);
-  const codes = await readAll(
-    "contract code",
-    holderAddresses.map((address) => ({
-      what: `eth_getCode(${address})`,
-      call: { method: "eth_getCode", params: [address, tag] },
-      parse: parseCode,
-    }))
-  );
-  const contracts = new Set(holderAddresses.filter((_, i) => codes[i] !== "0x"));
+  // Same rule as the scan's empty ranges: bytecode is final, but "0x" is what
+  // a backend that lacks the state also answers, so it is believed only after
+  // `emptyConfirmations` independent answers.
+  const codeItem = (address) => ({
+    what: `eth_getCode(${address})`,
+    call: { method: "eth_getCode", params: [address, tag] },
+    parse: parseCode,
+  });
+  const contracts = new Set();
+  let undecided = holderAddresses;
+  for (let answers = 1; answers <= settings.emptyConfirmations && undecided.length > 0; answers++) {
+    const codes = await readAll("contract code", undecided.map(codeItem));
+    undecided.filter((_, i) => codes[i] !== "0x").forEach((address) => contracts.add(address));
+    undecided = undecided.filter((_, i) => codes[i] === "0x");
+  }
 
   // Only accounts that ever appear in a freeze event can be frozen.
   const candidates = [

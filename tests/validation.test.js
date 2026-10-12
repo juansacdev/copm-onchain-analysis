@@ -149,6 +149,32 @@ test("timestamps-in-window: rows must sit between the deployment and the checkpo
   assert.equal(results(fx)["timestamps-in-window"].ok, false);
 });
 
+test("timestamps-in-window: a row later than the checkpoint time plus slack fails", () => {
+  const fx = fixture();
+  const last = fx.partitions[1].rows[0];
+  last.ts = fx.state.lastBlockTime + 120;
+  fx.transfers = fx.partitions.flatMap((p) => p.rows);
+  assert.equal(results(fx)["timestamps-in-window"].ok, true);
+
+  last.ts = fx.state.lastBlockTime + 121;
+  fx.transfers = fx.partitions.flatMap((p) => p.rows);
+  assert.equal(results(fx)["timestamps-in-window"].ok, false);
+});
+
+test("timestamps-in-window: a missing bound fails the rule instead of passing vacuously", () => {
+  const noDeploy = fixture();
+  delete noDeploy.manifest.deployTimestamp;
+  const deployCheck = results(noDeploy)["timestamps-in-window"];
+  assert.equal(deployCheck.ok, false);
+  assert.match(deployCheck.detail, /deployTimestamp/);
+
+  const noCheckpointTime = fixture();
+  delete noCheckpointTime.state.lastBlockTime;
+  const timeCheck = results(noCheckpointTime)["timestamps-in-window"];
+  assert.equal(timeCheck.ok, false);
+  assert.match(timeCheck.detail, /lastBlockTime/);
+});
+
 test("admin events must be strictly ordered, inside the checkpoint, and as many as the checkpoint says", () => {
   const unordered = fixture();
   unordered.adminEvents = [

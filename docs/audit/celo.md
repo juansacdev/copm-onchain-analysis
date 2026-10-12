@@ -42,9 +42,9 @@ The reading: Polygon carries the institutional settlement — large amounts, B2B
 
 ![Daily transfers](../../charts/celo/01-daily-transfers.svg)
 
-### On Polygon, takeoff took 17 months. On Celo, 6 weeks.
+### On Polygon, takeoff took 16.5 months. On Celo, 7 weeks. Both counted from deployment.
 
-First day with transfers on Celo: <!-- copm:celo.firstDay -->2024-09-17<!-- /copm -->. First day above 100 transfers: **<!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->**.
+Deploy: <!-- copm:celo.deployDate -->2024-09-11<!-- /copm -->. First day with transfers on Celo: <!-- copm:celo.firstDay -->2024-09-17<!-- /copm -->. First day above 100 transfers: **<!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->**. That is 7 weeks after deployment and about 6 weeks after the first transfer.
 
 The explanation is textbook: by the time COPM reached Celo, the operation, the partners, and the use case had already been proven on Polygon. A second chain doesn't start from zero — it inherits the first one's traction. And <!-- copm:celo.peakTxMonth -->January 2025<!-- /copm --> became its most active month ever: **<!-- copm:celo.peakTxMonthCount -->18,491<!-- /copm --> transactions**.
 
@@ -120,7 +120,7 @@ The `FREEZER_ROLE` can block an address; the contract emitted <!-- copm:celo.eve
 
 ## Validation
 
-The same <!-- copm:celo.checksTotal -->17<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->17<!-- /copm --> passed (last run <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+The same <!-- copm:celo.checksTotal -->17<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->17<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Rule | Result |
 | :--- | :--- | :--- |

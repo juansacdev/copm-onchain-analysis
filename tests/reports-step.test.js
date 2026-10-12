@@ -100,3 +100,11 @@ test("a missing data file is a clear error that points at the command to run", (
   writeFileSync(new URL("data/celo/summary.json", r.root), "");
   assert.throws(() => run(r, ["a.md"]), /celo/);
 });
+
+test("a malformed marker fails reports and reports --check, naming the file and line", () => {
+  const r = repo({ "a.md": "intro\n<!--copm:polygon.transfers-->x<!--/copm-->\n" });
+  for (const check of [false, true]) {
+    assert.throws(() => run(r, ["a.md"], { check }), /a\.md: malformed marker.*line 2/s, `check=${check}`);
+  }
+  assert.equal(r.read("a.md"), "intro\n<!--copm:polygon.transfers-->x<!--/copm-->\n");
+});

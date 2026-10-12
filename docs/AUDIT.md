@@ -43,7 +43,7 @@ The monthly transactions chart tells a story no internal dashboard could tell be
 
 ![Monthly transfers by chain](../charts/combined/02-monthly-transfers-by-chain.svg)
 
-It also explains why a second chain takes off faster: COPM took **17 months** to cross 100 daily transactions on Polygon (first day: <!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->), and **6 weeks** to do it on Celo (first day: <!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->). A second chain doesn't start from zero — it inherits partners, operations, and proven use cases.
+It also explains why a second chain takes off faster: COPM took **16.5 months** from deployment to cross 100 daily transactions on Polygon (first day: <!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->), and **7 weeks** from deployment to do it on Celo, about 6 from its first transfer (first day: <!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->). A second chain doesn't start from zero — it inherits partners, operations, and proven use cases.
 
 ## The running total: ~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> and counting
 

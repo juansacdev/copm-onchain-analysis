@@ -267,7 +267,9 @@ export async function runScan({
         );
         const retry = [];
         results.forEach((result, position) => {
-          const ts = Number(result.ok ? result.result?.timestamp : 0);
+          // A header counts only when it is the block that was asked for.
+          const answered = result.ok && Number(result.result?.number) === outstanding[position];
+          const ts = Number(answered ? result.result.timestamp : 0);
           if (ts > 0) known.set(outstanding[position], ts);
           else retry.push(outstanding[position]);
         });
