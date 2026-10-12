@@ -18,10 +18,10 @@ Si la historia de COPM en [Polygon](./polygon.es.md) es la de un rail institucio
 | **Total redimido (burns)** | <!-- copm:celo.burned -->4.863 millones<!-- /copm --> COPM ≈ <!-- copm:celo.burnedUsd -->US$1,2 millones<!-- /copm --> |
 | **Ticket promedio por transfer** | **~<!-- copm:celo.avgTicketUsd -->US$98<!-- /copm -->** |
 | **Promedio diario** | <!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> transfers · <!-- copm:celo.avgDailyGrossUsd -->US$17,3 mil<!-- /copm --> |
-| **Pico de transacciones en un día** | **<!-- copm:celo.peakTxCount -->1.919<!-- /copm -->** (<!-- copm:celo.peakTxDay -->2025-01-19<!-- /copm -->) |
+| **Pico de transferencias en un día** | **<!-- copm:celo.peakTxCount -->1.919<!-- /copm -->** (<!-- copm:celo.peakTxDay -->2025-01-19<!-- /copm -->) |
 | **Pico de volumen en un día** | **<!-- copm:celo.peakVolumeUsd -->US$737 mil<!-- /copm -->** (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) |
 | **Mes pico (volumen)** | <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->: <!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> |
-| **Mes pico (transacciones)** | <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->: <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> |
+| **Mes pico (transferencias)** | <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->: <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> |
 | **Pico de supply** | <!-- copm:celo.peakSupplyCopm -->1.145 millones<!-- /copm --> COPM ≈ <!-- copm:celo.peakSupplyUsd -->US$286 mil<!-- /copm --> (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->) |
 | **Supply actual** | <!-- copm:celo.supply -->418.585.134,63<!-- /copm --> COPM ≈ <!-- copm:celo.supplyUsd -->US$105 mil<!-- /copm --> |
 | **Holders con saldo** | <!-- copm:celo.holders -->998<!-- /copm --> (el mayor tiene <!-- copm:celo.top1Pct -->76,2 %<!-- /copm -->, los 10 mayores tienen <!-- copm:celo.top10Pct -->98,8 %<!-- /copm -->) |
@@ -46,11 +46,11 @@ La lectura: Polygon carga el settlement institucional — montos grandes, partne
 
 Deploy: <!-- copm:celo.deployDate -->2024-09-11<!-- /copm -->. Primer día con transfers en Celo: <!-- copm:celo.firstDay -->2024-09-17<!-- /copm -->. Primer día con más de 100 transfers: **<!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->**. Son 7 semanas después del despliegue y unas 6 después de la primera transferencia.
 
-La explicación es de manual: cuando COPM llegó a Celo, ya existía la operación, los partners y el caso de uso probados en Polygon. La segunda chain no arranca de cero — hereda la tracción de la primera. Y <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm --> fue su mes más activo de la historia: **<!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> transacciones**.
+La explicación es de manual: cuando COPM llegó a Celo, ya existía la operación, los partners y el caso de uso probados en Polygon. La segunda chain no arranca de cero — hereda la tracción de la primera. Y <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm --> fue su mes más activo de la historia: **<!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> transferencias**.
 
 ### El volumen es chico; la actividad no.
 
-<!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm --> brutos en <!-- copm:celo.years -->2,1<!-- /copm --> años suena pequeño al lado de los <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> de Polygon — y lo es. Pero el dato que sorprende es otro: **el promedio diario de transacciones es del mismo orden en las dos chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/día en Celo vs ~<!-- copm:polygon.avgDailyTransfers -->217<!-- /copm -->/día en Polygon). Celo procesa un flujo constante de operaciones pequeñas: hubo actividad en <!-- copm:celo.activeDays -->688<!-- /copm --> de los <!-- copm:celo.totalDays -->754<!-- /copm --> días auditados (<!-- copm:celo.activeDaysPct -->91 %<!-- /copm -->).
+<!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm --> brutos en <!-- copm:celo.years -->2,1<!-- /copm --> años suena pequeño al lado de los <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> de Polygon — y lo es. Pero el dato que sorprende es otro: **el promedio diario de transferencias es del mismo orden en las dos chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/día en Celo vs ~<!-- copm:polygon.avgDailyTransfers -->217<!-- /copm -->/día en Polygon). Celo procesa un flujo constante de operaciones pequeñas: hubo actividad en <!-- copm:celo.activeDays -->688<!-- /copm --> de los <!-- copm:celo.totalDays -->754<!-- /copm --> días auditados (<!-- copm:celo.activeDaysPct -->91 %<!-- /copm -->).
 
 La actividad llega en oleadas, eso sí. Los últimos meses son tranquilos: <!-- copm:celo.month.2026-09.transfers -->448<!-- /copm --> transfers en septiembre de 2026 frente a <!-- copm:celo.month.2026-06.transfers -->9.135<!-- /copm --> en junio de 2026 y <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->.
 
@@ -58,7 +58,7 @@ La actividad llega en oleadas, eso sí. Los últimos meses son tranquilos: <!-- 
 
 ### <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->: el pico de volumen.
 
-**<!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> en un mes**, con el <!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm --> moviendo **<!-- copm:celo.peakVolumeUsd -->US$737 mil<!-- /copm --> en un solo día** — el récord histórico de la chain. A diferencia de Polygon, donde el mes de mayor actividad y el de mayor volumen son <!-- copm:polygon.peakTxMonth -->noviembre 2025<!-- /copm --> y <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->, en Celo los picos van por separado: el de transacciones fue en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->, el de volumen en <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->. Otra señal de que los flujos aquí responden a dinámicas distintas.
+**<!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> en un mes**, con el <!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm --> moviendo **<!-- copm:celo.peakVolumeUsd -->US$737 mil<!-- /copm --> en un solo día** — el récord histórico de la chain. A diferencia de Polygon, donde el mes de mayor actividad y el de mayor volumen son <!-- copm:polygon.peakTxMonth -->noviembre 2025<!-- /copm --> y <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->, en Celo los picos van por separado: el de transferencias fue en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->, el de volumen en <!-- copm:celo.peakMonth -->julio 2025<!-- /copm -->. Otra señal de que los flujos aquí responden a dinámicas distintas.
 
 ### El supply cuadra exacto. Al wei.
 
@@ -84,7 +84,7 @@ El `FREEZER_ROLE` puede bloquear una dirección; el contrato emitió <!-- copm:c
 
 ## Top 10 días
 
-### Por transacciones
+### Por transferencias
 
 | Día | Transfers | Volumen bruto |
 | :--- | ---: | ---: |

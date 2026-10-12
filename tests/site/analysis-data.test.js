@@ -131,3 +131,18 @@ test("loader reports whether the supply reconciled to the wei", () => {
   assert.equal(broken.chains.celo.supplyExact, false);
   assert.equal(broken.chains.celo.checksPassed, 0);
 });
+
+test("a series that ends on the last day of a month counts that month as complete", () => {
+  const p = load({ polygon: { plan: { to: "2025-06-30" } } }).chains.polygon;
+  assert.equal(p.afterPeak.latestMonth, "2025-06");
+});
+
+test("a series that ends on the first day of a month leaves that month out", () => {
+  const p = load({ polygon: { plan: { to: "2025-06-01" } } }).chains.polygon;
+  assert.equal(p.afterPeak.latestMonth, "2025-05");
+});
+
+test("a series that ends the day before the last day of a month leaves that month out", () => {
+  const p = load({ polygon: { plan: { to: "2025-06-29" } } }).chains.polygon;
+  assert.equal(p.afterPeak.latestMonth, "2025-05");
+});

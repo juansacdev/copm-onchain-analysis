@@ -6,10 +6,14 @@
 // is pure. It turns parsed data into a flat map key -> figure, formats a
 // figure for a locale, and rewrites the markers of a text.
 
-const LOCALES = {
-  en: { group: ",", decimal: "." },
-  es: { group: ".", decimal: "," },
-};
+import {
+  LOCALES,
+  formatCopmCompact,
+  formatCopmExact,
+  formatDecimal,
+  formatUsd,
+  formatUsdFull,
+} from "./format.js";
 
 const MONTHS = {
   en: [
@@ -38,116 +42,26 @@ export const fig = {
   monthShort: (value) => ({ kind: "monthShort", value }),
 };
 
-const WEI = 10n ** 18n;
-
-const groupDigits = (digits, sep) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
-
-// Fixed decimals, no trailing zeros, locale separators. Works on the sign
-// separately so that -0.4 never prints as "-0".
-function number(n, digits, locale) {
-  const { group, decimal } = LOCALES[locale];
-  const fixed = Math.abs(n).toFixed(digits);
-  const [whole, frac = ""] = fixed.split(".");
-  const trimmed = frac.replace(/0+$/, "");
-  const sign = n < 0 && Number(fixed) !== 0 ? "-" : "";
-  return sign + groupDigits(whole, group) + (trimmed ? decimal + trimmed : "");
-}
+// Fixed decimals, no trailing zeros, locale separators.
+const number = (n, digits, locale) => formatDecimal(n, digits, locale, { trim: true });
 
 const copmToNumber = (value) =>
   typeof value === "bigint" ? Number(value / 10n ** 12n) / 1e6 : value;
 
-// Exact, rounded half up to 2 decimals, from a raw 18-decimal amount.
-function copmExact(wei, locale) {
-  const { group, decimal } = LOCALES[locale];
-  const negative = wei < 0n;
-  const abs = negative ? -wei : wei;
-  const hundredths = (abs + 5n * 10n ** 15n) / 10n ** 16n;
-  const whole = hundredths / 100n;
-  const cents = hundredths % 100n;
-  return (
-    (negative ? "-" : "") +
-    groupDigits(whole.toString(), group) +
-    decimal +
-    cents.toString().padStart(2, "0")
-  );
-}
+// Reports write dollars with B/M/K in English and words in Spanish, without
+// zero decimals.
+const usdCompact = (v, locale) => formatUsd(v, locale, locale === "es" ? "long" : "short", { trim: true });
 
-// Picks the largest unit that fits |v|, then checks the rounded text: a value
-// that rounds up to 1,000 of its unit ("1,000K") belongs to the next unit up.
-// `units` is ordered from the largest; the last one is the bare number.
-// Returns the sign separately so a currency symbol can follow it.
-function compact(v, units) {
-  const a = Math.abs(v);
-  let i = units.findIndex((u) => a >= u.min);
-  const rounded = (k) => Number((a / units[k].div).toFixed(units[k].digits(a)));
-  while (i > 0 && rounded(i) * units[i].div >= units[i - 1].min) i--;
-  const body = number(a / units[i].div, units[i].digits(a), units[i].locale);
-  return { sign: v < 0 && body !== "0" ? "-" : "", body: body + units[i].suffix };
-}
-
-const unit = (locale, min, digits, suffix, div = min) => ({
-  locale,
-  min,
-  div,
-  digits: typeof digits === "function" ? digits : () => digits,
-  suffix,
-});
-const bare = (locale) => unit(locale, 0, 0, "", 1);
-
-const USD_UNITS = {
-  en: [
-    unit("en", 1e9, 2, "B"),
-    unit("en", 1e6, 1, "M"),
-    unit("en", 1e3, (a) => (a < 1e5 ? 1 : 0), "K"),
-    bare("en"),
-  ],
-  es: [
-    unit("es", 1e6, (a) => (a < 1e9 ? 1 : 0), " millones"),
-    unit("es", 1e3, (a) => (a < 1e5 ? 1 : 0), " mil"),
-    bare("es"),
-  ],
-};
-
-function usdCompact(v, locale) {
-  const { sign, body } = compact(v, USD_UNITS[locale]);
-  return `${sign}${locale === "en" ? "$" : "US$"}${body}`;
-}
-
-// Whole-COPM number with exactly 2 decimals.
-const fixed2 = (v, locale) => {
-  const [whole, frac] = Math.abs(v).toFixed(2).split(".");
-  const { group, decimal } = LOCALES[locale];
-  return (v < 0 ? "-" : "") + groupDigits(whole, group) + decimal + frac;
-};
-
-const COPM_UNITS = {
-  en: [
-    unit("en", 1e12, 3, "T"),
-    unit("en", 1e9, 2, "B"),
-    unit("en", 1e6, 1, "M"),
-    bare("en"),
-  ],
-  es: [
-    unit("es", 1e12, 3, " billones"),
-    unit("es", 1e6, (a) => (a < 1e9 ? 1 : 0), " millones"),
-    bare("es"),
-  ],
-};
-
-function copmCompact(raw, locale) {
-  const { sign, body } = compact(copmToNumber(raw), COPM_UNITS[locale]);
-  return sign + body;
-}
+const copmCompact = (raw, locale) => formatCopmCompact(copmToNumber(raw), locale);
 
 const FORMATTERS = {
   int: (v, l) => number(v, 0, l),
   dec: (v, l, f) => number(v, f.digits, l),
   pct: (v, l, f) => `${number(v, f.digits, l)}${l === "es" ? " %" : "%"}`,
   usd: usdCompact,
-  usdFull: (v, l) => `${l === "es" ? "US$" : "$"}${number(v, 0, l)}`,
+  usdFull: formatUsdFull,
   copm: copmCompact,
-  copmFull: (v, l) =>
-    typeof v === "bigint" ? copmExact(v, l) : fixed2(v, l),
+  copmFull: (v, l) => (typeof v === "bigint" ? formatCopmExact(v, l) : formatDecimal(v, 2, l)),
   date: (v) => v,
   month: (v, l) => {
     const [year, month] = v.split("-");
@@ -250,6 +164,9 @@ const EVENT_NAMES = [
   "EIP712DomainChanged",
 ];
 const RANKING_SIZE = 10;
+// Turnover is measured over a 30-day window; a year is annualized by 365 / 30.
+const TURNOVER_WINDOW_DAYS = 30;
+const DAYS_PER_YEAR = 365;
 
 const sum = (rows, pick) => rows.reduce((total, r) => total + pick(r), 0);
 const weiToCopm = (wei) => Number(wei / 10n ** 12n) / 1e6;
@@ -362,7 +279,7 @@ function chainFigures(p, d, copPerUsd) {
     set(`month.${m.key}.transfers`, fig.int(m.transfers));
   }
 
-  const last30 = daily.slice(-30);
+  const last30 = daily.slice(-TURNOVER_WINDOW_DAYS);
   const last90 = daily.slice(-90);
   const gross30 = sum(last30, (r) => r.grossCOPM);
   const avgSupply30 = sum(last30, (r) => r.supplyEnd) / last30.length;
@@ -372,7 +289,7 @@ function chainFigures(p, d, copPerUsd) {
   set("last30GrossCopm", fig.copm(gross30));
   set("last30AvgSupply", fig.copm(avgSupply30));
   set("turnoverMonthly", fig.dec(monthlyTurnover, 1));
-  set("turnoverYearly", fig.int(Math.round(monthlyTurnover * 12)));
+  set("turnoverYearly", fig.int(Math.round((monthlyTurnover * DAYS_PER_YEAR) / TURNOVER_WINDOW_DAYS)));
 
   ranking(daily, "transfers").forEach((r, i) => {
     set(`topTx.${i + 1}.day`, fig.date(r.day));

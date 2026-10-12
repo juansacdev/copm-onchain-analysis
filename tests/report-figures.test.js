@@ -55,6 +55,24 @@ test("series figures come from daily.csv", () => {
   assert.equal(en(f, "polygon.last30GrossUsd"), "$2K");
 });
 
+test("yearly turnover annualizes the 30-day figure by 365 / 30", () => {
+  const day = (d, grossCOPM) => ({
+    day: d,
+    supplyEnd: 1_000_000,
+    transfers: 1,
+    activeAddresses: 1,
+    grossCOPM,
+    netCOPM: 0,
+    mintCOPM: 0,
+    burnCOPM: 0,
+  });
+  // 30 days of 1M COPM on a 1M supply: monthly turnover 30, yearly 365
+  const daily = Array.from({ length: 30 }, (_, i) => day(`2024-01-${String(i + 1).padStart(2, "0")}`, 1_000_000));
+  const f = buildFigures({ copPerUsd: 4000, chains: { polygon: chain({ daily }), celo: chain() } });
+  assert.equal(getFigure(f, "polygon.turnoverMonthly").value, 30);
+  assert.equal(getFigure(f, "polygon.turnoverYearly").value, 365);
+});
+
 test("rankings list the top days by transfers and by volume", () => {
   const f = built();
   assert.equal(en(f, "polygon.topTx.1.day"), "2024-02-01");

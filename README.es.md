@@ -33,7 +33,7 @@ Así que en vez de pedirte que me creas, lo audité: **<!-- copm:combined.transf
 | Eventos `Transfer` auditados | **<!-- copm:combined.transfers -->374.802<!-- /copm -->** |
 | Mes pico (Polygon) | **<!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm -->** (<!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->) |
 | Día de mayor volumen (Polygon) | **<!-- copm:polygon.peakVolumeUsd -->US$38,6 millones<!-- /copm -->** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
-| Día con más transacciones (Polygon) | **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> transacciones** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
+| Día con más transferencias (Polygon) | **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> transferencias** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | Rotación del supply (Polygon, últimos 30 días) | **~<!-- copm:polygon.turnoverMonthly -->13,7<!-- /copm -->x al mes** |
 | Reconciliación de supply | **Exacta en ambas chains**: minted − burned es igual a `totalSupply()` al wei |
 | Validación | **<!-- copm:combined.checksPassed -->34<!-- /copm -->/<!-- copm:combined.checksTotal -->34<!-- /copm --> checks estrictos** — offline, sin tolerancia, cada balance contrastado con `balanceOf` |

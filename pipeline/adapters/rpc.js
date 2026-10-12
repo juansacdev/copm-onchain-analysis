@@ -38,8 +38,15 @@ export class RpcError extends Error {}
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// A path segment is scrubbed on its own only when it looks like a credential:
+// long (20+ characters) or a mix of letters and digits (8+ characters).
+// Ordinary words such as "rpc" or "polygon" stay readable in messages.
+const looksLikeCredential = (segment) =>
+  segment.length >= 20 || (segment.length >= 8 && /[a-z]/i.test(segment) && /\d/.test(segment));
+
 // R6. Replaces everything that could identify or authenticate against the
-// endpoint (URL, host, credentials, path segments, query values) in one pass.
+// endpoint (URL, host, credentials, credential-looking path segments, query
+// values) in one pass, longest first.
 export function scrubUrl(text, url) {
   const secrets = new Set([url]);
   try {
@@ -47,8 +54,9 @@ export function scrubUrl(text, url) {
     for (const part of [u.href, u.origin, u.host, u.hostname, u.username, u.password]) {
       if (part) secrets.add(part);
     }
-    if (u.pathname.length > 1) secrets.add(u.pathname);
-    for (const segment of u.pathname.split("/")) if (segment.length >= 3) secrets.add(segment);
+    for (const segment of u.pathname.split("/")) {
+      if (looksLikeCredential(segment)) secrets.add(segment);
+    }
     for (const value of u.searchParams.values()) if (value.length >= 3) secrets.add(value);
   } catch {
     // not a parseable URL: the raw string is still removed

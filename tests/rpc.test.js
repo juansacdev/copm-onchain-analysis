@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRpc, requireRpcUrl, scrubUrl } from "../pipeline/adapters/rpc.js";
 
-const URL_WITH_SECRET = "https://secret.example/key";
+const URL_WITH_SECRET = "https://secret.example/k3yabc123";
 
 // A scripted fetch: each entry is a function (request) => response-ish or a
 // thrown error. Requests are recorded for inspection.
@@ -113,12 +113,12 @@ test("call returns the result and throws on a JSON-RPC error", async () => {
 test("R6: errors never contain the endpoint URL, host or key", async () => {
   const leaky = scriptedFetch([
     () => {
-      throw new Error(`connect ECONNREFUSED ${URL_WITH_SECRET} (host secret.example, key)`);
+      throw new Error(`connect ECONNREFUSED ${URL_WITH_SECRET} (host secret.example, key k3yabc123)`);
     },
   ]);
   await assert.rejects(rpc(leaky.fetch).batch([{ method: "a", params: [] }]), (err) => {
     assert.doesNotMatch(err.message, /secret\.example/);
-    assert.doesNotMatch(err.message, /key/);
+    assert.doesNotMatch(err.message, /k3yabc123/);
     assert.match(err.message, /ECONNREFUSED/);
     return true;
   });
@@ -128,7 +128,7 @@ test("R6: errors never contain the endpoint URL, host or key", async () => {
       ok([{ jsonrpc: "2.0", id: body[0].id, error: { code: 1, message: `bad ${URL_WITH_SECRET}` } }]),
   ]);
   const out = await rpc(itemError.fetch).batch([{ method: "a", params: [] }]);
-  assert.doesNotMatch(out[0].error, /secret\.example|key/);
+  assert.doesNotMatch(out[0].error, /secret\.example|k3yabc123/);
 });
 
 test("scrubUrl removes the URL, host, path segments and query values", () => {
@@ -138,6 +138,42 @@ test("scrubUrl removes the URL, host, path segments and query values", () => {
   for (const secret of ["node.example", "abcd1234", "zzz999", "pw"]) {
     assert.ok(!scrubbed.includes(secret), `${secret} leaked: ${scrubbed}`);
   }
+});
+
+test("scrubUrl leaves ordinary path words readable", async () => {
+  const { scrubConfiguredUrls } = await import("../pipeline/cli.js");
+  const env = {
+    CELO_RPC_URL: "http://127.0.0.1:1/rpc/celokey9",
+    POLYGON_RPC_URL: "https://rpc.ankr.com/polygon/a1b2c3d4e5",
+  };
+  assert.equal(
+    scrubConfiguredUrls("error: rpc request failed after 6 attempts", env),
+    "error: rpc request failed after 6 attempts"
+  );
+  assert.equal(
+    scrubConfiguredUrls('no state.json for polygon: run "scan --chain polygon" first', env),
+    'no state.json for polygon: run "scan --chain polygon" first'
+  );
+});
+
+test("scrubUrl removes credential-looking path segments, query values and userinfo", () => {
+  const hexKey = "0123456789abcdef0123456789abcdef";
+  const url = `https://rpc.example.org/v3/${hexKey}?token=queryvalue&apikey=zzz999`;
+  const text = `GET ${url} -> failed (${hexKey}, queryvalue, zzz999, rpc.example.org)`;
+  const scrubbed = scrubUrl(text, url);
+  for (const secret of [hexKey, "queryvalue", "zzz999", "rpc.example.org"]) {
+    assert.ok(!scrubbed.includes(secret), `${secret} leaked: ${scrubbed}`);
+  }
+
+  const withUser = "https://alice:s3cretpw@node.example:8545/rpc";
+  const out = scrubUrl("auth alice:s3cretpw@node.example failed", withUser);
+  assert.ok(!/alice|s3cretpw|node\.example/.test(out), out);
+  assert.equal(scrubUrl("the rpc is down", withUser), "the rpc is down");
+});
+
+test("scrubUrl scrubs a long path segment even without digits", () => {
+  const url = "https://node.example/abcdefghijklmnopqrstuvwxyz";
+  assert.ok(!scrubUrl("bad abcdefghijklmnopqrstuvwxyz", url).includes("abcdefgh"));
 });
 
 test("requireRpcUrl names the missing variable and never echoes another chain's URL", () => {

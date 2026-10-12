@@ -42,15 +42,15 @@ test("compact amounts that round up to 1,000 of a unit move to the next unit", (
   assert.equal(en(fig.usd(999_999_999)), "$1B");
   assert.equal(en(fig.usd(999.6)), "$1K");
   assert.equal(en(fig.usd(99_999)), "$100K");
-  assert.equal(es(fig.usd(999_999)), "US$1 millones");
+  assert.equal(es(fig.usd(999_999)), "US$1 millón");
   assert.equal(es(fig.usd(999.6)), "US$1 mil");
   assert.equal(es(fig.usd(999_999_999)), "US$1.000 millones");
 
   assert.equal(en(fig.copm(999_999_999.6)), "1B");
   assert.equal(en(fig.copm(999_999.6)), "1M");
   assert.equal(en(fig.copm(999_999_999_999.6)), "1T");
-  assert.equal(es(fig.copm(999_999.6)), "1 millones");
-  assert.equal(es(fig.copm(999_999_999_999.6)), "1 billones");
+  assert.equal(es(fig.copm(999_999.6)), "1 millón");
+  assert.equal(es(fig.copm(999_999_999_999.6)), "1 billón");
   assert.equal(es(fig.copm(999_999_999.6)), "1.000 millones");
   assert.equal(en(fig.copm(999.6)), "1,000");
 });
