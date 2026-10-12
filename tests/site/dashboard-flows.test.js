@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { flowTotals } from "../../site/src/features/dashboard/charts.js";
+// Imported from the pure view module, not from charts.js: charts.js loads the
+// charting library, which is a dependency of site/ and is not installed where
+// the pipeline tests run (the root `npm ci` in CI).
+import { flowTotalsOf, viewWindow } from "../../site/src/lib/dashboard-view.js";
+
+const flowTotals = (ctx, chain) => flowTotalsOf(chain, viewWindow(ctx.payload.chains, ctx.state), ctx.state.unit);
 
 // Two days at two rates: the same COPM is worth different dollars.
 const chain = {
