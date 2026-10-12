@@ -23,18 +23,18 @@ And here comes the classic problem: almost none of it can be shown. The code bel
 
 But there's one giant exception: **the blockchain is public by definition.** Every mint, every burn, every COPM transfer was recorded on Polygon and Celo, verifiable by anyone, forever. It's not the company's internal information, not its codebase, not its IP — it's the public record of what the system did.
 
-So instead of asking you to take my word for it, I audited it: **<!-- copm:combined.transfers -->374,802<!-- /copm --> `Transfer` events, ~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> in volume, two chains, <!-- copm:combined.checksPassed -->38<!-- /copm --> validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
+So instead of asking you to take my word for it, I audited it: **<!-- copm:combined.transfers -->374,820<!-- /copm --> `Transfer` events, ~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> in volume, two chains, <!-- copm:combined.checksPassed -->38<!-- /copm --> validation checks in the green.** This repository is the evidence, the scripts to reproduce it, and the analysis of what it tells.
 
 ## The headlines
 
 | Metric | Value |
 | :--- | :--- |
 | Total gross volume (both chains) | **~<!-- copm:combined.grossVolumeUsd -->$2.18B<!-- /copm --> USD** |
-| Audited `Transfer` events | **<!-- copm:combined.transfers -->374,802<!-- /copm -->** |
+| Audited `Transfer` events | **<!-- copm:combined.transfers -->374,820<!-- /copm -->** |
 | Peak month (Polygon) | **<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** (<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->) |
 | Peak volume day (Polygon) | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | Busiest day (Polygon) | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transfers** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
-| Supply turnover (Polygon, last 30 days) | **~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm -->x per month** |
+| Supply turnover (Polygon, last 30 days) | **~<!-- copm:polygon.turnoverMonthly -->13.8<!-- /copm -->x per month** |
 | Supply reconciliation | **Exact on both chains**: minted − burned equals `totalSupply()` to the wei |
 | Validation | **<!-- copm:combined.checksPassed -->38<!-- /copm -->/<!-- copm:combined.checksTotal -->38<!-- /copm --> strict checks** — offline, no tolerance, every balance checked against `balanceOf` |
 
@@ -96,7 +96,7 @@ It writes `data/<chain>/holders.csv` (one row per address with a positive balanc
 
 ### The figures in these documents
 
-No number in the reports is typed by hand. A figure is written as `<!-- copm:polygon.transfers -->241,858<!-- /copm -->`, invisible when rendered, and `npm run reports` rewrites its content from `data/<chain>/*` (English or Spanish formatting by file name: `*.es.md` is Spanish). `npm run reports:check` writes nothing and exits 1 if any figure is out of date; `audit:all` ends with `reports`. Keys are built in [`pipeline/domain/report.js`](./pipeline/domain/report.js). Numbers that are not derived from the data (years, addresses, block-explorer links) stay plain text.
+No number in the reports is typed by hand. A figure is written as `<!-- copm:polygon.transfers -->241,876<!-- /copm -->`, invisible when rendered, and `npm run reports` rewrites its content from `data/<chain>/*` (English or Spanish formatting by file name: `*.es.md` is Spanish). `npm run reports:check` writes nothing and exits 1 if any figure is out of date; `audit:all` ends with `reports`. Keys are built in [`pipeline/domain/report.js`](./pipeline/domain/report.js). Numbers that are not derived from the data (years, addresses, block-explorer links) stay plain text.
 
 ### Validation
 

@@ -6,22 +6,22 @@
 >
 > ¿Quieres el detalle de una sola chain? Cada una tiene su auditoría independiente: **[Polygon](./audit/polygon.es.md)** · **[Celo](./audit/celo.es.md)**
 
-Datos al bloque <!-- copm:polygon.checkpointBlock -->95.370.448<!-- /copm --> de Polygon y al bloque <!-- copm:celo.checkpointBlock -->79.861.762<!-- /copm --> de Celo (<!-- copm:polygon.checkpointDate -->2026-10-11<!-- /copm -->). Cada cifra de esta página se completa desde `data/` con `npm run reports`.
+Datos al bloque <!-- copm:polygon.checkpointBlock -->95.378.468<!-- /copm --> de Polygon y al bloque <!-- copm:celo.checkpointBlock -->79.872.373<!-- /copm --> de Celo (<!-- copm:polygon.checkpointDate -->2026-10-12<!-- /copm -->). Cada cifra de esta página se completa desde `data/` con `npm run reports`.
 
 ## Los números, lado a lado
 
 | Métrica | Polygon | Celo | **Total** |
 | :--- | ---: | ---: | ---: |
 | Deploy del contrato | <!-- copm:polygon.deployDate -->2023-09-19<!-- /copm --> | <!-- copm:celo.deployDate -->2024-09-11<!-- /copm --> | — |
-| Días auditados | <!-- copm:polygon.totalDays -->1.117<!-- /copm --> | <!-- copm:celo.totalDays -->754<!-- /copm --> | — |
-| Eventos `Transfer` | <!-- copm:polygon.transfers -->241.858<!-- /copm --> | <!-- copm:celo.transfers -->132.944<!-- /copm --> | **<!-- copm:combined.transfers -->374.802<!-- /copm -->** |
+| Días auditados | <!-- copm:polygon.totalDays -->1.118<!-- /copm --> | <!-- copm:celo.totalDays -->754<!-- /copm --> | — |
+| Eventos `Transfer` | <!-- copm:polygon.transfers -->241.876<!-- /copm --> | <!-- copm:celo.transfers -->132.944<!-- /copm --> | **<!-- copm:combined.transfers -->374.820<!-- /copm -->** |
 | Volumen bruto (USD) | <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> | <!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm --> | **~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm -->** |
 | Volumen neto (USD) | <!-- copm:polygon.netVolumeUsd -->US$1.541 millones<!-- /copm --> | <!-- copm:celo.netVolumeUsd -->US$10,5 millones<!-- /copm --> | **<!-- copm:combined.netVolumeUsd -->US$1.551 millones<!-- /copm -->** |
 | Ticket promedio | ~<!-- copm:polygon.avgTicketUsd -->US$8.952<!-- /copm --> | ~<!-- copm:celo.avgTicketUsd -->US$98<!-- /copm --> | — |
 | Pico de transferencias/día | <!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) | <!-- copm:celo.peakTxCount -->1.919<!-- /copm --> (<!-- copm:celo.peakTxDay -->2025-01-19<!-- /copm -->) | — |
 | Pico de volumen/día | <!-- copm:polygon.peakVolumeUsd -->US$38,6 millones<!-- /copm --> (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) | <!-- copm:celo.peakVolumeUsd -->US$737 mil<!-- /copm --> (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) | — |
 | Mes pico (volumen) | <!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm --> (<!-- copm:polygon.peakMonthShort -->nov 2025<!-- /copm -->) | <!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> (<!-- copm:celo.peakMonthShort -->jul 2025<!-- /copm -->) | — |
-| Supply on-chain actual | <!-- copm:polygon.supplyCompact -->4.482 millones<!-- /copm --> COPM | <!-- copm:celo.supplyCompact -->418,6 millones<!-- /copm --> COPM | **<!-- copm:combined.supply -->4.901 millones<!-- /copm --> COPM ≈ <!-- copm:combined.supplyUsd -->US$1,2 millones<!-- /copm -->** |
+| Supply on-chain actual | <!-- copm:polygon.supplyCompact -->4.478 millones<!-- /copm --> COPM | <!-- copm:celo.supplyCompact -->418,6 millones<!-- /copm --> COPM | **<!-- copm:combined.supply -->4.897 millones<!-- /copm --> COPM ≈ <!-- copm:combined.supplyUsd -->US$1,2 millones<!-- /copm -->** |
 | Holders con saldo | <!-- copm:polygon.holders -->582<!-- /copm --> | <!-- copm:celo.holders -->998<!-- /copm --> | **<!-- copm:combined.holders -->1.580<!-- /copm -->** |
 | Reglas de validación estricta | <!-- copm:polygon.checksPassed -->19<!-- /copm -->/<!-- copm:polygon.checksTotal -->19<!-- /copm --> ✅ | <!-- copm:celo.checksPassed -->19<!-- /copm -->/<!-- copm:celo.checksTotal -->19<!-- /copm --> ✅ | **<!-- copm:combined.checksPassed -->38<!-- /copm -->/<!-- copm:combined.checksTotal -->38<!-- /copm --> ✅** |
 
@@ -33,7 +33,7 @@ Datos al bloque <!-- copm:polygon.checkpointBlock -->95.370.448<!-- /copm --> de
 
 Mira el ticket promedio: **<!-- copm:polygon.avgTicketUsd -->US$8.952<!-- /copm --> en Polygon, <!-- copm:celo.avgTicketUsd -->US$98<!-- /copm --> en Celo**. Esa diferencia de unos dos órdenes de magnitud no es ruido — es arquitectura.
 
-Polygon es el rail institucional: settlement B2B, montos grandes, casi todo el volumen histórico. Celo es la red de pagos pequeños: remesas, micropagos, billeteras de usuario final — con un conteo de transferencias diarias del mismo orden que el de Polygon (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> vs ~<!-- copm:polygon.avgDailyTransfers -->217<!-- /copm -->), pero moviendo una fracción pequeña del valor.
+Polygon es el rail institucional: settlement B2B, montos grandes, casi todo el volumen histórico. Celo es la red de pagos pequeños: remesas, micropagos, billeteras de usuario final — con un conteo de transferencias diarias del mismo orden que el de Polygon (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> vs ~<!-- copm:polygon.avgDailyTransfers -->216<!-- /copm -->), pero moviendo una fracción pequeña del valor.
 
 ![Volumen mensual por chain](../charts/combined/01-monthly-volume-by-chain.svg)
 
@@ -53,7 +53,7 @@ También explica por qué la segunda chain despega más rápido: COPM tardó **1
 
 ![Supply por chain](../charts/combined/04-supply-by-chain.svg)
 
-En ambas chains, el supply derivado de reproducir cada evento `Transfer` (<!-- copm:polygon.transfers -->241.858<!-- /copm --> en Polygon, <!-- copm:celo.transfers -->132.944<!-- /copm --> en Celo) es igual al `totalSupply()` del contrato en vivo **al wei**: <!-- copm:polygon.supply -->4.482.231.674,75<!-- /copm --> COPM en Polygon y <!-- copm:celo.supply -->418.585.134,63<!-- /copm --> COPM en Celo. El supply de Polygon tuvo su máximo en <!-- copm:polygon.peakSupplyCopm -->11.363 millones<!-- /copm --> COPM el <!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->; el de Celo, en <!-- copm:celo.peakSupplyCopm -->1.145 millones<!-- /copm --> COPM el <!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->.
+En ambas chains, el supply derivado de reproducir cada evento `Transfer` (<!-- copm:polygon.transfers -->241.876<!-- /copm --> en Polygon, <!-- copm:celo.transfers -->132.944<!-- /copm --> en Celo) es igual al `totalSupply()` del contrato en vivo **al wei**: <!-- copm:polygon.supply -->4.478.360.707,75<!-- /copm --> COPM en Polygon y <!-- copm:celo.supply -->418.585.134,63<!-- /copm --> COPM en Celo. El supply de Polygon tuvo su máximo en <!-- copm:polygon.peakSupplyCopm -->11.363 millones<!-- /copm --> COPM el <!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->; el de Celo, en <!-- copm:celo.peakSupplyCopm -->1.145 millones<!-- /copm --> COPM el <!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->.
 
 Versiones anteriores de este dataset omitían parte del historial de Polygon y mostraban una diferencia contra `totalSupply()`. La validación estricta existe para que eso no vuelva a pasar: no tolera ninguna diferencia.
 

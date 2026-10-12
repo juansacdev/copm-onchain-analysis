@@ -4,7 +4,7 @@
 >
 > 🇬🇧 [English version](./celo.md) · 📖 [Glosario](../GLOSSARY.es.md) · 🔔 [Eventos del contrato](../EVENTS.es.md) · 🔗 [Auditoría unificada Polygon + Celo](../AUDIT.es.md)
 
-Si la historia de COPM en [Polygon](./polygon.es.md) es la de un rail institucional, la de Celo es otra completamente distinta — y verlas juntas es donde está la gracia. Misma stablecoin, dos roles. Cada cifra de abajo se completa desde `data/celo/` con `npm run reports`; el checkpoint es el bloque <!-- copm:celo.checkpointBlock -->79.861.762<!-- /copm --> (<!-- copm:celo.checkpointDate -->2026-10-11<!-- /copm -->).
+Si la historia de COPM en [Polygon](./polygon.es.md) es la de un rail institucional, la de Celo es otra completamente distinta — y verlas juntas es donde está la gracia. Misma stablecoin, dos roles. Cada cifra de abajo se completa desde `data/celo/` con `npm run reports`; el checkpoint es el bloque <!-- copm:celo.checkpointBlock -->79.872.373<!-- /copm --> (<!-- copm:celo.checkpointDate -->2026-10-12<!-- /copm -->).
 
 ## Resumen ejecutivo
 
@@ -50,7 +50,7 @@ La explicación es de manual: cuando COPM llegó a Celo, ya existía la operaci�
 
 ### El volumen es chico; la actividad no.
 
-<!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm --> brutos en <!-- copm:celo.years -->2,1<!-- /copm --> años suena pequeño al lado de los <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> de Polygon — y lo es. Pero el dato que sorprende es otro: **el promedio diario de transferencias es del mismo orden en las dos chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/día en Celo vs ~<!-- copm:polygon.avgDailyTransfers -->217<!-- /copm -->/día en Polygon). Celo procesa un flujo constante de operaciones pequeñas: hubo actividad en <!-- copm:celo.activeDays -->688<!-- /copm --> de los <!-- copm:celo.totalDays -->754<!-- /copm --> días auditados (<!-- copm:celo.activeDaysPct -->91 %<!-- /copm -->).
+<!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm --> brutos en <!-- copm:celo.years -->2,1<!-- /copm --> años suena pequeño al lado de los <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> de Polygon — y lo es. Pero el dato que sorprende es otro: **el promedio diario de transferencias es del mismo orden en las dos chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/día en Celo vs ~<!-- copm:polygon.avgDailyTransfers -->216<!-- /copm -->/día en Polygon). Celo procesa un flujo constante de operaciones pequeñas: hubo actividad en <!-- copm:celo.activeDays -->688<!-- /copm --> de los <!-- copm:celo.totalDays -->754<!-- /copm --> días auditados (<!-- copm:celo.activeDaysPct -->91 %<!-- /copm -->).
 
 La actividad llega en oleadas, eso sí. Los últimos meses son tranquilos: <!-- copm:celo.month.2026-09.transfers -->448<!-- /copm --> transfers en septiembre de 2026 frente a <!-- copm:celo.month.2026-06.transfers -->9.135<!-- /copm --> en junio de 2026 y <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->.
 

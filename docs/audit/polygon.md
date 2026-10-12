@@ -4,26 +4,26 @@
 >
 > 🇪🇸 [Versión en español](./polygon.es.md) · 📖 [Glossary](../GLOSSARY.md) · 🔔 [Contract events](../EVENTS.md) · 🔗 [Unified Polygon + Celo audit](../AUDIT.md)
 
-The data in this document doesn't come from a dashboard or a third party. It comes from the blockchain, event by event, using the scripts in this very repository. Anyone can reproduce every number. Every figure below is filled from `data/polygon/` by `npm run reports`; the checkpoint is block <!-- copm:polygon.checkpointBlock -->95,370,448<!-- /copm --> (<!-- copm:polygon.checkpointDate -->2026-10-11<!-- /copm -->).
+The data in this document doesn't come from a dashboard or a third party. It comes from the blockchain, event by event, using the scripts in this very repository. Anyone can reproduce every number. Every figure below is filled from `data/polygon/` by `npm run reports`; the checkpoint is block <!-- copm:polygon.checkpointBlock -->95,378,468<!-- /copm --> (<!-- copm:polygon.checkpointDate -->2026-10-12<!-- /copm -->).
 
 ## Executive summary
 
 | Metric | Value |
 | :--- | :--- |
-| **Audited period** | <!-- copm:polygon.firstDay -->2023-09-21<!-- /copm --> → <!-- copm:polygon.lastDay -->2026-10-11<!-- /copm --> (<!-- copm:polygon.totalDays -->1,117<!-- /copm --> days, ~<!-- copm:polygon.years -->3.1<!-- /copm --> years) |
-| **`Transfer` events** | **<!-- copm:polygon.transfers -->241,858<!-- /copm -->** |
+| **Audited period** | <!-- copm:polygon.firstDay -->2023-09-21<!-- /copm --> → <!-- copm:polygon.lastDay -->2026-10-12<!-- /copm --> (<!-- copm:polygon.totalDays -->1,118<!-- /copm --> days, ~<!-- copm:polygon.years -->3.1<!-- /copm --> years) |
+| **`Transfer` events** | **<!-- copm:polygon.transfers -->241,876<!-- /copm -->** |
 | **Gross volume moved** | <!-- copm:polygon.grossVolumeCopm -->8.661T<!-- /copm --> COPM ≈ **<!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> USD** |
 | **Net volume** (excl. mints/burns) | <!-- copm:polygon.netVolumeCopm -->6.164T<!-- /copm --> COPM ≈ **<!-- copm:polygon.netVolumeUsd -->$1.54B<!-- /copm --> USD** |
 | **Total issued (mints)** | <!-- copm:polygon.minted -->1.251T<!-- /copm --> COPM ≈ <!-- copm:polygon.mintedUsd -->$312.7M<!-- /copm --> USD |
 | **Total redeemed (burns)** | <!-- copm:polygon.burned -->1.246T<!-- /copm --> COPM ≈ <!-- copm:polygon.burnedUsd -->$311.5M<!-- /copm --> USD |
-| **Daily average** | <!-- copm:polygon.avgDailyTransfers -->217<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->$1.9M<!-- /copm --> USD |
+| **Daily average** | <!-- copm:polygon.avgDailyTransfers -->216<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->$1.9M<!-- /copm --> USD |
 | **Average ticket per transfer** | ~<!-- copm:polygon.avgTicketUsd -->$8,952<!-- /copm --> USD |
 | **Peak transfers in one day** | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | **Peak volume in one day** | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | **Peak month** | **<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->: <!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** |
 | **Supply peak** | <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM ≈ <!-- copm:polygon.peakSupplyUsd -->$2.8M<!-- /copm --> USD (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->) |
-| **Current supply** | <!-- copm:polygon.supply -->4,482,231,674.75<!-- /copm --> COPM ≈ <!-- copm:polygon.supplyUsd -->$1.1M<!-- /copm --> USD |
-| **Holders with a balance** | <!-- copm:polygon.holders -->582<!-- /copm --> (the largest holds <!-- copm:polygon.top1Pct -->65.6%<!-- /copm -->, the top 10 hold <!-- copm:polygon.top10Pct -->95.5%<!-- /copm -->) |
+| **Current supply** | <!-- copm:polygon.supply -->4,478,360,707.75<!-- /copm --> COPM ≈ <!-- copm:polygon.supplyUsd -->$1.1M<!-- /copm --> USD |
+| **Holders with a balance** | <!-- copm:polygon.holders -->582<!-- /copm --> (the largest holds <!-- copm:polygon.top1Pct -->65.7%<!-- /copm -->, the top 10 hold <!-- copm:polygon.top10Pct -->95.6%<!-- /copm -->) |
 
 > **FX rate:** 1 USD = <!-- copm:fx.copPerUsd -->4,000<!-- /copm --> COP, constant. The real rate moved over the period, so USD figures carry a ±5% margin. Configurable when reproducing.
 
@@ -35,7 +35,7 @@ Unfamiliar with a term? It's in the [glossary](../GLOSSARY.md).
 
 ### Over <!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> moved. No pause, ever.
 
-<!-- copm:polygon.grossVolumeCopm -->8.661T<!-- /copm --> COPM changed hands in <!-- copm:polygon.totalDays -->1,117<!-- /copm --> days: **~<!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> USD** gross, **<!-- copm:polygon.netVolumeUsd -->$1.54B<!-- /copm -->** net between wallets. The `PAUSER_ROLE` can stop every transfer; its `Paused` event was emitted <!-- copm:polygon.events.Paused -->0<!-- /copm --> times. There was activity on <!-- copm:polygon.activeDays -->910<!-- /copm --> of the <!-- copm:polygon.totalDays -->1,117<!-- /copm --> audited days (<!-- copm:polygon.activeDaysPct -->81%<!-- /copm -->).
+<!-- copm:polygon.grossVolumeCopm -->8.661T<!-- /copm --> COPM changed hands in <!-- copm:polygon.totalDays -->1,118<!-- /copm --> days: **~<!-- copm:polygon.grossVolumeUsd -->$2.17B<!-- /copm --> USD** gross, **<!-- copm:polygon.netVolumeUsd -->$1.54B<!-- /copm -->** net between wallets. The `PAUSER_ROLE` can stop every transfer; its `Paused` event was emitted <!-- copm:polygon.events.Paused -->0<!-- /copm --> times. There was activity on <!-- copm:polygon.activeDays -->911<!-- /copm --> of the <!-- copm:polygon.totalDays -->1,118<!-- /copm --> audited days (<!-- copm:polygon.activeDaysPct -->81%<!-- /copm -->).
 
 ![Daily gross volume USD](../../charts/polygon/02-daily-volume-usd.svg)
 
@@ -72,23 +72,23 @@ Monthly gross volume, from the peak on:
 | July 2026 | <!-- copm:polygon.month.2026-07.usd -->$34.3M<!-- /copm --> | <!-- copm:polygon.month.2026-07.transfers -->12,717<!-- /copm --> |
 | August 2026 | <!-- copm:polygon.month.2026-08.usd -->$26.1M<!-- /copm --> | <!-- copm:polygon.month.2026-08.transfers -->9,913<!-- /copm --> |
 | September 2026 | <!-- copm:polygon.month.2026-09.usd -->$22.3M<!-- /copm --> | <!-- copm:polygon.month.2026-09.transfers -->9,118<!-- /copm --> |
-| October 2026 (to <!-- copm:polygon.lastDay -->2026-10-11<!-- /copm -->) | <!-- copm:polygon.month.2026-10.usd -->$6M<!-- /copm --> | <!-- copm:polygon.month.2026-10.transfers -->3,023<!-- /copm --> |
+| October 2026 (to <!-- copm:polygon.lastDay -->2026-10-12<!-- /copm -->) | <!-- copm:polygon.month.2026-10.usd -->$6M<!-- /copm --> | <!-- copm:polygon.month.2026-10.transfers -->3,041<!-- /copm --> |
 
 Volume settled between December and April, jumped in May 2026, and has declined every month since. The second-highest volume day in the token's history, **<!-- copm:polygon.topVol.2.day -->2026-05-05<!-- /copm -->** (<!-- copm:polygon.topVol.2.usd -->$31.5M<!-- /copm -->), belongs to that rebound. The supply followed: it peaked at <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM on <!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm --> and stands at <!-- copm:polygon.supplyCompact -->4.48B<!-- /copm --> COPM at the checkpoint.
 
 | Window | Gross volume |
 | :--- | :--- |
 | <!-- copm:polygon.peakMonth -->November 2025<!-- /copm --> (peak month) | <!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> |
-| Last 90 days | <!-- copm:polygon.last90GrossUsd -->$76.1M<!-- /copm --> |
+| Last 90 days | <!-- copm:polygon.last90GrossUsd -->$74.5M<!-- /copm --> |
 | Last 30 days | <!-- copm:polygon.last30GrossUsd -->$21.2M<!-- /copm --> |
 
-### Supply turns over ~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm --> times a month. That's a payment rail, not a vault.
+### Supply turns over ~<!-- copm:polygon.turnoverMonthly -->13.8<!-- /copm --> times a month. That's a payment rail, not a vault.
 
-- Average supply (last 30 days): ~<!-- copm:polygon.last30AvgSupply -->6.21B<!-- /copm --> COPM
-- Gross volume (last 30 days): ~<!-- copm:polygon.last30GrossUsd -->$21.2M<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.93B<!-- /copm --> COPM
-- **Implied turnover: ~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm -->x per month, ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm -->x per year**
+- Average supply (last 30 days): ~<!-- copm:polygon.last30AvgSupply -->6.15B<!-- /copm --> COPM
+- Gross volume (last 30 days): ~<!-- copm:polygon.last30GrossUsd -->$21.2M<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.75B<!-- /copm --> COPM
+- **Implied turnover: ~<!-- copm:polygon.turnoverMonthly -->13.8<!-- /copm -->x per month, ~<!-- copm:polygon.turnoverYearly -->168<!-- /copm -->x per year**
 
-For reference: USDT and USDC turn over on the order of 10–20x **per year**. COPM rotates its supply roughly an order of magnitude faster than that range. The reading is direct: nobody holds COPM for long — the average COPM changes hands ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm --> times a year. That is the behavior of a *settlement rail*, not a store of value.
+For reference: USDT and USDC turn over on the order of 10–20x **per year**. COPM rotates its supply roughly an order of magnitude faster than that range. The reading is direct: nobody holds COPM for long — the average COPM changes hands ~<!-- copm:polygon.turnoverYearly -->168<!-- /copm --> times a year. That is the behavior of a *settlement rail*, not a store of value.
 
 ![Circulating supply](../../charts/polygon/03-supply-over-time.svg)
 
@@ -104,7 +104,7 @@ Why does this matter? Because a burn is someone converting COPM back into pesos.
 
 ### Who holds it: a handful of addresses.
 
-At the checkpoint, <!-- copm:polygon.holders -->582<!-- /copm --> addresses hold a balance (of <!-- copm:polygon.addressesEverSeen -->2,555<!-- /copm --> that ever touched the token). The largest holds <!-- copm:polygon.top1Pct -->65.6%<!-- /copm --> of the supply and the top 10 hold <!-- copm:polygon.top10Pct -->95.5%<!-- /copm -->. <!-- copm:polygon.contracts -->244<!-- /copm --> of the holders are contracts, not wallets. The full table is in `data/polygon/holders.csv`.
+At the checkpoint, <!-- copm:polygon.holders -->582<!-- /copm --> addresses hold a balance (of <!-- copm:polygon.addressesEverSeen -->2,555<!-- /copm --> that ever touched the token). The largest holds <!-- copm:polygon.top1Pct -->65.7%<!-- /copm --> of the supply and the top 10 hold <!-- copm:polygon.top10Pct -->95.6%<!-- /copm -->. <!-- copm:polygon.contracts -->244<!-- /copm --> of the holders are contracts, not wallets. The full table is in `data/polygon/holders.csv`.
 
 ### Governance: who holds the roles.
 
@@ -154,7 +154,7 @@ No number in this audit is reported unverified. The validation step ([`pipeline/
 
 | # | Rule | Result |
 | :--- | :--- | :--- |
-| 1 | Event count: stored transfers equal the checkpoint | ✅ <!-- copm:polygon.transfers -->241,858<!-- /copm --> = <!-- copm:polygon.transfers -->241,858<!-- /copm --> |
+| 1 | Event count: stored transfers equal the checkpoint | ✅ <!-- copm:polygon.transfers -->241,876<!-- /copm --> = <!-- copm:polygon.transfers -->241,876<!-- /copm --> |
 | 2 | Supply: minted − burned equals `totalSupply()` at the checkpoint block | ✅ difference 0 wei |
 | 3 | Replaying the stored transfers reproduces the checkpoint ledger | ✅ |
 | 4 | No negative balance in the ledger | ✅ |
@@ -163,12 +163,12 @@ No number in this audit is reported unverified. The validation step ([`pipeline/
 | 7 | Every row sits in the partition of its UTC month | ✅ |
 | 8 | Nothing above the checkpoint block | ✅ |
 | 9 | Nothing before the deploy block | ✅ block <!-- copm:polygon.deployBlock -->47,747,145<!-- /copm --> |
-| 10 | Every transfer has an exact block timestamp | ✅ <!-- copm:polygon.transfers -->241,858<!-- /copm --> events, 0 missing |
+| 10 | Every transfer has an exact block timestamp | ✅ <!-- copm:polygon.transfers -->241,876<!-- /copm --> events, 0 missing |
 | 11 | Timestamps inside the deploy → checkpoint window | ✅ |
 | 12 | Admin events strictly ordered, none above the checkpoint | ✅ |
 | 13 | Admin event count equals the checkpoint | ✅ <!-- copm:polygon.adminEvents -->11<!-- /copm --> events |
 | 14 | `daily.csv` equals the series rebuilt from the ledger, ending at `totalSupply()` | ✅ |
-| 15 | Daily series has the length announced in `summary.json` | ✅ <!-- copm:polygon.totalDays -->1,117<!-- /copm --> days |
+| 15 | Daily series has the length announced in `summary.json` | ✅ <!-- copm:polygon.totalDays -->1,118<!-- /copm --> days |
 | 16 | Daily series is continuous (no missing day) | ✅ 0 gaps |
 | 17 | `daily.csv` transfer total equals `summary.json` | ✅ |
 
