@@ -1,0 +1,101 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { buildFigures, formatFigure, getFigure } from "../pipeline/domain/report.js";
+import { chain } from "./helpers/report-fixture.js";
+
+const built = () => buildFigures({ copPerUsd: 4000, chains: { polygon: chain(), celo: chain() } });
+const en = (figures, key) => formatFigure(getFigure(figures, key), "en");
+const es = (figures, key) => formatFigure(getFigure(figures, key), "es");
+
+test("headline counts come from the checkpoint and the snapshot", () => {
+  const f = built();
+  assert.equal(en(f, "polygon.transfers"), "8");
+  assert.equal(en(f, "polygon.approvals"), "20");
+  assert.equal(en(f, "polygon.holders"), "7");
+  assert.equal(en(f, "polygon.frozenAccounts"), "1");
+  assert.equal(en(f, "polygon.checkpointBlock"), "5,000");
+  assert.equal(es(f, "polygon.checkpointBlock"), "5.000");
+  assert.equal(en(f, "polygon.checkpointDate"), "2024-02-03");
+  assert.equal(en(f, "polygon.deployDate"), "2024-01-30");
+  assert.equal(en(f, "polygon.deployBlock"), "100");
+});
+
+test("the audited span is written in years", () => {
+  const summary = { ...chain().summary, range: { firstDay: "2023-09-21", lastDay: "2026-10-11", totalDays: 1117 } };
+  const f = buildFigures({ copPerUsd: 4000, chains: { polygon: chain({ summary }), celo: chain() } });
+  assert.equal(en(f, "polygon.years"), "3.1");
+  assert.equal(es(f, "polygon.years"), "3,1");
+});
+
+test("supply is exact from the raw checkpoint amounts", () => {
+  const f = built();
+  assert.equal(en(f, "polygon.supply"), "600.00");
+  assert.equal(en(f, "polygon.minted"), "1,000");
+  assert.equal(en(f, "polygon.burnedPct"), "40%");
+});
+
+test("volumes and peaks come from the summary", () => {
+  const f = built();
+  assert.equal(en(f, "polygon.grossVolumeUsd"), "$2K");
+  assert.equal(en(f, "polygon.peakTxCount"), "4");
+  assert.equal(en(f, "polygon.peakTxDay"), "2024-02-01");
+  assert.equal(en(f, "polygon.peakVolumeUsd"), "$1K");
+  assert.equal(en(f, "polygon.peakSupplyDay"), "2024-02-02");
+});
+
+test("series figures come from daily.csv", () => {
+  const f = built();
+  assert.throws(() => getFigure(f, "polygon.firstDayAbove100"), /unknown figure/, "no day exceeds 100 transfers");
+  assert.equal(en(f, "polygon.activeDays"), "4");
+  assert.equal(en(f, "polygon.activeDaysPct"), "80%");
+  assert.equal(en(f, "polygon.peakMonth"), "February 2024");
+  assert.equal(en(f, "polygon.peakMonthUsd"), "$1.5K");
+  assert.equal(en(f, "polygon.month.2024-01.usd"), "$500");
+  assert.equal(en(f, "polygon.month.2024-02.transfers"), "6");
+  assert.equal(en(f, "polygon.last30GrossUsd"), "$2K");
+});
+
+test("rankings list the top days by transfers and by volume", () => {
+  const f = built();
+  assert.equal(en(f, "polygon.topTx.1.day"), "2024-02-01");
+  assert.equal(en(f, "polygon.topTx.1.transfers"), "4");
+  assert.equal(en(f, "polygon.topTx.2.day"), "2024-02-03");
+  assert.equal(en(f, "polygon.topVol.1.usd"), "$1K");
+  assert.equal(en(f, "polygon.topVol.2.transfers"), "2");
+  assert.throws(() => getFigure(f, "polygon.topTx.6.day"), /unknown figure/);
+});
+
+test("events are counted per name, zero when never emitted", () => {
+  const f = built();
+  assert.equal(en(f, "polygon.events.Transfer"), "8");
+  assert.equal(en(f, "polygon.events.Approval"), "20");
+  assert.equal(en(f, "polygon.events.RoleGranted"), "2");
+  assert.equal(en(f, "polygon.events.Upgraded"), "1");
+  assert.equal(en(f, "polygon.events.Paused"), "0");
+});
+
+test("validation counts the rules that pass", () => {
+  const f = built();
+  assert.equal(en(f, "polygon.checksPassed"), "17");
+  assert.equal(en(f, "polygon.checksTotal"), "17");
+});
+
+test("combined figures add both chains", () => {
+  const f = built();
+  assert.equal(en(f, "combined.transfers"), "16");
+  assert.equal(en(f, "combined.grossVolumeUsd"), "$4K");
+  assert.equal(en(f, "combined.checksPassed"), "34");
+  assert.equal(en(f, "combined.checksTotal"), "34");
+  assert.equal(en(f, "fx.copPerUsd"), "4,000");
+});
+
+test("a failing check shows in the passed count", () => {
+  const bad = chain({ validation: { passed: 16, failed: 1, validatedAt: "2024-02-03T13:00:00.000Z", checks: new Array(17).fill({}) } });
+  const f = buildFigures({ copPerUsd: 4000, chains: { polygon: bad, celo: chain() } });
+  assert.equal(en(f, "polygon.checksPassed"), "16");
+  assert.equal(en(f, "combined.checksPassed"), "33");
+});
+
+test("an unknown key is an error", () => {
+  assert.throws(() => getFigure(built(), "polygon.nope"), /unknown figure "polygon.nope"/);
+});

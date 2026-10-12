@@ -27,7 +27,11 @@
 | **Rotación / velocidad** | Cuántas veces se mueve el supply en un período: `volumen ÷ supply`. Una velocidad de 400x/año significa que cada token cambió de manos ~400 veces al año — la firma de un rail de pagos, no de una reserva de valor. |
 | **Settlement layer / rail** | Infraestructura cuyo trabajo es mover valor entre partes, no almacenarlo. Velocidad alta + mints/burns balanceados es como se ve un settlement rail on-chain. |
 | **On-ramp / off-ramp** | Los puentes entre dinero fiat y tokens: pesos → COPM (on-ramp, un mint) y COPM → pesos (off-ramp, un burn). |
-| **Proxy contract** | Un patrón de contrato donde la dirección con la que interactúan los usuarios delega su lógica a una implementación actualizable. COPM usa uno — relevante al interpretar eventos de bajo nivel. |
+| **Proxy contract** | Un patrón de contrato donde la dirección con la que interactúan los usuarios delega su lógica a una implementación actualizable. COPM usa uno (ERC-1967, UUPS): cada cambio de implementación emite un evento `Upgraded`. |
 | **Decimales (18)** | Los montos ERC-20 se guardan como enteros. Con 18 decimales, `1 COPM` se guarda como `1000000000000000000`. Todos los valores de la data cruda están en esa unidad. |
-| **Interpolación de timestamps** | En vez de consultar el timestamp de cada uno de los +100K bloques, se consultan unos cientos de muestras y se interpola linealmente el resto. Error máximo: segundos — irrelevante para agregados diarios. |
-| **Spot check** | Tomar eventos aleatorios del dataset y volver a consultar sus receipts en vivo contra la chain, verificando que bloque, log index y monto coincidan. Parte del paso de validación. |
+| **Timestamp de bloque** | El momento en que se produjo un bloque. Cada transferencia del dataset lleva el timestamp exacto de su bloque, tomado del log o del header del bloque, así que un día nunca es una estimación. |
+| **Reconciliación** | Comprobar que dos lecturas independientes del mismo hecho coinciden. Aquí: minted − burned, sumado desde los eventos, debe ser igual al `totalSupply()` del contrato en el mismo bloque, al wei; y el balance de cada holder debe ser igual a `balanceOf`. |
+| **Checkpoint** | El último bloque que el scan verificó por completo. Se escribe solo después de reconciliar, así que una corrida que se detiene a la mitad continúa desde él y todo lo que esté por encima se descarta. |
+| **Canario** | Un bloque cuya cantidad de logs ya se conoce, agregado a cada lote RPC. Si el endpoint no devuelve exactamente esa cantidad, se descarta todo el lote: es la señal de que el backend no tiene parte del índice de logs. |
+| **Wei** | La unidad mínima de un token de 18 decimales: 1 COPM son 10¹⁸ wei. "Al wei" significa sin ningún redondeo ni tolerancia. |
+| **Evento del contrato (log)** | Un registro que el contrato emite cuando algo ocurre: una transferencia, una aprobación, un congelamiento, un cambio de rol, una actualización. [Cuáles importan](./EVENTS.es.md). |
