@@ -39,6 +39,7 @@ export function buildInsights({ chains, validations, copPerUsd, lang, names, ren
   const keys = CHAIN_KEYS.filter((key) => chains[key]);
   const add = (id, section, show, key, vars) => out.push({ id, section, show, key, vars, text: render(key, vars) });
   const perChain = (key) => ["both", key];
+  const asOfOf = (key) => f.date(new Date(chains[key].checkpoint.time * 1000).toISOString().slice(0, 10));
 
   // How much is there?
   const turnoverVars = (name, flows) => ({
@@ -62,7 +63,7 @@ export function buildInsights({ chains, validations, copPerUsd, lang, names, ren
     const { supplyPeak, checkpoint } = chains[key];
     if (!supplyPeak) continue;
     const current = checkpoint.totalSupply;
-    const vars = { chain: names[key], current: f.usd(current), peak: f.usd(supplyPeak.copm), date: f.date(supplyPeak.day) };
+    const vars = { chain: names[key], asOf: asOfOf(key), current: f.usd(current), peak: f.usd(supplyPeak.copm), date: f.date(supplyPeak.day) };
     if (current >= supplyPeak.copm) add(`supply-${key}`, "supply", perChain(key), "supplyAtPeak", vars);
     else add(`supply-${key}`, "supply", perChain(key), "supplyBelowPeak", { ...vars, pct: f.percent((current / supplyPeak.copm) * 100) });
   }
@@ -106,6 +107,7 @@ export function buildInsights({ chains, validations, copPerUsd, lang, names, ren
       top1: f.percent(h.top1Pct),
       top10: f.percent(h.top10Pct),
       holders: f.int(h.count),
+      contracts: f.int(h.contracts),
       below1: f.int(h.below1),
     };
     add(`concentration-${key}`, "who", perChain(key), h.top1Pct > DOMINANT_SHARE ? "concentrationDominant" : "concentrationSpread", vars);
@@ -129,7 +131,7 @@ export function buildInsights({ chains, validations, copPerUsd, lang, names, ren
       "control",
       perChain(key),
       gov.frozen.length === 0 ? "frozenNone" : "frozenSome",
-      { chain: name, count: f.int(gov.frozen.length) },
+      { chain: name, asOf: asOfOf(key), count: f.int(gov.frozen.length) },
     );
     const pauses = countEvents(gov.events, "Paused").length;
     add(
@@ -137,7 +139,7 @@ export function buildInsights({ chains, validations, copPerUsd, lang, names, ren
       "control",
       perChain(key),
       gov.paused ? "pausedNow" : pauses > 0 ? "pausedBefore" : "pausedNever",
-      { chain: name, count: f.int(pauses) },
+      { chain: name, asOf: asOfOf(key), count: f.int(pauses) },
     );
     // The first Upgraded event is the deployment itself; later ones are changes.
     const upgrades = countEvents(gov.events, "Upgraded").slice(1);

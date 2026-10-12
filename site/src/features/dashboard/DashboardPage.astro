@@ -15,8 +15,8 @@ import { clientPayload, loadDashboardData } from '../../lib/dashboard-data.js';
 import { buildInsights } from '../../lib/dashboard-insights.js';
 import { CHAIN_CHOICES, DEFAULT_STATE, PERIOD_CHOICES, UNIT_CHOICES } from '../../lib/dashboard-filters.js';
 import { PERIOD_DAYS, granularityFor, largestRows, tilesFor } from '../../lib/dashboard-view.js';
-import { amountCompact, amountFull, arrowFor, changeText, utcDateTime } from '../../lib/dashboard-format.js';
-import { formatDate, formatDecimal, formatInt, formatMonthShort } from '../../lib/format.js';
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
+import { formatDate, formatDecimal, formatInt, formatMonthShort, rangeLabels } from '../../lib/format.js';
 import { formatSerialBlock } from '../../lib/serial.js';
 import {
   REPO_URL,
@@ -76,13 +76,40 @@ const deltaText = (change: number | null, key: 'vsPeriod' | 'vsStart') => {
 };
 const serial = tiles.blocks.map((b) => `${b.chain === 'polygon' ? 'POL' : 'CELO'} ${formatSerialBlock(b.block)}`).join(' · ');
 const latestTime = Math.max(...tiles.blocks.map((b) => b.time));
+const notes = tileNotes({ tiles, t, lang });
 const tileList = [
-  { id: 'supply', k: t.tiles.supply.k, v: amountCompact(tiles.supply.value, state.unit, lang, rate), d: deltaText(tiles.supply.changePct, 'vsStart'), n: t.tiles.supply.note },
-  { id: 'volume', k: t.tiles.volume.k, v: amountCompact(tiles.volume.current, state.unit, lang, rate), d: deltaText(tiles.volume.changePct, 'vsPeriod'), n: t.tiles.volume.note },
-  { id: 'transfers', k: t.tiles.transfers.k, v: formatInt(tiles.transfers.current, lang), d: deltaText(tiles.transfers.changePct, 'vsPeriod'), n: t.tiles.transfers.note },
-  { id: 'holders', k: t.tiles.holders.k, v: formatInt(tiles.holders, lang), d: '', n: t.tiles.holders.note },
-  { id: 'block', k: t.tiles.block.k, v: serial, d: utcDateTime(latestTime), n: '' },
+  { id: 'supply', k: t.tiles.supply.k, v: amountCompact(tiles.supply.value, state.unit, lang, rate), d: deltaText(tiles.supply.changePct, 'vsStart'), n: notes.supply },
+  { id: 'volume', k: t.tiles.volume.k, v: amountCompact(tiles.volume.current, state.unit, lang, rate), d: deltaText(tiles.volume.changePct, 'vsPeriod'), n: notes.volume },
+  { id: 'transfers', k: t.tiles.transfers.k, v: formatInt(tiles.transfers.current, lang), d: deltaText(tiles.transfers.changePct, 'vsPeriod'), n: notes.transfers },
+  { id: 'holders', k: t.tiles.holders.k, v: formatInt(tiles.holders, lang), d: '', n: notes.holders },
+  { id: 'block', k: t.tiles.block.k, v: serial, d: utcDateTime(latestTime), n: notes.block },
 ];
+
+// What every reader needs to read the figures, in the HTML whatever the
+// filters do: the fixed rate and where each chain's periods end.
+const basisItems = keys
+  .map((k) => {
+    const d = data.chains[k].dashboard;
+    return interpolate(t.basis.item, {
+      chain: chainLabel(k),
+      day: formatDate(d.activity.endDay, lang),
+      block: formatInt(d.checkpoint.block, lang),
+      time: utcDateTime(d.checkpoint.time),
+    });
+  })
+  .join('; ');
+
+// Tables the no-JavaScript reader gets for the charts that do not depend on a
+// period: transfer sizes and the top holders.
+const sizeLabels = rangeLabels(data.chains[keys[0]].dashboard.sizes.map((s: any) => s.min), lang);
+const sizeRows = sizeLabels.map((label: string, k: number) => ({
+  label,
+  counts: keys.map((key) => formatInt(data.chains[key].dashboard.sizes[k].count, lang)),
+}));
+const topRows = keys.flatMap((key) =>
+  data.chains[key].dashboard.holders.top.slice(0, 10).map((h: any) => ({ chain: key, ...h })),
+);
+const pct = (n: number, digits = 2) => `${formatDecimal(n, digits, lang)}${lang === 'es' ? ' %' : '%'}`;
 
 // Monthly figures for the no-JavaScript reader.
 const monthlyRows = keys.flatMap((key) => {
@@ -99,7 +126,11 @@ const monthlyRows = keys.flatMap((key) => {
 });
 
 const largest = largestRows(payload.chains, state);
-const holderBuckets = keys.map((k) => ({ key: k, buckets: data.chains[k].dashboard.holders.buckets, total: data.chains[k].dashboard.checkpoint.totalSupply }));
+const holderBuckets = keys.map((k) => {
+  const buckets = data.chains[k].dashboard.holders.buckets;
+  const labels = rangeLabels(buckets.map((b: any) => b.min), lang);
+  return { key: k, buckets: buckets.map((b: any, i: number) => ({ ...b, label: labels[i] })), total: data.chains[k].dashboard.checkpoint.totalSupply };
+});
 const roleRows = keys.flatMap((k) =>
   Object.entries(data.chains[k].dashboard.governance.roles as Record<string, string[]>).map(([role, members]) => ({ chain: k, role, members })),
 );
@@ -143,6 +174,11 @@ const clientData = { ...payload, t: clientText };
       <noscript><p class="note-inline">{t.header.noscript}</p></noscript>
     </section>
 
+    <div class="dash-basis" data-basis>
+      <p>{interpolate(t.basis.rate, { rate: formatInt(rate, lang) })}</p>
+      <p>{interpolate(t.basis.complete, { items: basisItems })}</p>
+    </div>
+
     <form class="filters" data-filters hidden aria-label={t.filters.label} onsubmit="return false">
       <div class="filter" role="group" aria-label={t.filters.chain.label} data-filter="chain">
         <span class="filter-k">{t.filters.chain.label}</span>
@@ -168,7 +204,7 @@ const clientData = { ...payload, t: clientText };
           </button>
         ))}
       </div>
-      <p class="filter-note">{interpolate(t.filters.rate, { rate: formatInt(rate, lang) })} {t.filters.scope}</p>
+      <p class="filter-note">{t.filters.scope}</p>
       <p class="filter-note" data-window>
         {interpolate(t.filters.window, { from: formatDate(tiles.window.fromDay, lang), to: formatDate(tiles.window.toDay, lang) })}
       </p>
@@ -180,7 +216,7 @@ const clientData = { ...payload, t: clientText };
           <p class="k">{tile.k}</p>
           <p class="v" data-v>{tile.v}</p>
           <p class="d" data-d>{tile.d}</p>
-          {tile.n && <p class="n">{tile.n}</p>}
+          <p class="n" data-n hidden={!tile.n}>{tile.n}</p>
         </li>
       ))}
     </ul>
@@ -243,8 +279,41 @@ const clientData = { ...payload, t: clientText };
       <ul class="insights" data-insights>
         {insightsFor('who').map((i) => <li data-show={i.show.join(' ')}>{i.text}</li>)}
       </ul>
-      <ChartBlock id="sizes" title={t.charts.sizes.title} titleTemplate={t.charts.sizes.title} aid={t.charts.sizes.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
-      <ChartBlock id="holders" title={t.charts.holders.title} titleTemplate={t.charts.holders.title} aid={t.charts.holders.aid} noscript={t.chartUi.noscript} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading} />
+      <ChartBlock id="sizes" title={t.charts.sizes.title} titleTemplate={t.charts.sizes.title} aid={t.charts.sizes.aid} noscript={t.chartUi.noscriptTable} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading}>
+        <div slot="fallback" class="table-scroll">
+          <table class="tbl">
+            <caption class="visually-hidden">{t.charts.sizes.title}</caption>
+            <thead>
+              <tr><th scope="col">{t.columns.bucket}</th>{keys.map((k) => <th scope="col" class="num">{chainLabel(k)} · {t.columns.transfers}</th>)}</tr>
+            </thead>
+            <tbody>
+              {sizeRows.map((r) => (
+                <tr><th scope="row">{r.label}</th>{r.counts.map((c) => <td class="num">{c}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ChartBlock>
+      <ChartBlock id="holders" title={t.charts.holders.title} titleTemplate={t.charts.holders.title} aid={t.charts.holders.aid} noscript={t.chartUi.noscriptTable} viewTable={t.chartUi.viewTable} loading={t.chartUi.loading}>
+        <div slot="fallback" class="table-scroll">
+          <table class="tbl mixed">
+            <caption class="visually-hidden">{t.charts.holders.title}</caption>
+            <thead>
+              <tr><th scope="col">{t.columns.chain} · {t.columns.rank}</th><th scope="col">{t.columns.holder}</th><th scope="col" class="num">{t.columns.balance}</th><th scope="col" class="num">{t.columns.share}</th></tr>
+            </thead>
+            <tbody>
+              {topRows.map((h) => (
+                <tr>
+                  <th scope="row">{chainLabel(h.chain)} · {h.rank}</th>
+                  <td><a class="addr" href={explorerAddressUrl(h.chain, h.address)} title={h.address} target="_blank" rel="noopener noreferrer">{middleEllipsis(h.address, 6, 4)}</a></td>
+                  <td class="num">{amountFull(h.balance, 'copm', lang, rate)}</td>
+                  <td class="num">{pct(h.share, 1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ChartBlock>
 
       <h3 class="sub">{t.who.concentration}</h3>
       <div class="conc-grid">
@@ -257,6 +326,7 @@ const clientData = { ...payload, t: clientText };
                 <div><dt>{t.who.top1}</dt><dd class="num">{formatDecimal(h.top1Pct, 1, lang)}{lang === 'es' ? ' %' : '%'}</dd></div>
                 <div><dt>{t.who.top10}</dt><dd class="num">{formatDecimal(h.top10Pct, 1, lang)}{lang === 'es' ? ' %' : '%'}</dd></div>
                 <div><dt>{t.who.holders}</dt><dd class="num">{formatInt(h.count, lang)}</dd></div>
+                <div><dt>{t.who.contracts}</dt><dd class="num">{formatInt(h.contracts, lang)}</dd></div>
                 <div><dt>{t.who.below1}</dt><dd class="num">{formatInt(h.below1, lang)}</dd></div>
               </dl>
             </div>
@@ -390,7 +460,7 @@ const clientData = { ...payload, t: clientText };
                       <span class="muted">{name}</span>{' '}
                       {isAddress(value)
                         ? <a class="addr" href={explorerAddressUrl(e.chain, value)} title={value} target="_blank" rel="noopener noreferrer">{middleEllipsis(value, 6, 4)}</a>
-                        : <span class="mono">{String(value)}</span>}
+                        : <span class="mono">{eventArgText(e.name, name, value, lang)}</span>}
                     </span>
                   ))}
                 </td>

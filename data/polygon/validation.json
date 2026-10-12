@@ -1,7 +1,7 @@
 {
   "chain": "polygon",
   "block": 95370448,
-  "validatedAt": "2026-10-12T01:00:52.079Z",
+  "validatedAt": "2026-10-12T01:38:40.294Z",
   "checks": [
     {
       "id": "event-count",
@@ -91,7 +91,7 @@
     {
       "id": "dashboard-matches-ledger",
       "ok": true,
-      "detail": "block=95370448 checkpoint=95370448 minted=1250644898317 burned=1246162666642.245 supply=4482231674.754852 transfers=241858"
+      "detail": "block=95370448 checkpoint=95370448 sections=14"
     }
   ],
   "passed": 18,

@@ -48,19 +48,41 @@ const mondayOf = (day) => {
   return new Date(date.getTime() - ((date.getUTCDay() + 6) % 7) * DAY_MS).toISOString().slice(0, 10);
 };
 
-// Flows add up inside a bucket; supply is the last day's value. Weeks start on
-// Monday and are named by that Monday; months by "YYYY-MM".
+const monthEndOf = (day) => {
+  const [year, month] = day.split("-").map(Number);
+  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+};
+
+// First and last day a whole bucket would cover: Monday..Sunday or the 1st..
+// the last day of the month.
+const BOUNDS = {
+  week: (day) => {
+    const start = mondayOf(day);
+    return { key: start, start, end: addDays(start, 6) };
+  },
+  month: (day) => ({ key: day.slice(0, 7), start: `${day.slice(0, 7)}-01`, end: monthEndOf(day) }),
+};
+
+// Flows add up inside a bucket; supply is the last day's value. A week is
+// named by the first day of the window it covers (its Monday, except when the
+// window starts mid-week), a month by "YYYY-MM". `partial[k]` is true for a
+// bucket that covers fewer days than a whole week or month, which only the
+// first and the last can: the window starts or ends inside it.
 export function bucketize(slice, granularity) {
-  const keyOf = granularity === "week" ? mondayOf : (day) => day.slice(0, 7);
-  const out = { bucket: [] };
+  const bounds = BOUNDS[granularity];
+  const out = { bucket: [], partial: [] };
   for (const m of MEASURES) out[m] = [];
+  let current = null;
   slice.day.forEach((day, k) => {
-    const key = keyOf(day);
-    if (out.bucket.at(-1) !== key) {
-      out.bucket.push(key);
+    const { key, start, end } = bounds(day);
+    if (current !== key) {
+      current = key;
+      out.bucket.push(granularity === "week" ? day : key);
+      out.partial.push(day !== start);
       for (const m of MEASURES) out[m].push(0);
     }
     const last = out.bucket.length - 1;
+    if (k === slice.day.length - 1 && day !== end) out.partial[last] = true;
     for (const m of MEASURES) {
       if (m === "supply") out.supply[last] = slice.supply[k];
       else out[m][last] += slice[m][k];
@@ -96,6 +118,7 @@ export function tilesFor(chains, state) {
     volume: sum("volume"),
     transfers: sum("transfers"),
     holders: selected.reduce((t, c) => t + c.holders.count, 0),
+    contracts: selected.reduce((t, c) => t + (c.holders.contracts ?? 0), 0),
     blocks: selected.map((c) => ({ chain: c.key, block: c.checkpoint.block, time: c.checkpoint.time })),
   };
 }

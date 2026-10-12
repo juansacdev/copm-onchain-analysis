@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { amountCompact, amountFull, arrowFor, changeText, utcDateTime } from "../../site/src/lib/dashboard-format.js";
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, tileNotes, utcDateTime } from "../../site/src/lib/dashboard-format.js";
 
 const RATE = 4000;
 
@@ -36,4 +36,30 @@ test("the arrow is neutral text: up, down or level", () => {
 
 test("block time is printed in UTC from the unix seconds, with no clock involved", () => {
   assert.equal(utcDateTime(1791760950), "2026-10-11 23:22 UTC");
+});
+
+test("BurnedFrozen shows its amount in COPM, not in raw wei; other arguments stay as they are", () => {
+  const wei = "30672824591542995207235322";
+  assert.equal(eventArgText("BurnedFrozen", "amount", wei, "en"), "30,672,824.59 COPM");
+  assert.equal(eventArgText("BurnedFrozen", "amount", wei, "es"), "30.672.824,59 COPM");
+  assert.equal(eventArgText("BurnedFrozen", "account", "0xabc", "en"), "0xabc");
+  assert.equal(eventArgText("RoleGranted", "amount", wei, "en"), wei);
+});
+
+test("tile notes carry the checkpoint date, the contract count and the last-complete-day wording", () => {
+  const t = {
+    tiles: {
+      supply: { note: "as of {date}" },
+      volume: { note: "volume" },
+      transfers: { note: "transfers" },
+      holders: { note: "{contracts} contracts" },
+      block: {},
+    },
+  };
+  const tiles = { blocks: [{ time: 1791760950 }, { time: 1791700000 }], contracts: 244 };
+  const notes = tileNotes({ tiles, t, lang: "en" });
+  assert.equal(notes.supply, "as of October 11, 2026");
+  assert.equal(notes.holders, "244 contracts");
+  assert.equal(notes.volume, "volume");
+  assert.equal(notes.block, "");
 });

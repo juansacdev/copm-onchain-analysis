@@ -11,6 +11,9 @@ main.dash { max-width: var(--measure-wide); padding-bottom: var(--space-900); }
 .dash-head h1 { font: var(--fw-bold) var(--t-4xl) var(--font-sans); letter-spacing: -0.02em; margin: var(--space-0) var(--space-0) var(--space-100); }
 .dash-lead { max-width: var(--measure); font: var(--fw-regular) var(--t-lg) var(--font-sans); color: var(--muted); }
 .dash-link { margin: var(--space-0); font: var(--fw-medium) var(--t-base) var(--font-sans); }
+.dash-basis { display: grid; gap: var(--space-50); max-width: var(--measure); margin: var(--space-0) var(--space-0) var(--space-300); }
+.dash-basis p { margin: var(--space-0); font: var(--fw-regular) var(--t-sm) var(--font-sans); color: var(--muted); }
+.dchart-table-fallback { margin-top: var(--space-100); }
 .note-inline { padding: var(--space-100) var(--space-200); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg); font: var(--fw-regular) var(--t-base) var(--font-sans); color: var(--muted); }
 
 /* ---------- Filters: one row above everything they scope ---------- */

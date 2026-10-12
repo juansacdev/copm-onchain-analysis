@@ -3,6 +3,7 @@
 // are what validation.json records, so keep them stable. There is no
 // tolerance anywhere: amounts are compared to the wei.
 import { buildDailySeries, dailyCsv } from "./aggregate.js";
+import { buildDashboard } from "./dashboard.js";
 import { parseHoldersCsv, formatUnits } from "./holders.js";
 import { createLedger, foldTransfers, negativeBalances } from "./ledger.js";
 import { monthKey } from "./partition.js";
@@ -229,29 +230,32 @@ export function checkCsvTransferTotal(csvRows, summary) {
   );
 }
 
-// dashboard.json is a view of the ledger: it must be at the checkpoint block
-// and its totals must be the ledger's, so the page can never show numbers
-// that the audit did not verify.
-export function checkDashboardMatchesLedger({ dashboard, ledger, state }) {
+// dashboard.json is a pure function of the transfers, the admin events, the
+// approval counts and the holders snapshot, so the stored file must be exactly
+// what those produce now. Rebuilding it pins every figure the page shows (not
+// only the totals) to the ledger the other rules verified, and the page can
+// never show numbers the audit did not check.
+export function checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders }) {
   if (!dashboard) {
     return check("dashboard-matches-ledger", false, `dashboard.json missing: run "dashboard --chain ${state.chain}"`);
   }
-  const supply = toCOPM(BigInt(state.totalSupply));
-  const days = dashboard.daily ?? { transfers: [], supply: [] };
-  const transfers = days.transfers.reduce((total, n) => total + n, 0);
-  const figures = {
-    block: dashboard.checkpoint?.block === state.lastBlock,
-    minted: dashboard.flows?.minted === toCOPM(ledger.minted),
-    burned: dashboard.flows?.burned === toCOPM(ledger.burned),
-    supply: dashboard.checkpoint?.totalSupply === supply && days.supply.at(-1) === supply,
-    transfers: transfers === state.transfers,
-  };
-  const wrong = Object.entries(figures).filter(([, ok]) => !ok).map(([name]) => name);
+  if (!holders?.json) {
+    return check("dashboard-matches-ledger", false, `cannot rebuild the dashboard without holders.json: run "holders --chain ${state.chain}"`);
+  }
+  let expected;
+  try {
+    expected = buildDashboard({ chainKey: state.chain, state, transfers, adminEvents, approvals, holders: holders.json });
+  } catch (err) {
+    return check("dashboard-matches-ledger", false, `cannot rebuild the dashboard: ${err.message}`);
+  }
+  // The stored file went through JSON, so compare the same way.
+  const wanted = JSON.parse(JSON.stringify(expected));
+  const sections = [...new Set([...Object.keys(wanted), ...Object.keys(dashboard)])];
+  const wrong = sections.filter((name) => JSON.stringify(wanted[name]) !== JSON.stringify(dashboard[name]));
   return check(
     "dashboard-matches-ledger",
     wrong.length === 0,
-    `block=${dashboard.checkpoint?.block} checkpoint=${state.lastBlock} minted=${dashboard.flows?.minted} ` +
-      `burned=${dashboard.flows?.burned} supply=${dashboard.checkpoint?.totalSupply} transfers=${transfers}` +
+    `block=${dashboard.checkpoint?.block} checkpoint=${state.lastBlock} sections=${sections.length}` +
       (wrong.length ? `; differs: ${wrong.join(", ")}` : ""),
   );
 }
@@ -290,6 +294,6 @@ export function strictChecks({
     checkSeriesLength(csvRows, summary),
     checkSeriesContinuous(csvRows),
     checkCsvTransferTotal(csvRows, summary),
-    checkDashboardMatchesLedger({ dashboard, ledger, state }),
+    checkDashboardMatchesLedger({ dashboard, state, transfers, adminEvents, approvals, holders }),
   ];
 }

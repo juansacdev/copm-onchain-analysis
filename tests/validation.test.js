@@ -262,3 +262,38 @@ test("dashboard-matches-ledger: a missing dashboard.json fails and says how to m
   assert.equal(r.ok, false);
   assert.match(r.detail, /dashboard --chain celo/);
 });
+
+test("dashboard-matches-ledger: every other field of dashboard.json is checked too", () => {
+  for (const [name, edit] of Object.entries({
+    gross: (d) => (d.flows.gross += 1),
+    turnover: (d) => (d.flows.turnover += 1),
+    supplyPeak: (d) => (d.supplyPeak.copm += 1),
+    activityTransfers: (d) => (d.activity.transfers.current += 1),
+    activityVolume: (d) => (d.activity.volume.previous += 1),
+    sizes: (d) => (d.sizes[0].count += 1),
+    largest: (d) => (d.largest.all[0].amount += 1),
+    issuance: (d) => (d.issuance.mint.topSharePct = 1),
+    holders: (d) => (d.holders.count += 1),
+    monthly: (d) => (d.monthly.volume[0] += 1),
+    governance: (d) => (d.governance.paused = !d.governance.paused),
+    extraField: (d) => (d.invented = true),
+  })) {
+    const fx = fixture();
+    edit(fx.dashboard);
+    const r = results(fx)["dashboard-matches-ledger"];
+    assert.equal(r.ok, false, name);
+    assert.deepEqual(failing(fx), ["dashboard-matches-ledger"], name);
+  }
+});
+
+test("dashboard-matches-ledger: the detail names the sections that differ", () => {
+  const fx = fixture();
+  fx.dashboard.sizes[0].count += 1;
+  assert.match(results(fx)["dashboard-matches-ledger"].detail, /differs: sizes/);
+});
+
+test("dashboard-matches-ledger: without the holders snapshot it cannot rebuild and fails", () => {
+  const fx = fixture();
+  fx.holders = { csv: null, json: null };
+  assert.equal(results(fx)["dashboard-matches-ledger"].ok, false);
+});

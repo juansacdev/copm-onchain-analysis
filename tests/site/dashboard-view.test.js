@@ -73,11 +73,23 @@ test("buckets by month sum the flows and keep the last supply of each month", ()
   assert.deepEqual(b.supply, [155, 165]);
 });
 
-test("buckets by week start on Monday", () => {
+test("buckets by week are named by the first day of the window they cover", () => {
   const s = sliceDaily(chain("polygon").daily, "2025-01-01", "2025-01-13"); // Wed .. Mon
   const b = bucketize(s, "week");
-  assert.deepEqual(b.bucket, ["2024-12-30", "2025-01-06", "2025-01-13"]);
+  assert.deepEqual(b.bucket, ["2025-01-01", "2025-01-06", "2025-01-13"], "the first bar starts on the window's first day, not on a Monday before it");
   assert.deepEqual(b.transfers, [5, 7, 1]);
+});
+
+test("buckets say which bars cover fewer days than a whole week or month", () => {
+  const week = bucketize(sliceDaily(chain("polygon").daily, "2025-01-01", "2025-01-13"), "week");
+  assert.deepEqual(week.partial, [true, false, true], "Wed..Sun, Mon..Sun, Mon alone");
+  const whole = bucketize(sliceDaily(chain("polygon").daily, "2025-01-06", "2025-01-19"), "week");
+  assert.deepEqual(whole.partial, [false, false]);
+  const month = bucketize(sliceDaily(chain("polygon").daily, "2025-01-15", "2025-03-31"), "month");
+  assert.deepEqual(month.bucket, ["2025-01", "2025-02", "2025-03"]);
+  assert.deepEqual(month.partial, [true, false, false]);
+  const tail = bucketize(sliceDaily(chain("polygon").daily, "2025-01-01", "2025-02-10"), "month");
+  assert.deepEqual(tail.partial, [false, true]);
 });
 
 test("tiles: volume and transfers compare the window with the one before it, summed over the chains in view", () => {

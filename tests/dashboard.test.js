@@ -301,6 +301,7 @@ test("dashboard: holders section keeps concentration, buckets and the holders be
   assert.equal(d.holders.below1, 1);
   assert.equal(d.holders.top[0].share, 70);
   assert.equal(d.holders.buckets.length, 2);
+  assert.deepEqual(d.holders.buckets.map((b) => b.min), [1, 0], "a stable numeric key, so each language labels the tramo itself");
 });
 
 test("dashboard: issuance, peak and counterparties are present and consistent", () => {

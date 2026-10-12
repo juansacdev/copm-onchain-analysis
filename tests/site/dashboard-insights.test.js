@@ -10,7 +10,7 @@ function chainData(overrides = {}) {
   return {
     flows: { minted: 100e6, burned: 90e6, wallet: 500e6, gross: 690e6, turnover: 6.9 },
     supplyPeak: { day: "2025-05-01", copm: 40e6 },
-    checkpoint: { block: 1234, time: 1, totalSupply: 10e6 },
+    checkpoint: { block: 1234, time: 1791760950, totalSupply: 10e6 },
     activity: {
       endDay: "2025-06-10",
       days: 30,
@@ -21,7 +21,7 @@ function chainData(overrides = {}) {
       mint: { addresses: 1, topSharePct: 100, top: [{ address: A }] },
       burn: { addresses: 4, topSharePct: 80.5, top: [{ address: B }] },
     },
-    holders: { count: 50, top1Pct: 65, top10Pct: 95, below1: 12 },
+    holders: { count: 50, contracts: 7, top1Pct: 65, top10Pct: 95, below1: 12 },
     governance: {
       roles: { DEFAULT_ADMIN_ROLE: [A], MINTER_ROLE: [A], PAUSER_ROLE: [] },
       roleHolders: 1,
@@ -129,7 +129,7 @@ test("trend: signed change against the previous window; new activity and no acti
 
 test("concentration: one address above half is said plainly, otherwise the spread is described", () => {
   assert.equal(find(run(both()), "concentration-polygon").key, "concentrationDominant");
-  const spread = chainData({ holders: { count: 50, top1Pct: 20, top10Pct: 60, below1: 12 } });
+  const spread = chainData({ holders: { count: 50, contracts: 5, top1Pct: 20, top10Pct: 60, below1: 12 } });
   const item = find(run({ polygon: spread, celo: chainData() }), "concentration-polygon");
   assert.equal(item.key, "concentrationSpread");
   assert.equal(item.vars.top1, "20%");
@@ -205,4 +205,10 @@ test("sentences are rendered through the supplied renderer", () => {
   const item = find(run(both()), "mint-polygon");
   assert.match(item.text, /^mintSingle \{/);
   assert.ok(keys(run(both())).length > 15);
+});
+
+test("supply sentences name the checkpoint date, and holder sentences give the number of contracts", () => {
+  const list = run(both());
+  assert.equal(find(list, "supply-polygon").vars.asOf, "October 11, 2026");
+  assert.equal(find(list, "concentration-polygon").vars.contracts, "7");
 });

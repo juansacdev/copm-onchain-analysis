@@ -5,7 +5,7 @@
 // filters, using the same pure functions the server used.
 import { RENDERERS, flowTotals, readTokens } from "./charts.js";
 import { DEFAULT_STATE, decodeState, encodeState } from "../../lib/dashboard-filters.js";
-import { amountCompact, amountFull, arrowFor, changeText, utcDateTime } from "../../lib/dashboard-format.js";
+import { amountCompact, amountFull, arrowFor, changeText, tileNotes, utcDateTime } from "../../lib/dashboard-format.js";
 import { granularityFor, largestRows, periodTurnover, selectedChains, tilesFor, viewWindow } from "../../lib/dashboard-view.js";
 import { formatDate, formatDecimal, formatInt } from "../../lib/format.js";
 import { middleEllipsis } from "../../lib/links.js";
@@ -100,10 +100,14 @@ export function mountDashboard(doc) {
       if (text === null) return t.tiles.noBase;
       return `${arrowFor(change)} ${interpolate(t.tiles[key], { change: text, n: tiles.window.days ?? "" })}`;
     };
-    const set = (id, value, note) => {
+    const notes = tileNotes({ tiles, t, lang });
+    const set = (id, value, delta) => {
       const tile = root.querySelector(`[data-tile="${id}"]`);
       tile.querySelector("[data-v]").textContent = value;
-      tile.querySelector("[data-d]").textContent = note;
+      tile.querySelector("[data-d]").textContent = delta;
+      const note = tile.querySelector("[data-n]");
+      note.textContent = notes[id];
+      note.hidden = notes[id] === "";
     };
     set("supply", amountCompact(tiles.supply.value, state.unit, lang, rate), delta(tiles.supply.changePct, "vsStart"));
     set("volume", amountCompact(tiles.volume.current, state.unit, lang, rate), delta(tiles.volume.changePct, "vsPeriod"));

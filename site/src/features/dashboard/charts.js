@@ -18,7 +18,7 @@ import {
   sliceDaily,
   viewWindow,
 } from "../../lib/dashboard-view.js";
-import { formatCopmCompact, formatDate, formatDecimal, formatInt, formatMonthShort, formatUsd } from "../../lib/format.js";
+import { formatCopmCompact, formatDate, formatDecimal, formatInt, formatMonthShort, formatUsd, rangeLabels } from "../../lib/format.js";
 import { middleEllipsis } from "../../lib/links.js";
 
 const BAR_MAX = 24;
@@ -188,6 +188,12 @@ function bucketsOf(ctx, chain) {
   return { granularity, slice, b: bucketize(slice, granularity) };
 }
 
+// A bar that covers fewer days than a whole week or month is drawn lighter and
+// named as such in its tooltip and its table row.
+const PARTIAL_OPACITY = 0.4;
+const barOpacity = (r) => (r.partial ? PARTIAL_OPACITY : 1);
+const labelOf = (ctx, r) => (r.partial ? `${r.label} (${ctx.t.chartUi.partial})` : r.label);
+
 function bandBars(width, count) {
   const plotWidth = Math.max(40, width - 80);
   const band = plotWidth / Math.max(1, count);
@@ -202,21 +208,21 @@ function mintBurn(ctx, width) {
     const { granularity, slice, b } = bucketsOf(ctx, chain);
     if (!hasData(slice)) continue;
     const labels = b.bucket.map((key) => f.bucket(key, granularity));
-    const data = b.bucket.map((key, k) => ({ label: labels[k], key, mint: b.mint[k], burn: b.burn[k] }));
+    const data = b.bucket.map((key, k) => ({ label: labels[k], key, partial: b.partial[k], mint: b.mint[k], burn: b.burn[k] }));
     const plot = Plot.plot({
       ...baseOptions(ctx, width, PLOT_HEIGHT),
       marginLeft: MONEY_MARGIN,
       x: { type: "band", label: null, domain: labels, tickFormat: thin(labels, width), ...bandBars(width, labels.length) },
       y: { grid: true, label: null, tickFormat: (v) => f.axisMoney(Math.abs(v)) },
       marks: [
-        Plot.barY(data, { x: "label", y: (r) => r.mint * f.scale, fill: ctx.tok.mint, insetBottom: 1 }),
-        Plot.barY(data, { x: "label", y: (r) => -r.burn * f.scale, fill: ctx.tok.burn, insetTop: 1 }),
+        Plot.barY(data, { x: "label", y: (r) => r.mint * f.scale, fill: ctx.tok.mint, fillOpacity: barOpacity, insetBottom: 1 }),
+        Plot.barY(data, { x: "label", y: (r) => -r.burn * f.scale, fill: ctx.tok.burn, fillOpacity: barOpacity, insetTop: 1 }),
         Plot.ruleY([0], { stroke: ctx.tok.muted }),
-        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.mint * f.scale, title: (r) => `${r.label}\n${ctx.t.legend.mint}: ${f.money(r.mint)}\n${ctx.t.legend.burn}: ${f.money(r.burn)}`, ...tipOptions(ctx) })),
+        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.mint * f.scale, title: (r) => `${labelOf(ctx, r)}\n${ctx.t.legend.mint}: ${f.money(r.mint)}\n${ctx.t.legend.burn}: ${f.money(r.burn)}`, ...tipOptions(ctx) })),
       ],
     });
     nodes.push(panel(ctx, chain.key, plot));
-    for (const r of data) rows.push([chain.label, r.label, f.money(r.mint), f.money(r.burn)]);
+    for (const r of data) rows.push([chain.label, labelOf(ctx, r), f.money(r.mint), f.money(r.burn)]);
   }
   return {
     nodes,
@@ -285,7 +291,7 @@ function transfers(ctx, width) {
   const keys = [...new Set(per.flatMap((c) => c.b.bucket))].sort();
   const labels = keys.map((key) => f.bucket(key, granularity));
   const data = per.flatMap((c) =>
-    c.b.bucket.map((key, k) => ({ chain: c.chain.key, label: f.bucket(key, granularity), key, v: c.b.transfers[k] })),
+    c.b.bucket.map((key, k) => ({ chain: c.chain.key, label: f.bucket(key, granularity), key, partial: c.b.partial[k], v: c.b.transfers[k] })),
   );
   const plot = Plot.plot({
     ...baseOptions(ctx, width, PLOT_HEIGHT + 20),
@@ -293,9 +299,9 @@ function transfers(ctx, width) {
     y: { grid: true, label: null, tickFormat: f.axisCount },
     color: { domain: per.map((c) => c.chain.key), range: per.map((c) => colorOf(ctx, c.chain.key)) },
     marks: [
-      Plot.barY(data, { x: "label", y: "v", fill: "chain", insetTop: 1, insetBottom: 1 }),
+      Plot.barY(data, { x: "label", y: "v", fill: "chain", fillOpacity: barOpacity, insetTop: 1, insetBottom: 1 }),
       Plot.ruleY([0], { stroke: ctx.tok.muted }),
-      Plot.tip(data, Plot.pointerX(Plot.stackY({ x: "label", y: "v", fill: "chain", title: (r) => `${r.label}\n${ctx.payload.chains[r.chain].label}: ${f.count(r.v)}`, ...tipOptions(ctx) }))),
+      Plot.tip(data, Plot.pointerX(Plot.stackY({ x: "label", y: "v", fill: "chain", title: (r) => `${labelOf(ctx, r)}\n${ctx.payload.chains[r.chain].label}: ${f.count(r.v)}`, ...tipOptions(ctx) }))),
     ],
   });
   const wrap = document.createElement("div");
@@ -306,7 +312,7 @@ function transfers(ctx, width) {
     legend: per.length > 1 ? per.map((c) => ({ cls: c.chain.key, label: c.chain.label })) : [],
     table: {
       columns: [ctx.t.columns.chain, ctx.t.columns.period, ctx.t.columns.transfers],
-      rows: data.map((r) => [ctx.payload.chains[r.chain].label, r.label, f.count(r.v)]),
+      rows: data.map((r) => [ctx.payload.chains[r.chain].label, labelOf(ctx, r), f.count(r.v)]),
     },
   };
 }
@@ -319,20 +325,20 @@ function volume(ctx, width) {
     const { granularity, slice, b } = bucketsOf(ctx, chain);
     if (!hasData(slice)) continue;
     const labels = b.bucket.map((key) => f.bucket(key, granularity));
-    const data = b.bucket.map((key, k) => ({ label: labels[k], v: b.volume[k] }));
+    const data = b.bucket.map((key, k) => ({ label: labels[k], partial: b.partial[k], v: b.volume[k] }));
     const plot = Plot.plot({
       ...baseOptions(ctx, width, PLOT_HEIGHT),
       marginLeft: MONEY_MARGIN,
       x: { type: "band", label: null, domain: labels, tickFormat: thin(labels, width), ...bandBars(width, labels.length) },
       y: { grid: true, label: null, tickFormat: f.axisMoney },
       marks: [
-        Plot.barY(data, { x: "label", y: (r) => r.v * f.scale, fill: colorOf(ctx, chain.key) }),
+        Plot.barY(data, { x: "label", y: (r) => r.v * f.scale, fill: colorOf(ctx, chain.key), fillOpacity: barOpacity }),
         Plot.ruleY([0], { stroke: ctx.tok.muted }),
-        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.v * f.scale, title: (r) => `${r.label}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
+        Plot.tip(data, Plot.pointerX({ x: "label", y: (r) => r.v * f.scale, title: (r) => `${labelOf(ctx, r)}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
       ],
     });
     nodes.push(panel(ctx, chain.key, plot));
-    for (const r of data) rows.push([chain.label, r.label, f.money(r.v)]);
+    for (const r of data) rows.push([chain.label, labelOf(ctx, r), f.money(r.v)]);
   }
   return { nodes, legend: [], table: { columns: [ctx.t.columns.chain, ctx.t.columns.period, ctx.t.columns.gross], rows }, columnsClass: "cols" };
 }
@@ -406,7 +412,8 @@ function sizes(ctx, width) {
   const f = makeFormat(ctx);
   const chains = chainsInView(ctx);
   const count = (c, k) => c.sizes[k].count;
-  const all = chains[0].sizes.map((s, k) => ({ label: s.label, k }));
+  const labels = rangeLabels(chains[0].sizes.map((s) => s.min), ctx.lang);
+  const all = chains[0].sizes.map((s, k) => ({ label: labels[k], k }));
   const used = all.filter(({ k }) => chains.some((c) => count(c, k) > 0));
   if (used.length === 0) return { nodes: [], legend: [], table: { columns: [], rows: [] } };
   const first = used[0].k;
@@ -415,12 +422,15 @@ function sizes(ctx, width) {
   const data = shown.flatMap(({ label, k }) => chains.map((c) => ({ bin: label, chain: c.key, v: count(c, k) })));
   const peak = new Map(chains.map((c) => [c.key, Math.max(...data.filter((r) => r.chain === c.key).map((r) => r.v))]));
   const height = shown.length * (chains.length * 14 + 14) + 36;
+  const longestLine = Math.max(...shown.flatMap((s) => s.label.replace(" – ", " –\n").split("\n").map((line) => line.length)));
   const plot = Plot.plot({
     ...baseOptions(ctx, width, height),
-    marginLeft: 76,
+    marginLeft: Math.min(Math.floor(width * 0.4), Math.ceil(longestLine * 6.6) + 12),
     marginRight: 64,
     marginBottom: 28,
-    fy: { label: null, domain: shown.map((s) => s.label), padding: 0.2 },
+    // A range reads on two lines ("100 millones –" / "mil millones") so the
+    // longest Spanish labels fit beside the bars.
+    fy: { label: null, domain: shown.map((s) => s.label), padding: 0.2, tickFormat: (label) => label.replace(" – ", " –\n") },
     y: { axis: null, domain: chains.map((c) => c.key), padding: 0.15 },
     x: { grid: true, label: null, tickFormat: f.axisCount },
     color: { domain: chains.map((c) => c.key), range: chains.map((c) => colorOf(ctx, c.key)) },

@@ -277,7 +277,9 @@ function holdersSection(snapshot) {
       kind: h.kind,
       frozen: h.frozen,
     })),
-    buckets: snapshot.buckets.map((b) => ({ label: b.label, holders: b.holders, copm: Number(b.copm) })),
+    // `min` (whole COPM) is the stable key; the page writes the tramo's label
+    // itself, per language.
+    buckets: snapshot.buckets.map((b) => ({ label: b.label, min: Number(b.min), holders: b.holders, copm: Number(b.copm) })),
   };
 }
 

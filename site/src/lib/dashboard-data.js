@@ -53,8 +53,8 @@ export function clientPayload(data) {
       supplyPeak: d.supplyPeak,
       activity: d.activity,
       daily: { day, transfers, volume, mint, burn, supply },
-      sizes: d.sizes,
-      holders: { count: d.holders.count, top1Pct: d.holders.top1Pct, top10Pct: d.holders.top10Pct, top: d.holders.top },
+      sizes: d.sizes.map(({ min, count }) => ({ min, count })),
+      holders: { count: d.holders.count, contracts: d.holders.contracts, top1Pct: d.holders.top1Pct, top10Pct: d.holders.top10Pct, top: d.holders.top },
       largest: d.largest,
     };
   }
