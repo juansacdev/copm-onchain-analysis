@@ -128,3 +128,53 @@ test("holders without an RPC URL fails with the same message as scan, before tou
   assert.equal(result.status, 1);
   assert.match(result.stderr, /missing CELO_RPC_URL/);
 });
+
+/* R6 at the boundary ------------------------------------------------------- */
+
+const SECRET_URL = "http://127.0.0.1:1/v2/SECRETKEY123";
+
+// Everything an error could print: message, the viem fields and the stack.
+const printable = (err) =>
+  [err.message, err.shortMessage, err.details, ...(err.metaMessages ?? []), err.stack, String(err.cause?.message)]
+    .filter(Boolean)
+    .join("\n");
+
+test("R6: discover against a refused connection never lets the endpoint URL out", async () => {
+  const { run } = await import("../pipeline/steps/discover.js");
+  await assert.rejects(run({ chainKey: "polygon", env: { POLYGON_RPC_URL: SECRET_URL } }), (err) => {
+    const text = printable(err);
+    assert.doesNotMatch(text, /SECRETKEY123/);
+    assert.doesNotMatch(text, /127\.0\.0\.1/);
+    return true;
+  });
+});
+
+test("R6: the CLI scrubs every configured RPC URL from any step's error before printing", async () => {
+  const { main } = await import("../pipeline/cli.js");
+  const printed = [];
+  const original = console.error;
+  console.error = (...args) => printed.push(args.join(" "));
+  try {
+    // holders fails on the missing state or on the network depending on the
+    // data; what matters is that nothing printed carries either URL.
+    const env = {
+      POLYGON_RPC_URL: SECRET_URL,
+      CELO_RPC_URL: "http://127.0.0.1:2/other/CELOKEY456",
+    };
+    const code = await main(["discover", "--chain", "polygon"], env);
+    assert.equal(code, 1);
+  } finally {
+    console.error = original;
+  }
+  const text = printed.join("\n");
+  assert.match(text, /^error: /);
+  assert.doesNotMatch(text, /SECRETKEY123|CELOKEY456|127\.0\.0\.1/);
+});
+
+test("R6: scrubbing covers the other chain's URL when a step's message quotes it", async () => {
+  const { scrubConfiguredUrls } = await import("../pipeline/cli.js");
+  const env = { POLYGON_RPC_URL: SECRET_URL, CELO_RPC_URL: "https://celo.example/CELOKEY456" };
+  const out = scrubConfiguredUrls("a https://celo.example/CELOKEY456 b http://127.0.0.1:1/v2/SECRETKEY123", env);
+  assert.doesNotMatch(out, /CELOKEY456|SECRETKEY123|celo\.example/);
+  assert.equal(scrubConfiguredUrls("nothing to hide", {}), "nothing to hide");
+});

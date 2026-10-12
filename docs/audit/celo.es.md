@@ -42,9 +42,9 @@ La lectura: Polygon carga el settlement institucional — montos grandes, partne
 
 ![Transfers diarios](../../charts/celo/01-daily-transfers.svg)
 
-### En Polygon el despegue tardó 17 meses. En Celo, 6 semanas.
+### En Polygon el despegue tardó 16,5 meses. En Celo, 7 semanas. Ambos contados desde el despliegue.
 
-Primer día con transfers en Celo: <!-- copm:celo.firstDay -->2024-09-17<!-- /copm -->. Primer día con más de 100 transfers: **<!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->**.
+Deploy: <!-- copm:celo.deployDate -->2024-09-11<!-- /copm -->. Primer día con transfers en Celo: <!-- copm:celo.firstDay -->2024-09-17<!-- /copm -->. Primer día con más de 100 transfers: **<!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->**. Son 7 semanas después del despliegue y unas 6 después de la primera transferencia.
 
 La explicación es de manual: cuando COPM llegó a Celo, ya existía la operación, los partners y el caso de uso probados en Polygon. La segunda chain no arranca de cero — hereda la tracción de la primera. Y <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm --> fue su mes más activo de la historia: **<!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> transacciones**.
 
@@ -120,7 +120,7 @@ El `FREEZER_ROLE` puede bloquear una dirección; el contrato emitió <!-- copm:c
 
 ## Validación
 
-Las mismas <!-- copm:celo.checksTotal -->17<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->17<!-- /copm --> pasaron (última corrida <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+Las mismas <!-- copm:celo.checksTotal -->17<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->17<!-- /copm --> pasaron (validado el <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |

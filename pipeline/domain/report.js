@@ -72,17 +72,45 @@ function copmExact(wei, locale) {
   );
 }
 
-function usdCompact(v, locale) {
+// Picks the largest unit that fits |v|, then checks the rounded text: a value
+// that rounds up to 1,000 of its unit ("1,000K") belongs to the next unit up.
+// `units` is ordered from the largest; the last one is the bare number.
+// Returns the sign separately so a currency symbol can follow it.
+function compact(v, units) {
   const a = Math.abs(v);
-  if (locale === "en") {
-    if (a >= 1e9) return `$${number(v / 1e9, 2, "en")}B`;
-    if (a >= 1e6) return `$${number(v / 1e6, 1, "en")}M`;
-    if (a >= 1e3) return `$${number(v / 1e3, a < 1e5 ? 1 : 0, "en")}K`;
-    return `$${number(v, 0, "en")}`;
-  }
-  if (a >= 1e6) return `US$${number(v / 1e6, a < 1e9 ? 1 : 0, "es")} millones`;
-  if (a >= 1e3) return `US$${number(v / 1e3, a < 1e5 ? 1 : 0, "es")} mil`;
-  return `US$${number(v, 0, "es")}`;
+  let i = units.findIndex((u) => a >= u.min);
+  const rounded = (k) => Number((a / units[k].div).toFixed(units[k].digits(a)));
+  while (i > 0 && rounded(i) * units[i].div >= units[i - 1].min) i--;
+  const body = number(a / units[i].div, units[i].digits(a), units[i].locale);
+  return { sign: v < 0 && body !== "0" ? "-" : "", body: body + units[i].suffix };
+}
+
+const unit = (locale, min, digits, suffix, div = min) => ({
+  locale,
+  min,
+  div,
+  digits: typeof digits === "function" ? digits : () => digits,
+  suffix,
+});
+const bare = (locale) => unit(locale, 0, 0, "", 1);
+
+const USD_UNITS = {
+  en: [
+    unit("en", 1e9, 2, "B"),
+    unit("en", 1e6, 1, "M"),
+    unit("en", 1e3, (a) => (a < 1e5 ? 1 : 0), "K"),
+    bare("en"),
+  ],
+  es: [
+    unit("es", 1e6, (a) => (a < 1e9 ? 1 : 0), " millones"),
+    unit("es", 1e3, (a) => (a < 1e5 ? 1 : 0), " mil"),
+    bare("es"),
+  ],
+};
+
+function usdCompact(v, locale) {
+  const { sign, body } = compact(v, USD_UNITS[locale]);
+  return `${sign}${locale === "en" ? "$" : "US$"}${body}`;
 }
 
 // Whole-COPM number with exactly 2 decimals.
@@ -92,18 +120,23 @@ const fixed2 = (v, locale) => {
   return (v < 0 ? "-" : "") + groupDigits(whole, group) + decimal + frac;
 };
 
+const COPM_UNITS = {
+  en: [
+    unit("en", 1e12, 3, "T"),
+    unit("en", 1e9, 2, "B"),
+    unit("en", 1e6, 1, "M"),
+    bare("en"),
+  ],
+  es: [
+    unit("es", 1e12, 3, " billones"),
+    unit("es", 1e6, (a) => (a < 1e9 ? 1 : 0), " millones"),
+    bare("es"),
+  ],
+};
+
 function copmCompact(raw, locale) {
-  const v = copmToNumber(raw);
-  const a = Math.abs(v);
-  if (locale === "en") {
-    if (a >= 1e12) return `${number(v / 1e12, 3, "en")}T`;
-    if (a >= 1e9) return `${number(v / 1e9, 2, "en")}B`;
-    if (a >= 1e6) return `${number(v / 1e6, 1, "en")}M`;
-    return number(v, 0, "en");
-  }
-  if (a >= 1e12) return `${number(v / 1e12, 3, "es")} billones`;
-  if (a >= 1e6) return `${number(v / 1e6, a < 1e9 ? 1 : 0, "es")} millones`;
-  return number(v, 0, "es");
+  const { sign, body } = compact(copmToNumber(raw), COPM_UNITS[locale]);
+  return sign + body;
 }
 
 const FORMATTERS = {
@@ -143,11 +176,31 @@ export function getFigure(figures, key) {
 const TAG = /<!-- copm:([^\s>]*) -->|<!-- \/copm -->/g;
 const lineOf = (text, index) => text.slice(0, index).split("\n").length;
 
+// Any HTML comment that mentions a marker but is not exactly one is a typo
+// (no spaces, two spaces, split across lines, never terminated). Left alone it
+// would be skipped, its figure would go stale and `reports --check` would stay
+// green, so it is an error instead.
+const COMMENT = /<!--[\s\S]*?(?:-->|$)/g;
+const EXACT_MARKER = /^(?:<!-- copm:[^\s>]* -->|<!-- \/copm -->)$/;
+
+function assertNoMalformedMarkers(text) {
+  for (const comment of text.matchAll(COMMENT)) {
+    if (!/copm:|\/copm/.test(comment[0]) || EXACT_MARKER.test(comment[0])) continue;
+    const shown = comment[0].split("\n")[0].slice(0, 60);
+    throw new Error(
+      `malformed marker "${shown}" at line ${lineOf(text, comment.index)}: ` +
+        'write exactly "<!-- copm:KEY -->" and "<!-- /copm -->"'
+    );
+  }
+}
+
 // Replaces the content of every marker with the figure formatted for the
 // locale. Throws on an unknown key, a marker that is never closed (or that
-// contains another opening tag) and a closing tag that closes nothing.
+// contains another opening tag), a closing tag that closes nothing and any
+// comment that looks like a marker but does not follow the grammar.
 // `changes` lists the markers whose content was different.
 export function rewriteMarkers(text, figures, locale) {
+  assertNoMalformedMarkers(text);
   const changes = [];
   let out = "";
   let cursor = 0;

@@ -43,7 +43,7 @@ El gráfico de transacciones mensuales cuenta una historia que ningún dashboard
 
 ![Transfers mensuales por chain](../charts/combined/02-monthly-transfers-by-chain.svg)
 
-También explica por qué la segunda chain despega más rápido: COPM tardó **17 meses** en superar las 100 transacciones diarias en Polygon (primer día: <!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->), y **6 semanas** en lograrlo en Celo (primer día: <!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->). La segunda chain no empieza de cero — hereda partners, operación y casos de uso ya probados.
+También explica por qué la segunda chain despega más rápido: COPM tardó **16,5 meses** desde el despliegue en superar las 100 transacciones diarias en Polygon (primer día: <!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->), y **7 semanas** desde el despliegue en lograrlo en Celo, unas 6 desde su primera transferencia (primer día: <!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->). La segunda chain no empieza de cero — hereda partners, operación y casos de uso ya probados.
 
 ## El acumulado: ~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm --> y subiendo
 

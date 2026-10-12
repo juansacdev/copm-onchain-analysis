@@ -39,7 +39,7 @@ Los datos de este documento no salen de un dashboard ni de un tercero. Salen de 
 
 ![Volumen bruto diario USD](../../charts/polygon/02-daily-volume-usd.svg)
 
-### El token existió 17 meses antes de cruzar 100 transacciones por día.
+### El token existió 16,5 meses (contados desde el despliegue) antes de cruzar 100 transacciones por día.
 
 Deploy: <!-- copm:polygon.deployDate -->2023-09-19<!-- /copm -->. Primer día con más de 100 transfers: **<!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->**.
 
@@ -150,7 +150,7 @@ Los seis roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_RO
 
 ## Validación
 
-Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->17<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->17<!-- /copm --> pasaron (última corrida <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
+Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->17<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->17<!-- /copm --> pasaron (validado el <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |

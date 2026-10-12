@@ -82,3 +82,21 @@ test("a marker opened inside another one is an unclosed marker", () => {
 test("a closing tag with no opening tag is an error", () => {
   assert.throws(() => rewriteMarkers("1<!-- /copm -->", figures, "en"), /stray closing.*line 1/);
 });
+
+test("a well-formed marker is accepted, with other HTML comments around it", () => {
+  const input = `<!-- note --> ${mark("polygon.transfers", "")} <!-- another one -->`;
+  assert.doesNotThrow(() => rewriteMarkers(input, figures, "en"));
+});
+
+test("a malformed marker is an error that names the line, never skipped", () => {
+  const cases = {
+    "no spaces": "ok\n<!--copm:polygon.transfers-->x<!--/copm-->",
+    "double space": "ok\n<!--  copm:polygon.transfers -->x<!-- /copm -->",
+    "closing tag without spaces": `ok\n${mark("polygon.transfers", "x").replace("<!-- /copm -->", "<!--/copm-->")}`,
+    "split across lines": "ok\n<!-- copm:polygon.transfers\n-->x<!-- /copm -->",
+    "never terminated": "ok\n<!-- copm:polygon.transfers",
+  };
+  for (const [name, input] of Object.entries(cases)) {
+    assert.throws(() => rewriteMarkers(input, figures, "en"), /malformed marker.*line 2/s, name);
+  }
+});

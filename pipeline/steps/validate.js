@@ -54,11 +54,15 @@ export function validateChain({
   // produce a diff (or a stale report figure) just because time passed.
   const url = new URL("validation.json", dir);
   const { validatedAt: _previousTime, ...previous } = existsSync(url) ? readJson(url) : {};
-  if (JSON.stringify(previous) !== JSON.stringify(result)) {
+  const changed = JSON.stringify(previous) !== JSON.stringify(result);
+  if (changed) {
     const { chain, block, ...rest } = result;
     writeJson(url, { chain, block, validatedAt: clock().toISOString(), ...rest }, 2);
   }
-  log(`\n${failed === 0 ? "ALL CHECKS PASSED" : `${failed} CHECK(S) FAILED`} — data/${chainKey}/validation.json written`);
+  log(
+    `\n${failed === 0 ? "ALL CHECKS PASSED" : `${failed} CHECK(S) FAILED`} — ` +
+      `data/${chainKey}/validation.json ${changed ? "written" : "unchanged"}`
+  );
   return { exitCode: failed === 0 ? 0 : 1 };
 }
 

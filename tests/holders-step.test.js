@@ -74,7 +74,9 @@ test("balanceOf is asked for every address ever seen, isFrozen only for addresse
   assert.deepEqual(asked(SELECTORS.balanceOf), [ALICE, BOB, CAROL, DAVE].sort());
   assert.deepEqual(asked(SELECTORS.isFrozen), [ALICE, BOB].sort());
   const codeReads = reads.filter((r) => r.method === "eth_getCode").map((r) => r.data).sort();
-  assert.deepEqual(codeReads, [ALICE, BOB, CAROL].sort());
+  // A contract answers once; a wallet is asked until `emptyConfirmations` answers agree.
+  const expected = [CAROL, ...Array(SETTINGS.emptyConfirmations).fill([ALICE, BOB]).flat()].sort();
+  assert.deepEqual(codeReads, expected);
 });
 
 test("no JSON-RPC batch carries more than 100 calls", async () => {
@@ -176,4 +178,26 @@ test("the snapshot is deterministic: running it twice writes identical files", a
   const first = dataset.store.readHolders();
   await run(dataset);
   assert.deepEqual(dataset.store.readHolders(), first);
+});
+
+const isCode = (who) => (read) => read.method === "eth_getCode" && read.data === who;
+const kindOf = (dataset, who) =>
+  dataset.store.readHolders().csv.split("\n").find((l) => l.includes(who)).split(",")[4];
+
+test("a contract is not labelled a wallet because one backend answered 0x for its code", async () => {
+  const dataset = await scannedDataset();
+  dataset.fake.faults.read = (read) => (isCode(CAROL)(read) && read.attempt === 1 ? "0x" : undefined);
+  await run(dataset);
+  assert.equal(kindOf(dataset, CAROL), "contract");
+  assert.equal(dataset.store.readHolders().json.contracts, 1);
+});
+
+test("0x is believed only after emptyConfirmations independent answers", async () => {
+  const dataset = await scannedDataset();
+  dataset.fake.faults.read = (read) =>
+    isCode(CAROL)(read) && read.attempt <= SETTINGS.emptyConfirmations ? "0x" : undefined;
+  await run(dataset);
+  assert.equal(kindOf(dataset, CAROL), "wallet");
+  assert.equal(dataset.fake.seen.reads.filter(isCode(CAROL)).length, SETTINGS.emptyConfirmations);
+  assert.equal(dataset.store.readHolders().json.contracts, 0);
 });

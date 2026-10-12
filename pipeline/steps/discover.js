@@ -1,5 +1,5 @@
 import { getChain, dataPath, dataDir, ERC20_ABI } from "../config/chains.js";
-import { createRpcClient } from "../adapters/rpc.js";
+import { createRpcClient, requireRpcUrl, scrubUrl } from "../adapters/rpc.js";
 import { ensureDir, writeJson } from "../adapters/store.js";
 
 // Refreshes the static facts about the token in manifest.json. Everything that
@@ -10,12 +10,20 @@ export async function run({ chainKey, env = process.env }) {
   const client = createRpcClient(key, env);
   ensureDir(dataDir(key));
 
-  const [decimals, symbol, name] = await Promise.all([
-    client.readContract({ address, abi: ERC20_ABI, functionName: "decimals" }),
-    client.readContract({ address, abi: ERC20_ABI, functionName: "symbol" }),
-    client.readContract({ address, abi: ERC20_ABI, functionName: "name" }),
-  ]);
-  const deployBlockData = await client.getBlock({ blockNumber: BigInt(deployBlock) });
+  // viem errors quote the endpoint URL in message, details and metaMessages.
+  // Only a scrubbed message leaves this step, with no `cause` to print later.
+  const url = requireRpcUrl(key, env);
+  let decimals, symbol, name, deployBlockData;
+  try {
+    [decimals, symbol, name] = await Promise.all([
+      client.readContract({ address, abi: ERC20_ABI, functionName: "decimals" }),
+      client.readContract({ address, abi: ERC20_ABI, functionName: "symbol" }),
+      client.readContract({ address, abi: ERC20_ABI, functionName: "name" }),
+    ]);
+    deployBlockData = await client.getBlock({ blockNumber: BigInt(deployBlock) });
+  } catch (err) {
+    throw new Error(scrubUrl(err?.message ?? err, url));
+  }
 
   const manifest = {
     chain: key,

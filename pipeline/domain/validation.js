@@ -135,6 +135,17 @@ export function checkTimestampsExact(transfers) {
 // The slack covers a block's timestamp being a little ahead of the manifest's.
 export function checkTimestampWindow(transfers, manifest, state, slackSeconds = 120) {
   const deployTs = Date.parse(manifest.deployTimestamp) / 1000;
+  // A comparison against NaN or undefined is always false: with a bound
+  // missing, the rule would pass for any data. It fails instead.
+  const missingBounds = [
+    ["manifest.deployTimestamp", Number.isFinite(deployTs)],
+    ["state.lastBlockTime", Number.isFinite(state.lastBlockTime)],
+  ]
+    .filter(([, present]) => !present)
+    .map(([name]) => name);
+  if (missingBounds.length > 0) {
+    return check("timestamps-in-window", false, `missing or invalid bound: ${missingBounds.join(", ")}`);
+  }
   const outside = transfers.filter(
     (t) => t.ts < deployTs - slackSeconds || t.ts > state.lastBlockTime + slackSeconds
   ).length;

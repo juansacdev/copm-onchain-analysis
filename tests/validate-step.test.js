@@ -120,10 +120,15 @@ test("re-validating unchanged data keeps validation.json byte-identical, so a se
   const { url, store } = tempStore();
   writeFixture(store, url, fixture());
 
-  validate(url);
+  const firstLog = [];
+  validate(url, { log: (line) => firstLog.push(line) });
   const first = readFileSync(new URL("validation.json", url), "utf8");
-  validate(url, { clock: () => new Date("2026-02-02T00:00:00.000Z") });
+  const secondLog = [];
+  validate(url, { clock: () => new Date("2026-02-02T00:00:00.000Z"), log: (line) => secondLog.push(line) });
   assert.equal(readFileSync(new URL("validation.json", url), "utf8"), first);
+  assert.match(firstLog.join("\n"), /validation\.json written/);
+  assert.match(secondLog.join("\n"), /validation\.json unchanged/);
+  assert.doesNotMatch(secondLog.join("\n"), /written/);
 });
 
 test("a changed result is written with the time of the new run", () => {
