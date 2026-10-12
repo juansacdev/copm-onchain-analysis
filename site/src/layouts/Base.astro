@@ -1,23 +1,26 @@
 ---
 import '../styles/global.css';
 import LangSwitch from '../components/LangSwitch.astro';
+import SiteNav from '../components/SiteNav.astro';
+import { dictionaries } from '../i18n/index.js';
+import { alternatesFor, canonicalUrl, languageSwitch, navigation } from '../lib/routes.js';
 
 interface Props {
   lang: 'es' | 'en';
+  /** Key of the route table: decides canonical, hreflang, language switch and navigation. */
+  page: 'dashboard' | 'analysis';
   title: string;
   description: string;
 }
 
-const { lang, title, description } = Astro.props;
+const { lang, page, title, description } = Astro.props;
 
-// URLs canónicas de cada idioma para hreflang y el switcher
-const urls = { es: '/', en: '/en/' };
+const dict = dictionaries[lang];
 const site = Astro.site ?? new URL('https://copm.juansac.dev');
-const absolute = {
-  es: new URL(urls.es, site).href,
-  en: new URL(urls.en, site).href,
-};
-const canonical = new URL(urls[lang], site).href;
+const canonical = canonicalUrl(page, lang, site);
+const alternates = alternatesFor(page, site);
+const switchItems = languageSwitch(page, lang);
+const navItems = navigation(lang, page).map((item) => ({ ...item, label: dict.nav[item.key] }));
 ---
 
 <!doctype html>
@@ -28,13 +31,12 @@ const canonical = new URL(urls[lang], site).href;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="es" href={absolute.es} />
-    <link rel="alternate" hreflang="en" href={absolute.en} />
-    <link rel="alternate" hreflang="x-default" href={absolute.es} />
+    {alternates.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)}
   </head>
   <body>
     <div id="progress" role="presentation"></div>
-    <LangSwitch lang={lang} urls={urls} />
+    <SiteNav label={dict.a11y.mainNavLabel} items={navItems} />
+    <LangSwitch label={dict.a11y.langLabel} items={switchItems} />
     <slot />
 
     <script>

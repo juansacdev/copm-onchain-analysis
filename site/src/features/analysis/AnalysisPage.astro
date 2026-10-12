@@ -1,0 +1,181 @@
+---
+// The long-form analysis, rendered in Spanish at /analisis and in English at
+// /en/analysis. All copy comes from the dictionaries (i18n/), all figures from
+// the repository data files, read at build time (lib/analysis-data.js).
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import Base from '../../layouts/Base.astro';
+import SideNav from '../../components/SideNav.astro';
+import Hero from '../../components/Hero.astro';
+import Chapter from '../../components/Chapter.astro';
+import BigNum from '../../components/BigNum.astro';
+import Note from '../../components/Note.astro';
+import Quote from '../../components/Quote.astro';
+import Steps from '../../components/Steps.astro';
+import Checks from '../../components/Checks.astro';
+import Glossary from '../../components/Glossary.astro';
+import ChartFigure from '../../components/ChartFigure.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import { dictionaries, renderDictionary } from '../../i18n/index.js';
+import { loadAnalysisData } from '../../lib/analysis-data.js';
+import { AUTHOR_URL, PRESS_URL, REPO_URL, auditDocUrl, explorerTokenUrl, shortAddress } from '../../lib/links.js';
+import { buildVars } from './vars.js';
+
+import polygonMonthly from '../../../../charts/polygon/light/04-monthly-volume-usd.svg?raw';
+import celoMonthly from '../../../../charts/celo/light/04-monthly-volume-usd.svg?raw';
+import transfersByChain from '../../../../charts/combined/light/02-monthly-transfers-by-chain.svg?raw';
+import cumulativeByChain from '../../../../charts/combined/light/03-cumulative-volume-by-chain.svg?raw';
+
+interface Props {
+  lang: 'es' | 'en';
+  /** Route-table key of the page that renders this component. */
+  page?: 'dashboard' | 'analysis';
+}
+
+const { lang, page = 'analysis' } = Astro.props;
+
+// `astro build` runs from site/; the data lives one level up.
+const dataDir = fileURLToPath(new URL('../data', pathToFileURL(`${process.cwd()}/`)));
+const data = loadAnalysisData({ dataDir, copPerUsd: Number(process.env.COP_PER_USD ?? 4000) });
+const vars = buildVars(data, lang);
+const t = renderDictionary(dictionaries[lang], vars);
+const { chapters: ch } = t;
+const { polygon, celo } = data.chains;
+
+const chapterIds = ['problema', 'copm', 'metodo', 'polygon', 'celo', 'duo', 'confianza', 'prensa', 'glosario'];
+const chapterNums = ['01', '02', '03', '04', '05', '06', '07', '08', 'A'];
+const navItems = chapterIds.map((id, index) => ({ href: `#${id}`, num: chapterNums[index], text: ch[id].nav }));
+
+const footerLinks = [
+  { href: REPO_URL, text: t.footer.links.repo },
+  { href: auditDocUrl(lang), text: t.footer.links.audit },
+  { href: explorerTokenUrl('polygon', polygon.address), text: t.footer.links.polygon },
+  { href: explorerTokenUrl('celo', celo.address), text: t.footer.links.celo },
+  { href: PRESS_URL, text: t.footer.links.press },
+  { href: AUTHOR_URL, text: t.footer.links.github },
+];
+
+const explorerLinks = [polygon, celo].map((c) => ({
+  href: explorerTokenUrl(c.key, c.address),
+  text: shortAddress(c.address),
+}));
+---
+
+<Base lang={lang} page={page} title={t.meta.title} description={t.meta.description}>
+  <SideNav label={t.a11y.chaptersLabel} items={navItems} />
+
+  <Hero eyebrow={t.hero.eyebrow} stats={t.hero.stats} scrollHint={t.hero.scrollHint}>
+    <Fragment slot="title">{t.hero.titleLine1}<br />{t.hero.titleLine2}<br /><span class="big">{t.hero.titleBig}</span></Fragment>
+    <Fragment slot="sub">{t.hero.sub}</Fragment>
+  </Hero>
+
+  <main>
+    <Chapter id="problema" label={ch.problema.label}>
+      <Fragment slot="title">{ch.problema.title}</Fragment>
+      <p class="lead" set:html={ch.problema.lead} />
+      <p>{ch.problema.p1}</p>
+      <p>{ch.problema.p2}</p>
+      <p set:html={ch.problema.p3} />
+      <p>{ch.problema.p4}</p>
+    </Chapter>
+
+    <Chapter id="copm" label={ch.copm.label}>
+      <Fragment slot="title">{ch.copm.title}</Fragment>
+      <p set:html={ch.copm.p1} />
+      <p>{ch.copm.p2}</p>
+      <div class="duo">
+        <article class="card pol">
+          <h4>{ch.copm.mint.title}</h4>
+          <p class="small" style="margin:0" set:html={ch.copm.mint.body} />
+        </article>
+        <article class="card cel">
+          <h4>{ch.copm.burn.title}</h4>
+          <p class="small" style="margin:0" set:html={ch.copm.burn.body} />
+        </article>
+      </div>
+      <p set:html={ch.copm.p3} />
+      <p set:html={ch.copm.p4} />
+    </Chapter>
+
+    <Chapter id="metodo" label={ch.metodo.label}>
+      <Fragment slot="title">{ch.metodo.title}</Fragment>
+      <p>{ch.metodo.intro}</p>
+      <Steps steps={ch.metodo.steps} />
+    </Chapter>
+
+    <Chapter id="polygon" label={ch.polygon.label}>
+      <Fragment slot="title" set:html={ch.polygon.title} />
+      <p class="lead">{ch.polygon.lead}</p>
+      <BigNum value={vars.polygonGrossUsdShort} variant="p" desc={ch.polygon.bigNum} />
+      <p>{ch.polygon.intro}</p>
+      <p set:html={ch.polygon.act1} />
+      <p set:html={ch.polygon.act2} />
+      <p set:html={ch.polygon.act3} />
+      <ChartFigure svg={polygonMonthly} caption={ch.polygon.chartCaption} />
+      <Note><Fragment set:html={ch.polygon.note} /></Note>
+    </Chapter>
+
+    <Chapter id="celo" label={ch.celo.label}>
+      <Fragment slot="title" set:html={ch.celo.title} />
+      <p class="lead">{ch.celo.lead}</p>
+      <BigNum value={vars.celoTicket} variant="c" desc={ch.celo.bigNum} />
+      <p set:html={ch.celo.p1} />
+      <p set:html={ch.celo.p2} />
+      <ChartFigure svg={celoMonthly} caption={ch.celo.chartCaption} />
+      <Note variant="green"><Fragment set:html={ch.celo.note} /></Note>
+    </Chapter>
+
+    <Chapter id="duo" label={ch.duo.label}>
+      <Fragment slot="title">{ch.duo.title}</Fragment>
+      <p class="lead">{ch.duo.lead}</p>
+      <ChartFigure svg={transfersByChain} caption={ch.duo.transfersCaption} />
+      <p set:html={ch.duo.relay} />
+      <table class="tbl">
+        <thead><tr><th>{ch.duo.table.metric}</th><th>{ch.duo.table.polygon}</th><th>{ch.duo.table.celo}</th></tr></thead>
+        <tbody>
+          {ch.duo.table.rows.slice(0, 1).map((row) => (
+            <tr><td>{row.label}</td><td class="mono">{row.polygon}</td><td class="mono">{row.celo}</td></tr>
+          ))}
+          <tr>
+            <td>{ch.duo.table.explorer}</td>
+            {explorerLinks.map((link) => (
+              <td class="mono"><a href={link.href} target="_blank" rel="noopener noreferrer">{link.text} ↗</a></td>
+            ))}
+          </tr>
+          {ch.duo.table.rows.slice(1).map((row) => (
+            <tr><td set:html={row.label} /><td class="mono">{row.polygon}</td><td class="mono">{row.celo}</td></tr>
+          ))}
+          <tr class="hl"><td><strong>{ch.duo.table.combined}</strong></td><td class="mono" colspan="2" style="text-align:center"><strong>{ch.duo.table.combinedValue}</strong></td></tr>
+        </tbody>
+      </table>
+      <ChartFigure svg={cumulativeByChain} caption={ch.duo.cumulativeCaption} />
+    </Chapter>
+
+    <Chapter id="confianza" label={ch.confianza.label}>
+      <Fragment slot="title">{ch.confianza.title}</Fragment>
+      <p>{ch.confianza.intro}</p>
+      <Checks items={ch.confianza.checks} />
+      <pre class="repro"><code><span class="c">{ch.confianza.reproComment}</span>
+git clone {REPO_URL}.git
+cd copm-onchain-analysis && cp .env.example .env
+npm install && npm run audit:all</code></pre>
+      <p class="muted" style="font-size:.92rem">{ch.confianza.more}</p>
+    </Chapter>
+
+    <Chapter id="prensa" label={ch.prensa.label}>
+      <Fragment slot="title">{ch.prensa.title}</Fragment>
+      <Quote>
+        {ch.prensa.quote}
+        <Fragment slot="cite">— <cite><a href={PRESS_URL} target="_blank" rel="noopener noreferrer">{ch.prensa.cite}</a></cite> {ch.prensa.citeNote}</Fragment>
+      </Quote>
+      <p set:html={ch.prensa.p1} />
+      <p>{ch.prensa.p2}</p>
+    </Chapter>
+
+    <Chapter id="glosario" label={ch.glosario.label}>
+      <Fragment slot="title">{ch.glosario.title}</Fragment>
+      <Glossary items={ch.glosario.items} />
+    </Chapter>
+  </main>
+
+  <SiteFooter navLabel={t.a11y.linksLabel} links={footerLinks} credit={t.footer.credit} />
+</Base>
