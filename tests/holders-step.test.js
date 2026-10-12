@@ -201,3 +201,21 @@ test("0x is believed only after emptyConfirmations independent answers", async (
   assert.equal(dataset.fake.seen.reads.filter(isCode(CAROL)).length, SETTINGS.emptyConfirmations);
   assert.equal(dataset.store.readHolders().json.contracts, 0);
 });
+
+test("rows above the checkpoint, left by a scan that crashed before writing state, never reach the ledger", async () => {
+  const dataset = await scannedDataset();
+  const { store } = dataset;
+  const { lastBlock } = store.readState();
+  const key = store.listPartitions().at(-1);
+  const rows = store.readPartition(key);
+  const last = rows.at(-1);
+  store.writePartition(key, [
+    ...rows,
+    { ...last, b: lastBlock + 1, i: 0, t: "0xleftover", f: `0x${"0".repeat(40)}`, r: CAROL, v: COPM(7).toString() },
+  ]);
+
+  const json = await run(dataset);
+  assert.equal(json.block, lastBlock);
+  assert.equal(json.totalSupply, "1020");
+  assert.equal(json.holders, 3);
+});

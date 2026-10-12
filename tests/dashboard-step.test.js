@@ -58,3 +58,14 @@ test("fails with a clear message when there are no partitions or no holders snap
     /holders.*run "holders --chain testnet" first/s,
   );
 });
+
+test("rows above the checkpoint do not reach the dashboard", async () => {
+  const { store } = await datasetWithHolders();
+  const { lastBlock } = store.readState();
+  const before = buildDashboardFor({ store, chainKey: "testnet" });
+  const key = store.listPartitions().at(-1);
+  const rows = store.readPartition(key);
+  store.writePartition(key, [...rows, { ...rows.at(-1), b: lastBlock + 1, i: 0, v: "1000000000000000000" }]);
+
+  assert.deepEqual(buildDashboardFor({ store, chainKey: "testnet" }), before);
+});

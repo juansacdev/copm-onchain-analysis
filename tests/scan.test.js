@@ -439,3 +439,108 @@ test("stale rows above the checkpoint in a month the stage does not touch are re
 
   assert.deepEqual(snapshot(dir), snapshot(reference.dir));
 });
+
+// An honest scan of the same history, to compare byte for byte.
+async function referenceSnapshot() {
+  const reference = setup();
+  await reference.scan();
+  return snapshot(reference.dir);
+}
+
+test("a backend that repeats every log of a range changes nothing: counters, approvals and canary come from the unique set", async () => {
+  const expected = await referenceSnapshot();
+  const { fake, dir, store, scan } = setup();
+  fake.faults.getLogs = ({ index, real }) => (index > 1 ? real.flatMap((l) => [l, { ...l }]) : undefined);
+  const result = await scan();
+
+  assert.deepEqual(snapshot(dir), expected);
+  const state = store.readState();
+  assert.equal(state.transfers, 5);
+  assert.equal(state.approvals, 3);
+  assert.deepEqual(state.canary, { block: 2150, logs: 1 });
+  assert.equal(result.stats.logs.transfer, 5);
+  assert.equal(result.stats.logs.approval, 3);
+});
+
+test("two logs with the same block and log index but different content reject the batch", async () => {
+  const { fake, store, dir, scan } = setup();
+  fake.faults.getLogs = ({ index, real }) =>
+    index > 1 && real.length ? [...real, { ...real[0], data: `0x${"0".repeat(63)}9` }] : undefined;
+
+  await assert.rejects(scan(), /rejected 20 times.*logs/s);
+  assert.equal(store.readState(), null);
+  assert.deepEqual(snapshot(dir), {});
+});
+
+test("a log outside the range it was returned for, or flagged removed, rejects the batch and is asked again", async () => {
+  const expected = await referenceSnapshot();
+  const spoilers = [
+    (real, from, to) => [...real, { ...real[0], blockNumber: hex(to + 1) }],
+    (real, from) => [...real, { ...real[0], blockNumber: hex(from - 1) }],
+    (real) => real.map((l) => ({ ...l, removed: true })),
+  ];
+  for (const spoil of spoilers) {
+    const { fake, dir, scan } = setup();
+    const lied = new Set();
+    fake.faults.getLogs = ({ index, from, to, real }) => {
+      if (index <= 1 || real.length === 0 || lied.has(`${from}-${to}`)) return undefined;
+      lied.add(`${from}-${to}`);
+      return spoil(real, from, to);
+    };
+    const result = await scan();
+    assert.ok(result.stats.rejectedLogs > 0, "the spoiled answers were not rejected");
+    assert.deepEqual(snapshot(dir), expected);
+  }
+});
+
+test("a crashed stage with transfers, approvals and an admin event is repaired when the re-run covers a different range", async () => {
+  // Stage 2 is cut short by the head (1500-1700); the stage after the crash,
+  // with the head further on, is 1500-1900. So the leftovers are not simply
+  // re-fetched and overwritten: whatever the chain no longer reports (a
+  // transfer and an admin event) has to be dropped, and approvals already
+  // counted by the crashed stage must not be counted again.
+  const base = [
+    upgraded(DEPLOY, 0),
+    mint(1010, 0, ALICE, COPM(1000)),
+    transfer(1520, 0, ALICE, BOB, COPM(100)),
+    approval(1530, 0, ALICE, SPENDER),
+    roleGranted(1540, 0, "MINTER_ROLE", BOB),
+    transfer(1690, 0, BOB, ALICE, COPM(10)),
+    approval(1695, 0, BOB, SPENDER),
+  ];
+  const crashedChain = base;
+  const finalChain = [
+    ...base.filter((l) => l.b !== 1690 && l.b !== 1540),
+    transfer(1850, 0, ALICE, BOB, COPM(5)),
+    approval(1860, 0, ALICE, SPENDER),
+  ];
+
+  const reference = setup({ logs: finalChain, head: 1905 });
+  await reference.scan();
+
+  const dir = mkdtempSync(join(tmpdir(), "copm-crash2-"));
+  const real = createStore(pathToFileURL(`${dir}/`));
+  let stateWrites = 0;
+  const crashing = {
+    ...real,
+    writeState(state) {
+      if (++stateWrites === 2) throw new Error("simulated crash");
+      real.writeState(state);
+    },
+  };
+  const fake = createFakeChain({ logs: crashedChain, head: 1705 });
+  const run = (store) =>
+    runScan({ chain: CHAIN, settings: SETTINGS, rpc: fake.rpc, store, clock: CLOCK, log: () => {}, sleep: async () => {} });
+
+  await assert.rejects(run(crashing), /simulated crash/);
+  assert.equal(real.readState().lastBlock, 1499);
+  assert.ok(real.readTransfers().some((r) => r.b === 1690), "a leftover transfer exists");
+  assert.ok(real.readAdminEvents().some((e) => e.b === 1540), "a leftover admin event exists");
+  assert.equal(real.readApprovals().block, 1695, "the crashed stage already counted its approvals");
+
+  fake.logs = finalChain;
+  fake.head = 1905;
+  await run(real);
+
+  assert.deepEqual(snapshot(dir), snapshot(reference.dir));
+});

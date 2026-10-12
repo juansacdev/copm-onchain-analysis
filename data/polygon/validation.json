@@ -1,7 +1,7 @@
 {
   "chain": "polygon",
   "block": 95370448,
-  "validatedAt": "2026-10-12T01:38:40.294Z",
+  "validatedAt": "2026-10-12T02:41:08.806Z",
   "checks": [
     {
       "id": "event-count",
@@ -69,6 +69,11 @@
       "detail": "stored=11 checkpoint=11"
     },
     {
+      "id": "approvals-consistent",
+      "ok": true,
+      "detail": "block=95305770 checkpoint=95370448 state=122239 daily=122239 spenders=122239"
+    },
+    {
       "id": "daily-matches-ledger",
       "ok": true,
       "detail": "rows=1117 lastSupply=4482231674.754852 totalSupply=4482231674.754852"
@@ -94,6 +99,6 @@
       "detail": "block=95370448 checkpoint=95370448 sections=14"
     }
   ],
-  "passed": 18,
+  "passed": 19,
   "failed": 0
 }

@@ -150,7 +150,7 @@ Los seis roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_RO
 
 ## Validación
 
-Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->18<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->18<!-- /copm --> pasaron (validado el <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
+Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) es estricto y offline, corre <!-- copm:polygon.checksTotal -->19<!-- /copm --> reglas sin tolerancia, y <!-- copm:polygon.checksPassed -->19<!-- /copm --> pasaron (validado el <!-- copm:polygon.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |
@@ -185,7 +185,7 @@ El pipeline son unos pocos pasos, cada uno un comando de `node pipeline/cli.js`,
 3. **Holders** — calcula cada balance desde el libro y contrasta cada uno con `balanceOf` en el bloque del checkpoint.
 4. **Aggregate** — reproduce los eventos en orden y construye la serie diaria: volumen, mints, burns, supply derivado.
 5. **Charts** — renderiza los SVG sin canvas ni headless browser.
-6. **Validate** — las <!-- copm:polygon.checksTotal -->18<!-- /copm --> reglas estrictas de arriba.
+6. **Validate** — las <!-- copm:polygon.checksTotal -->19<!-- /copm --> reglas estrictas de arriba.
 7. **Reports** — completa cada cifra de estos documentos desde los datos.
 
 **Fuente única: un endpoint RPC.** Sin indexers, sin APIs de terceros, sin exploradores. Sirve cualquier proveedor — uno de pago (más rápido) o uno público (gratis, con rate limits que el scanner maneja solo).

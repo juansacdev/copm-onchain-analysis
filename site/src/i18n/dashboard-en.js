@@ -243,6 +243,7 @@ export const dashboardEn = {
       "timestamps-in-window": "Every time falls between deployment and the checkpoint.",
       "admin-events-ordered": "Administrative events are in order, with no duplicates.",
       "admin-events-count": "The number of administrative events is the checkpoint's.",
+      "approvals-consistent": "The checkpoint's approval count equals the sum by day and the sum by spender.",
       "daily-matches-ledger": "The daily series is exactly what the transfers give.",
       "series-length": "The daily series covers every day of the summary.",
       "series-continuous": "The daily series has no missing days.",

@@ -23,7 +23,7 @@ Y aquí viene el problema clásico: casi nada de eso se puede mostrar. El códig
 
 Pero hay una excepción enorme: **la blockchain es pública por definición.** Cada mint, cada burn, cada transfer de COPM quedó registrado en Polygon y Celo, verificable por cualquiera, para siempre. No es información interna de la empresa, ni su codebase, ni su IP — es el registro público de lo que el sistema hizo.
 
-Así que en vez de pedirte que me creas, lo audité: **<!-- copm:combined.transfers -->374.802<!-- /copm --> eventos `Transfer`, ~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm --> en volumen, dos chains, <!-- copm:combined.checksPassed -->36<!-- /copm --> checks de validación en verde.** Este repositorio es la evidencia, los scripts para reproducirla y el análisis de lo que cuenta.
+Así que en vez de pedirte que me creas, lo audité: **<!-- copm:combined.transfers -->374.802<!-- /copm --> eventos `Transfer`, ~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm --> en volumen, dos chains, <!-- copm:combined.checksPassed -->38<!-- /copm --> checks de validación en verde.** Este repositorio es la evidencia, los scripts para reproducirla y el análisis de lo que cuenta.
 
 ## Los titulares
 
@@ -36,7 +36,7 @@ Así que en vez de pedirte que me creas, lo audité: **<!-- copm:combined.transf
 | Día con más transferencias (Polygon) | **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> transferencias** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | Rotación del supply (Polygon, últimos 30 días) | **~<!-- copm:polygon.turnoverMonthly -->13,7<!-- /copm -->x al mes** |
 | Reconciliación de supply | **Exacta en ambas chains**: minted − burned es igual a `totalSupply()` al wei |
-| Validación | **<!-- copm:combined.checksPassed -->36<!-- /copm -->/<!-- copm:combined.checksTotal -->36<!-- /copm --> checks estrictos** — offline, sin tolerancia, cada balance contrastado con `balanceOf` |
+| Validación | **<!-- copm:combined.checksPassed -->38<!-- /copm -->/<!-- copm:combined.checksTotal -->38<!-- /copm --> checks estrictos** — offline, sin tolerancia, cada balance contrastado con `balanceOf` |
 
 → El detalle, los gráficos y la historia completa están en la **[auditoría unificada](./docs/AUDIT.es.md)**.
 
@@ -72,6 +72,7 @@ Cada paso es un comando de un único CLI: `node pipeline/cli.js <comando> [--cha
 Los endpoints públicos están detrás de balanceadores de carga, y un backend al que le falta parte del índice de logs responde `eth_getLogs` con un arreglo vacío y sin error. Un scan simple guarda esos huecos. Este no avanza hasta que los eventos que tiene cuadran con el contrato:
 
 - **Canario y verificación del head en cada lote.** Un lote es `[eth_blockNumber, un bloque con cantidad de logs conocida, ...rangos]`; se descarta salvo que el canario devuelva exactamente esa cantidad y el head cubra los rangos.
+- **Los logs deben pertenecer a su rango.** Un log fuera del rango por el que volvió, marcado `removed`, o dos logs distintos con el mismo bloque e índice de log rechazan el lote completo; una repetición exacta se descarta, así que todos los contadores salen del conjunto único.
 - **Los rangos vacíos se confirman.** Una respuesta con eventos es definitiva; una vacía debe repetirse `emptyConfirmations` veces (2 en Polygon, 6 en Celo) en lotes independientes.
 - **Reconciliación exacta antes de mover el checkpoint.** Minted − burned debe ser igual a `totalSupply()` en el último bloque de la etapa, al wei (un `eth_call` fijado a ese bloque y enviado por separado). Si no cuadra, la corrida falla y no escribe nada de esa etapa.
 - **Timestamps exactos.** Cada transferencia lleva el timestamp de su bloque (del log, o del header del bloque cuando el nodo devuelve `0x0`), así que los días no se interpolan.
@@ -99,7 +100,7 @@ Ningún número de los reportes se escribe a mano. Una cifra se escribe como `<!
 
 ### Validación
 
-`validate` es estricto y offline: lee solo los archivos que escriben `scan`, `holders`, `aggregate` y `dashboard`, así que el CI puede correrlo en cada push. Entre sus <!-- copm:polygon.checksTotal -->18<!-- /copm --> reglas: minted − burned es igual a `totalSupply` al wei, recorrer las transferencias guardadas reproduce el checkpoint, ningún balance negativo, `holders.csv` suma `totalSupply` en el bloque del checkpoint, las particiones están estrictamente ordenadas y cada fila está en su mes UTC, nada queda por encima del checkpoint `daily.csv` es exactamente lo que producen las transferencias y `dashboard.json` está en el bloque del checkpoint con los minted, burned y supply del libro. El resultado va a `data/<chain>/validation.json`.
+`validate` es estricto y offline: lee solo los archivos que escriben `scan`, `holders`, `aggregate` y `dashboard`, así que el CI puede correrlo en cada push. Entre sus <!-- copm:polygon.checksTotal -->19<!-- /copm --> reglas: minted − burned es igual a `totalSupply` al wei, recorrer las transferencias guardadas reproduce el checkpoint, ningún balance negativo, `holders.csv` suma `totalSupply` en el bloque del checkpoint, las particiones están estrictamente ordenadas y cada fila está en su mes UTC, nada queda por encima del checkpoint, los contadores de approvals de `state.json`, `approvals.daily` y `approvals.spenders` coinciden, `daily.csv` es exactamente lo que producen las transferencias y `dashboard.json` está en el bloque del checkpoint con los minted, burned y supply del libro. El resultado va a `data/<chain>/validation.json`.
 
 Ajustes, todos opcionales: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (o las variables `SCAN_*` equivalentes). Los valores por defecto están por chain en `pipeline/config/chains.js`. `scan --fresh` descarta lo que el scan generó para esa chain y empieza de cero.
 

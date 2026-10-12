@@ -243,6 +243,7 @@ export const dashboardEs = {
       "timestamps-in-window": "Todas las horas caen entre el despliegue y el punto de control.",
       "admin-events-ordered": "Los eventos administrativos están en orden y sin duplicados.",
       "admin-events-count": "El número de eventos administrativos es el del punto de control.",
+      "approvals-consistent": "El conteo de aprobaciones del punto de control es igual a la suma por día y a la suma por spender.",
       "daily-matches-ledger": "La serie diaria es exactamente lo que dan las transferencias.",
       "series-length": "La serie diaria cubre todos los días del resumen.",
       "series-continuous": "La serie diaria no tiene días faltantes.",

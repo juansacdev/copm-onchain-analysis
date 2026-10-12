@@ -171,6 +171,21 @@ export function checkAdminEventsCount(adminEvents, state) {
   );
 }
 
+// Approvals are counted, never stored one by one, so nothing else audits them:
+// daily.csv is rebuilt from approvals.daily, which proves nothing about it. The
+// three tallies of one number must agree, and none may come from a stage the
+// checkpoint does not cover.
+export function checkApprovalsConsistent(approvals, state) {
+  const sum = (counts) => Object.values(counts).reduce((total, n) => total + n, 0);
+  const daily = sum(approvals.daily);
+  const spenders = sum(approvals.spenders);
+  return check(
+    "approvals-consistent",
+    approvals.block <= state.lastBlock && state.approvals === daily && state.approvals === spenders,
+    `block=${approvals.block} checkpoint=${state.lastBlock} state=${state.approvals} daily=${daily} spenders=${spenders}`
+  );
+}
+
 // daily.csv is a pure function of the transfers and the approval counts, so
 // the file must be byte for byte what they produce now. That also pins its
 // supply column to the ledger, and the last row to totalSupply.
@@ -290,6 +305,7 @@ export function strictChecks({
     checkTimestampWindow(transfers, manifest, state),
     checkAdminEventsOrdered(adminEvents, state),
     checkAdminEventsCount(adminEvents, state),
+    checkApprovalsConsistent(approvals, state),
     checkDailyMatchesLedger({ transfers, approvals, csvText, state }),
     checkSeriesLength(csvRows, summary),
     checkSeriesContinuous(csvRows),

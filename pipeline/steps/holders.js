@@ -74,7 +74,7 @@ export async function runHolders({
   const block = state.lastBlock;
   const tag = hex(block);
 
-  const ledger = foldTransfers(createLedger({ trackActivity: true }), store.readTransfers());
+  const ledger = foldTransfers(createLedger({ trackActivity: true }), store.readTransfersAtCheckpoint());
   const negatives = negativeBalances(ledger);
   if (negatives.length > 0) {
     throw new Error(

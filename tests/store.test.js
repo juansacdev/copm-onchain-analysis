@@ -90,3 +90,18 @@ test("holders.csv and holders.json round-trip together; absent files read as nul
   assert.deepEqual(store.readHolders(), { csv: "rank,address\n", json: { block: 7, holders: 0 } });
   assert.deepEqual(readdirSync(dir).filter((n) => n.endsWith(".tmp")), []);
 });
+
+test("readTransfersAtCheckpoint returns only the rows at or below state.lastBlock; readTransfers stays raw", () => {
+  const { store } = tempStore();
+  store.writePartition("2023-11", [row(3, 0), row(5, 0), row(6, 0)]);
+  store.writeState({ schema: 1, lastBlock: 5 });
+
+  assert.deepEqual(store.readTransfersAtCheckpoint().map((r) => r.b), [3, 5]);
+  assert.deepEqual(store.readTransfers().map((r) => r.b), [3, 5, 6]);
+});
+
+test("readTransfersAtCheckpoint without a checkpoint is an error, not an empty list", () => {
+  const { store } = tempStore();
+  store.writePartition("2023-11", [row(3, 0)]);
+  assert.throws(() => store.readTransfersAtCheckpoint(), /no state\.json/);
+});

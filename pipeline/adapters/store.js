@@ -62,8 +62,10 @@ export function createStore(dirUrl) {
   const readPartition = (key) =>
     existsSync(partitionUrl(key)) ? readJsonl(partitionUrl(key)) : [];
 
+  const readState = () => readJsonIfExists(stateUrl, null);
+
   return {
-    readState: () => readJsonIfExists(stateUrl, null),
+    readState,
     writeState(state) {
       ensureDir(dirUrl);
       writeAtomic(stateUrl, `${JSON.stringify(state, null, 2)}\n`);
@@ -79,7 +81,19 @@ export function createStore(dirUrl) {
       ensureDir(transfersDir);
       writeAtomic(partitionUrl(key), toJsonl(rows));
     },
+    // Raw partitions, leftovers included: only validate's no-row-above-checkpoint
+    // rule reads them this way, so it can report them.
     readTransfers: () => listPartitions().flatMap(readPartition),
+    // What every other reader works from. A scan that crashed between the
+    // partition write and the state write leaves rows above the checkpoint;
+    // they belong to a stage that was never verified against totalSupply.
+    readTransfersAtCheckpoint() {
+      const state = readState();
+      if (!state) throw new Error("no state.json: run scan first");
+      return listPartitions()
+        .flatMap(readPartition)
+        .filter((row) => row.b <= state.lastBlock);
+    },
 
     readAdminEvents: () => (existsSync(adminUrl) ? readJsonl(adminUrl) : []),
     writeAdminEvents(rows) {

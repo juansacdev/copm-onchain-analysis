@@ -22,6 +22,7 @@ test("a consistent dataset passes every rule, in report order", () => {
     "timestamps-in-window",
     "admin-events-ordered",
     "admin-events-count",
+    "approvals-consistent",
     "daily-matches-ledger",
     "series-length",
     "series-continuous",
@@ -296,4 +297,32 @@ test("dashboard-matches-ledger: without the holders snapshot it cannot rebuild a
   const fx = fixture();
   fx.holders = { csv: null, json: null };
   assert.equal(results(fx)["dashboard-matches-ledger"].ok, false);
+});
+
+test("approvals-consistent: the checkpoint's count, the daily counts and the spender counts must agree", () => {
+  const fx = fixture();
+  assert.equal(results(fx)["approvals-consistent"].ok, true);
+  assert.equal(
+    results(fx)["approvals-consistent"].detail,
+    `block=${fx.approvals.block} checkpoint=${fx.state.lastBlock} state=2 daily=2 spenders=2`
+  );
+});
+
+test("approvals-consistent: fails when state.approvals differs from the daily counts", () => {
+  const fx = fixture();
+  fx.state.approvals += 1;
+  assert.ok(failing(fx).includes("approvals-consistent"));
+});
+
+test("approvals-consistent: fails when the spender counts differ from the daily counts", () => {
+  const fx = fixture();
+  fx.approvals.spenders[A] += 1;
+  assert.ok(failing(fx).includes("approvals-consistent"));
+  assert.match(results(fx)["approvals-consistent"].detail, /daily=2 spenders=3/);
+});
+
+test("approvals-consistent: fails when approvals.json is ahead of the checkpoint", () => {
+  const fx = fixture();
+  fx.approvals.block = fx.state.lastBlock + 1;
+  assert.ok(failing(fx).includes("approvals-consistent"));
 });

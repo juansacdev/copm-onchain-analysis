@@ -46,7 +46,7 @@ export function fixture() {
     adminEvents: 1,
   };
   const adminEvents = [{ b: DEPLOY, ts: ts(2024, 1, 31, 11), t: "0xup", i: 0, name: "Upgraded", args: {} }];
-  const approvals = { block: lastBlock, daily: { "2024-01-31": 2 }, spenders: {} };
+  const approvals = { block: lastBlock, daily: { "2024-01-31": 2 }, spenders: { [A]: 2 } };
   const manifest = {
     chain: CHAIN_KEY,
     chainLabel: "Celo",

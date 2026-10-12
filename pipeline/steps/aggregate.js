@@ -12,7 +12,7 @@ export function buildAggregate({ store, manifest, chainKey, copPerUsd }) {
     );
   }
 
-  const transfers = store.readTransfers();
+  const transfers = store.readTransfersAtCheckpoint();
   const { series, totals } = buildDailySeries(transfers, store.readApprovals().daily);
   const summary = summarize({
     manifest,

@@ -23,7 +23,7 @@ Datos al bloque <!-- copm:polygon.checkpointBlock -->95.370.448<!-- /copm --> de
 | Mes pico (volumen) | <!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm --> (<!-- copm:polygon.peakMonthShort -->nov 2025<!-- /copm -->) | <!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> (<!-- copm:celo.peakMonthShort -->jul 2025<!-- /copm -->) | — |
 | Supply on-chain actual | <!-- copm:polygon.supplyCompact -->4.482 millones<!-- /copm --> COPM | <!-- copm:celo.supplyCompact -->418,6 millones<!-- /copm --> COPM | **<!-- copm:combined.supply -->4.901 millones<!-- /copm --> COPM ≈ <!-- copm:combined.supplyUsd -->US$1,2 millones<!-- /copm -->** |
 | Holders con saldo | <!-- copm:polygon.holders -->582<!-- /copm --> | <!-- copm:celo.holders -->998<!-- /copm --> | **<!-- copm:combined.holders -->1.580<!-- /copm -->** |
-| Reglas de validación estricta | <!-- copm:polygon.checksPassed -->18<!-- /copm -->/<!-- copm:polygon.checksTotal -->18<!-- /copm --> ✅ | <!-- copm:celo.checksPassed -->18<!-- /copm -->/<!-- copm:celo.checksTotal -->18<!-- /copm --> ✅ | **<!-- copm:combined.checksPassed -->36<!-- /copm -->/<!-- copm:combined.checksTotal -->36<!-- /copm --> ✅** |
+| Reglas de validación estricta | <!-- copm:polygon.checksPassed -->19<!-- /copm -->/<!-- copm:polygon.checksTotal -->19<!-- /copm --> ✅ | <!-- copm:celo.checksPassed -->19<!-- /copm -->/<!-- copm:celo.checksTotal -->19<!-- /copm --> ✅ | **<!-- copm:combined.checksPassed -->38<!-- /copm -->/<!-- copm:combined.checksTotal -->38<!-- /copm --> ✅** |
 
 > Tasa de cambio: 1 USD = <!-- copm:fx.copPerUsd -->4.000<!-- /copm --> COP, constante (±5% de margen). Misma metodología, mismos scripts, [mismas validaciones](#validación) en ambas chains.
 
@@ -61,14 +61,14 @@ Versiones anteriores de este dataset omitían parte del historial de Polygon y m
 
 ## Validación
 
-Cada chain pasa las mismas <!-- copm:polygon.checksTotal -->18<!-- /copm --> reglas estrictas, offline y sin tolerancia: minted − burned es igual a `totalSupply()` al wei, reproducir las transferencias guardadas reproduce el checkpoint, ningún balance es negativo, `holders.csv` suma `totalSupply()`, las particiones están ordenadas y completas, los timestamps son exactos y `daily.csv` es exactamente lo que producen las transferencias. Resultado: **<!-- copm:combined.checksPassed -->36<!-- /copm -->/<!-- copm:combined.checksTotal -->36<!-- /copm --> en verde**.
+Cada chain pasa las mismas <!-- copm:polygon.checksTotal -->19<!-- /copm --> reglas estrictas, offline y sin tolerancia: minted − burned es igual a `totalSupply()` al wei, reproducir las transferencias guardadas reproduce el checkpoint, ningún balance es negativo, `holders.csv` suma `totalSupply()`, las particiones están ordenadas y completas, los timestamps son exactos y `daily.csv` es exactamente lo que producen las transferencias. Resultado: **<!-- copm:combined.checksPassed -->38<!-- /copm -->/<!-- copm:combined.checksTotal -->38<!-- /copm --> en verde**.
 
 La comparación con la chain en vivo ocurre cuando se escriben los datos, no en `validate`: `scan` reconcilia el libro contra `totalSupply()` en cada etapa antes de mover el checkpoint, y `holders` contrasta cada balance con `balanceOf` en el bloque del checkpoint.
 
 | Chain | Reglas aprobadas | Detalle |
 | :--- | :--- | :--- |
-| Polygon | <!-- copm:polygon.checksPassed -->18<!-- /copm -->/<!-- copm:polygon.checksTotal -->18<!-- /copm --> ✅ | [`data/polygon/validation.json`](../data/polygon/validation.json) |
-| Celo | <!-- copm:celo.checksPassed -->18<!-- /copm -->/<!-- copm:celo.checksTotal -->18<!-- /copm --> ✅ | [`data/celo/validation.json`](../data/celo/validation.json) |
+| Polygon | <!-- copm:polygon.checksPassed -->19<!-- /copm -->/<!-- copm:polygon.checksTotal -->19<!-- /copm --> ✅ | [`data/polygon/validation.json`](../data/polygon/validation.json) |
+| Celo | <!-- copm:celo.checksPassed -->19<!-- /copm -->/<!-- copm:celo.checksTotal -->19<!-- /copm --> ✅ | [`data/celo/validation.json`](../data/celo/validation.json) |
 
 ## Por qué puedes confiar en estos números
 

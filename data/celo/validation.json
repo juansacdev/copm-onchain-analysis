@@ -1,7 +1,7 @@
 {
   "chain": "celo",
   "block": 79861762,
-  "validatedAt": "2026-10-12T01:38:41.663Z",
+  "validatedAt": "2026-10-12T02:41:10.205Z",
   "checks": [
     {
       "id": "event-count",
@@ -69,6 +69,11 @@
       "detail": "stored=12 checkpoint=12"
     },
     {
+      "id": "approvals-consistent",
+      "ok": true,
+      "detail": "block=79293429 checkpoint=79861762 state=82623 daily=82623 spenders=82623"
+    },
+    {
       "id": "daily-matches-ledger",
       "ok": true,
       "detail": "rows=754 lastSupply=418585134.62811 totalSupply=418585134.62811"
@@ -94,6 +99,6 @@
       "detail": "block=79861762 checkpoint=79861762 sections=14"
     }
   ],
-  "passed": 18,
+  "passed": 19,
   "failed": 0
 }

@@ -14,13 +14,18 @@
 //   R5  writes are atomic and drop rows above the previous checkpoint, so a
 //       re-run after a crash never duplicates anything
 //   R6  no message ever contains the endpoint URL (see adapters/rpc.js)
+//   R7  the logs of a range answer must belong to it: a log outside the range
+//       asked for, or flagged `removed`, or two different logs under one
+//       (blockNumber, logIndex) reject the batch like a failed canary; an
+//       exact repeat is dropped, so every counter and the next canary's log
+//       count come from the unique set
 import { getChain, scanSettings, dataDir } from "../config/chains.js";
 import { mapPool } from "../adapters/pool.js";
 import { createRpc, requireRpcUrl } from "../adapters/rpc.js";
 import { createStore, ensureDir } from "../adapters/store.js";
 import { applyApprovals } from "../domain/approvals.js";
 import { EVENT_TOPICS, decodeLog } from "../domain/events.js";
-import { checkBatch, newRangeState, observeRange } from "../domain/integrity.js";
+import { checkBatch, checkRangeLogs, newRangeState, observeRange } from "../domain/integrity.js";
 import { createLedger, foldTransfers } from "../domain/ledger.js";
 import { groupByMonth, mergePartition, monthKey } from "../domain/partition.js";
 import { groupBatches, planRanges, planStages } from "../domain/ranges.js";
@@ -78,6 +83,7 @@ const newStats = () => ({
   batches: 0,
   rejectedCanary: 0,
   rejectedHead: 0,
+  rejectedLogs: 0,
   rejectedError: 0,
   emptyAnswers: 0,
   headerBatches: 0,
@@ -193,6 +199,22 @@ export async function runScan({
         }
       }
 
+      // R7, on the answers of the ranges that passed R3.
+      const answers = [];
+      if (!rejection) {
+        for (const [position, rangeIndex] of item.indexes.entries()) {
+          const logs = results[2 + position].result;
+          assertOwnLogs(logs);
+          const verdict = checkRangeLogs(logs, ranges[rangeIndex]);
+          if (!verdict.ok) {
+            stats.rejectedLogs++;
+            rejection = `logs: ${verdict.reason}`;
+            break;
+          }
+          answers.push({ rangeIndex, logs: verdict.logs });
+        }
+      }
+
       if (rejection) {
         item.rejections++;
         if (item.rejections >= settings.maxBatchAttempts) {
@@ -206,9 +228,7 @@ export async function runScan({
       }
 
       const pending = [];
-      item.indexes.forEach((rangeIndex, position) => {
-        const logs = results[2 + position].result;
-        assertOwnLogs(logs);
+      answers.forEach(({ rangeIndex, logs }) => {
         if (logs.length === 0) stats.emptyAnswers++;
         else rangeLogs[rangeIndex] = logs;
         rangeState[rangeIndex] = observeRange(rangeState[rangeIndex], logs.length, settings.emptyConfirmations);
@@ -425,7 +445,7 @@ export async function runScan({
   log(
     `scan complete: ${stats.blocks} blocks, ${stats.logs.transfer} transfers, ${stats.logs.approval} approvals, ` +
       `${stats.logs.admin} admin events; ${stats.batches} batches ` +
-      `(${stats.rejectedCanary} rejected by canary, ${stats.rejectedHead} by head, ${stats.rejectedError} by error), ` +
+      `(${stats.rejectedCanary} rejected by canary, ${stats.rejectedHead} by head, ${stats.rejectedLogs} by logs, ${stats.rejectedError} by error), ` +
       `${stats.emptyAnswers} empty answers, ${stats.headerBatches} header batches`
   );
   return { status: "scanned", lastBlock: state.lastBlock, stats };

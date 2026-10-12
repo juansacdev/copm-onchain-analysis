@@ -25,7 +25,7 @@ export function buildDashboardFor({ store, chainKey }) {
   return buildDashboard({
     chainKey,
     state,
-    transfers: store.readTransfers(),
+    transfers: store.readTransfersAtCheckpoint(),
     adminEvents: store.readAdminEvents(),
     approvals: store.readApprovals(),
     holders,
