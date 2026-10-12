@@ -34,7 +34,7 @@ Los datos de este documento no salen de un dashboard ni de un tercero. Salen de 
 
 8.14 billones (10¹²) de COPM cambiaron de manos en 996 días: **~$2.03B USD** brutos, **$1.45B** netos entre wallets. La serie no muestra pausas anómalas, ni reversiones masivas, ni días en cero después del arranque operativo.
 
-![Volumen bruto diario USD](../charts/polygon/02-daily-volume-usd.svg)
+![Volumen bruto diario USD](../../charts/polygon/02-daily-volume-usd.svg)
 
 ### El token existió 17 meses antes de cruzar 100 transacciones por día.
 
@@ -42,7 +42,7 @@ Deploy: septiembre 2023. Primer día con más de 100 transfers: **2025-02-03**.
 
 Ese gap cuenta cómo escala un settlement layer B2B: no por adquisición de usuarios retail, sino por integraciones grandes. Cada partner nuevo es un escalón, no una pendiente. Los primeros meses fueron pruebas; el despegue real llegó cuando las integraciones entraron en producción — y de ahí en adelante la curva es otra.
 
-![Transfers diarios](../charts/polygon/01-daily-transfers.svg)
+![Transfers diarios](../../charts/polygon/01-daily-transfers.svg)
 
 ### Noviembre 2025: el mes que lo cambió todo.
 
@@ -50,7 +50,7 @@ Ese gap cuenta cómo escala un settlement layer B2B: no por adquisición de usua
 
 9 de los 10 días con más transacciones de toda la historia del token cayeron entre octubre y noviembre de 2025. Eso no es ruido: es la firma de una integración mayor o un caso de uso nuevo entrando en producción.
 
-![Volumen mensual USD](../charts/polygon/04-monthly-volume-usd.svg)
+![Volumen mensual USD](../../charts/polygon/04-monthly-volume-usd.svg)
 
 ### Después del pico, la actividad se normalizó — y en mayo 2026 volvió a acelerar.
 
@@ -71,7 +71,7 @@ Tras el máximo de noviembre ($318M), el volumen mensual se asentó en un rango 
 
 Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota su supply **~25 veces más rápido** que las stablecoins de dólar. La lectura es directa: nadie acumula COPM — cada peso emitido se mueve decenas de veces antes de redimirse. Es el comportamiento de un *settlement rail*, no de una reserva de valor.
 
-![Supply circulante](../charts/polygon/03-supply-over-time.svg)
+![Supply circulante](../../charts/polygon/03-supply-over-time.svg)
 
 ### Mints y burns casi en espejo: el peg operó en ambas direcciones.
 
@@ -80,7 +80,7 @@ Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota 
 
 ¿Por qué importa? Porque un burn es alguien convirtiendo COPM de vuelta a pesos. Si los burns fueran mucho menores que los mints, sería una bandera roja: tokens que se emiten pero no se pueden redimir. El balance casi 1:1 sostenido durante años es la evidencia on-chain de un peg con operación bidireccional fluida.
 
-![Mints vs burns mensuales](../charts/polygon/06-monthly-mints-burns.svg)
+![Mints vs burns mensuales](../../charts/polygon/06-monthly-mints-burns.svg)
 
 ---
 
@@ -116,13 +116,13 @@ Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota 
 | 2025-10-08 | $22.1M | 1,972 |
 | 2025-08-15 | $21.9M | 796 |
 
-![Top 10 días por volumen](../charts/polygon/05-top10-volume-days.svg)
+![Top 10 días por volumen](../../charts/polygon/05-top10-volume-days.svg)
 
 ---
 
 ## Validación
 
-Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`07-validate.js`](../07-validate.js)) corre 12 checks y todos pasaron:
+Ningún número de esta auditoría se reporta sin verificarse. El paso de validación ([`pipeline/steps/validate.js`](../../pipeline/steps/validate.js)) corre 12 checks y todos pasaron:
 
 | # | Check | Resultado |
 | :--- | :--- | :--- |
@@ -139,7 +139,7 @@ Ningún número de esta auditoría se reporta sin verificarse. El paso de valida
 | 11 | Supply derivado vs `totalSupply()` en vivo | ✅ dentro del límite (ver caveat) |
 | 12 | **Spot check: 12 transfers re-verificados contra receipts en vivo** | ✅ 12/12 coinciden |
 
-El check 12 es el más fuerte: toma eventos distribuidos por todo el dataset, vuelve a pedir el receipt de cada transacción directamente a la chain, y verifica que bloque, log index y monto coincidan exactamente con lo escaneado. Resultado completo en [`data/polygon/validation.json`](../data/polygon/validation.json).
+El check 12 es el más fuerte: toma eventos distribuidos por todo el dataset, vuelve a pedir el receipt de cada transacción directamente a la chain, y verifica que bloque, log index y monto coincidan exactamente con lo escaneado. Resultado completo en [`data/polygon/validation.json`](../../data/polygon/validation.json).
 
 ---
 

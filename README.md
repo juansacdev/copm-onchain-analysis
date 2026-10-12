@@ -7,10 +7,10 @@
 | | |
 | :--- | :--- |
 | 📖 **[The story as a website](https://copm.juansac.dev/en/)** | The storytelling version for every audience — bilingual (ES/EN) Astro site, source in [`site/`](./site) |
-| 📊 **[Unified audit (Polygon + Celo)](./AUDIT.md)** | The consolidated, side-by-side view |
-| 🟣 **[Polygon audit](./audit/polygon.md)** | $2.03B moved in 2.7 years |
-| 🟢 **[Celo audit](./audit/celo.md)** | 120,900 payments at a $96 average ticket |
-| 📚 **[Glossary](./GLOSSARY.md)** | Every term, in plain language |
+| 📊 **[Unified audit (Polygon + Celo)](./docs/AUDIT.md)** | The consolidated, side-by-side view |
+| 🟣 **[Polygon audit](./docs/audit/polygon.md)** | $2.03B moved in 2.7 years |
+| 🟢 **[Celo audit](./docs/audit/celo.md)** | 120,900 payments at a $96 average ticket |
+| 📚 **[Glossary](./docs/GLOSSARY.md)** | Every term, in plain language |
 
 ---
 
@@ -36,7 +36,7 @@ So instead of asking you to take my word for it, I audited it: **317,696 events,
 | Supply reconciliation (Celo) | **Exact: 0.0% deviation** against `totalSupply()` |
 | Validation | **24/24 checks** — including transfer re-verification against the live chain |
 
-→ The detail, the charts, and the full story live in the **[unified audit](./AUDIT.md)**.
+→ The detail, the charts, and the full story live in the **[unified audit](./docs/AUDIT.md)**.
 
 ## In the press
 
@@ -47,15 +47,17 @@ In September 2025, **La República** (Colombia's financial newspaper) covered Mi
 A Node.js pipeline, deliberately lightweight (a single dependency: [viem](https://viem.sh)), run per chain:
 
 ```
-01-discover.js    → finds the deploy block (binary search over eth_getCode)
-02-scan.js        → downloads every Transfer event (eth_getLogs, parallel workers,
+discover          → finds the deploy block (binary search over eth_getCode)
+scan              → downloads every Transfer event (eth_getLogs, parallel workers,
                      adaptive backoff on rate limits)
-03-resolve-timestamps.js → timestamps via sampling + interpolation
-04-aggregate.js   → daily series: volume, mints, burns, derived supply
-05-charts.js      → self-contained SVGs (no canvas, no headless browser)
-06-combined-charts.js → Polygon + Celo charts on shared axes
-07-validate.js    → 12 checks per chain, including live-chain spot checks
+timestamps        → timestamps via sampling + interpolation
+aggregate         → daily series: volume, mints, burns, derived supply
+charts            → self-contained SVGs (no canvas, no headless browser)
+charts:combined   → Polygon + Celo charts on shared axes
+validate          → 12 checks per chain, including live-chain spot checks
 ```
+
+Each step is a command of one CLI: `node pipeline/cli.js <command> [--chain polygon|celo] [--fresh]`. `--chain` defaults to the `CHAIN` environment variable, then to `polygon`. The `npm run` scripts below wrap it.
 
 **The only source is an RPC endpoint.** No indexers, no third-party APIs, no block explorers. Works with a paid RPC (faster) or a public one (free; the scanner self-throttles).
 
@@ -72,16 +74,25 @@ npm run audit:celo     # Celo only (~25 min on the public RPC)
 npm run audit:all      # both + combined charts
 ```
 
-Every run is complete and idempotent: it scans from the deploy block to `latest`, validates, and regenerates everything.
+Every run is complete and idempotent: it scans from the deploy block to `latest`, validates, and regenerates everything. Requires Node.js 22+; `npm test` runs the unit tests (no network needed).
 
 ## Repository layout
 
 ```
-├── AUDIT.md / AUDIT.es.md        # unified audit (start here)
-├── audit/
-│   ├── polygon.md / polygon.es.md  # per-chain audits
-│   └── celo.md / celo.es.md
-├── GLOSSARY.md / GLOSSARY.es.md  # glossary
+├── docs/
+│   ├── AUDIT.md / AUDIT.es.md    # unified audit (start here)
+│   ├── audit/
+│   │   ├── polygon.md / polygon.es.md  # per-chain audits
+│   │   └── celo.md / celo.es.md
+│   └── GLOSSARY.md / GLOSSARY.es.md    # glossary
+├── pipeline/
+│   ├── cli.js                    # entry point: node pipeline/cli.js <command>
+│   ├── config/                   # chain table and path helpers (no side effects)
+│   ├── domain/                   # pure logic: aggregation, units, validation rules
+│   ├── adapters/                 # RPC client factory, file helpers
+│   ├── steps/                    # one module per command
+│   └── charts/                   # SVG chart library
+├── tests/                        # node --test, no extra dependencies
 ├── data/<chain>/                 # raw + derived data per chain
 │   ├── transfers.jsonl           # every Transfer event (raw)
 │   ├── daily.csv                 # aggregated daily series
@@ -91,7 +102,7 @@ Every run is complete and idempotent: it scans from the deploy block to `latest`
 ├── charts/<chain>/               # 6 SVGs per chain
 ├── charts/combined/              # 4 comparative SVGs
 ├── site/                         # storytelling website (Astro, ES + EN)
-└── 0*.js                         # the pipeline
+└── package.json                  # npm scripts wrapping the CLI
 ```
 
 ## Audited contracts

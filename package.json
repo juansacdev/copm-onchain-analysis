@@ -4,18 +4,19 @@
   "description": "Reproducible on-chain audit and analysis of Minteo's COPM (Colombian peso stablecoin) on Polygon and Celo. Scans every Transfer event directly from the contracts via RPC.",
   "type": "module",
   "scripts": {
-    "discover": "node --env-file=.env 01-discover.js",
-    "scan": "node --env-file=.env 02-scan.js",
-    "scan:fresh": "node --env-file=.env 02-scan.js --fresh",
-    "timestamps": "node --env-file=.env 03-resolve-timestamps.js",
-    "aggregate": "node --env-file=.env 04-aggregate.js",
-    "charts": "node --env-file=.env 05-charts.js",
-    "validate": "node --env-file=.env 07-validate.js",
-    "charts:combined": "node --env-file=.env 06-combined-charts.js",
+    "discover": "node --env-file=.env pipeline/cli.js discover",
+    "scan": "node --env-file=.env pipeline/cli.js scan",
+    "scan:fresh": "node --env-file=.env pipeline/cli.js scan --fresh",
+    "timestamps": "node --env-file=.env pipeline/cli.js timestamps",
+    "aggregate": "node --env-file=.env pipeline/cli.js aggregate",
+    "charts": "node --env-file=.env pipeline/cli.js charts",
+    "validate": "node --env-file=.env pipeline/cli.js validate",
+    "charts:combined": "node --env-file=.env pipeline/cli.js charts:combined",
     "audit": "npm run discover && npm run scan:fresh && npm run timestamps && npm run aggregate && npm run charts && npm run validate",
     "audit:polygon": "CHAIN=polygon npm run audit",
     "audit:celo": "CHAIN=celo npm run audit",
-    "audit:all": "npm run audit:polygon && npm run audit:celo && npm run charts:combined"
+    "audit:all": "npm run audit:polygon && npm run audit:celo && npm run charts:combined",
+    "test": "node --test \"tests/**/*.test.js\""
   },
   "keywords": [
     "blockchain",
@@ -35,7 +36,7 @@
     "url": "https://github.com/juansacdev/copm-onchain-analysis.git"
   },
   "engines": {
-    "node": ">=20.6.0"
+    "node": ">=22"
   },
   "dependencies": {
     "viem": "^2.48.8"

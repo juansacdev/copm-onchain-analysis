@@ -7,10 +7,10 @@
 | | |
 | :--- | :--- |
 | 📖 **[La historia como sitio web](https://copm.juansac.dev/)** | El storytelling para todo público — sitio Astro bilingüe (ES/EN), código en [`site/`](./site) |
-| 📊 **[Auditoría unificada (Polygon + Celo)](./AUDIT.es.md)** | La vista consolidada, lado a lado |
-| 🟣 **[Auditoría de Polygon](./audit/polygon.es.md)** | $2.03B movidos en 2.7 años |
-| 🟢 **[Auditoría de Celo](./audit/celo.es.md)** | 120,900 pagos con ticket promedio de $96 |
-| 📚 **[Glosario](./GLOSSARY.es.md)** | Todos los términos, en lenguaje claro |
+| 📊 **[Auditoría unificada (Polygon + Celo)](./docs/AUDIT.es.md)** | La vista consolidada, lado a lado |
+| 🟣 **[Auditoría de Polygon](./docs/audit/polygon.es.md)** | $2.03B movidos en 2.7 años |
+| 🟢 **[Auditoría de Celo](./docs/audit/celo.es.md)** | 120,900 pagos con ticket promedio de $96 |
+| 📚 **[Glosario](./docs/GLOSSARY.es.md)** | Todos los términos, en lenguaje claro |
 
 ---
 
@@ -36,7 +36,7 @@ Así que en vez de pedirte que me creas, lo audité: **317,696 eventos, ~$2.05 m
 | Reconciliación de supply (Celo) | **Exacta: 0.0% de desviación** contra `totalSupply()` |
 | Validación | **24/24 checks** — incluye re-verificación de transfers contra la chain en vivo |
 
-→ El detalle, los gráficos y la historia completa están en la **[auditoría unificada](./AUDIT.es.md)**.
+→ El detalle, los gráficos y la historia completa están en la **[auditoría unificada](./docs/AUDIT.es.md)**.
 
 ## En los medios
 
@@ -47,15 +47,17 @@ En septiembre de 2025, **La República** (el diario financiero colombiano) cubri
 Un pipeline de Node.js, liviano a propósito (una sola dependencia: [viem](https://viem.sh)), que corre por chain:
 
 ```
-01-discover.js    → encuentra el bloque de deploy (búsqueda binaria sobre eth_getCode)
-02-scan.js        → descarga todos los eventos Transfer (eth_getLogs, workers paralelos,
+discover          → encuentra el bloque de deploy (búsqueda binaria sobre eth_getCode)
+scan              → descarga todos los eventos Transfer (eth_getLogs, workers paralelos,
                      backoff adaptativo ante rate limits)
-03-resolve-timestamps.js → timestamps por muestreo e interpolación
-04-aggregate.js   → serie diaria: volumen, mints, burns, supply derivado
-05-charts.js      → SVGs autocontenidos (sin canvas, sin headless browser)
-06-combined-charts.js → gráficos Polygon + Celo en los mismos ejes
-07-validate.js    → 12 checks por chain, incluyendo spot checks contra la chain en vivo
+timestamps        → timestamps por muestreo e interpolación
+aggregate         → serie diaria: volumen, mints, burns, supply derivado
+charts            → SVGs autocontenidos (sin canvas, sin headless browser)
+charts:combined   → gráficos Polygon + Celo en los mismos ejes
+validate          → 12 checks por chain, incluyendo spot checks contra la chain en vivo
 ```
+
+Cada paso es un comando de un único CLI: `node pipeline/cli.js <comando> [--chain polygon|celo] [--fresh]`. `--chain` toma por defecto la variable de entorno `CHAIN` y, si no existe, `polygon`. Los scripts de `npm run` de abajo lo envuelven.
 
 **La única fuente es un endpoint RPC.** Sin indexers, sin APIs de terceros, sin exploradores de bloques. Funciona con un RPC de pago (más rápido) o con uno público (gratis; el scanner se autorregula).
 
@@ -72,16 +74,25 @@ npm run audit:celo     # solo Celo (~25 min con el RPC público)
 npm run audit:all      # ambas + charts combinados
 ```
 
-Cada corrida es completa e idempotente: escanea desde el deploy block hasta `latest`, valida y regenera todo.
+Cada corrida es completa e idempotente: escanea desde el deploy block hasta `latest`, valida y regenera todo. Requiere Node.js 22+; `npm test` corre los tests unitarios (sin red).
 
 ## Estructura del repositorio
 
 ```
-├── AUDIT.es.md / AUDIT.md        # auditoría unificada (empieza aquí)
-├── audit/
-│   ├── polygon.es.md / polygon.md  # auditoría por chain
-│   └── celo.es.md / celo.md
-├── GLOSSARY.es.md / GLOSSARY.md  # glosario
+├── docs/
+│   ├── AUDIT.es.md / AUDIT.md    # auditoría unificada (empieza aquí)
+│   ├── audit/
+│   │   ├── polygon.es.md / polygon.md  # auditoría por chain
+│   │   └── celo.es.md / celo.md
+│   └── GLOSSARY.es.md / GLOSSARY.md    # glosario
+├── pipeline/
+│   ├── cli.js                    # punto de entrada: node pipeline/cli.js <comando>
+│   ├── config/                   # tabla de chains y rutas (sin efectos secundarios)
+│   ├── domain/                   # lógica pura: agregación, unidades, reglas de validación
+│   ├── adapters/                 # fábrica del cliente RPC, utilidades de archivos
+│   ├── steps/                    # un módulo por comando
+│   └── charts/                   # librería de gráficos SVG
+├── tests/                        # node --test, sin dependencias adicionales
 ├── data/<chain>/                 # datos crudos y derivados por chain
 │   ├── transfers.jsonl           # cada evento Transfer (crudo)
 │   ├── daily.csv                 # serie diaria agregada
@@ -91,7 +102,7 @@ Cada corrida es completa e idempotente: escanea desde el deploy block hasta `lat
 ├── charts/<chain>/               # 6 SVGs por chain
 ├── charts/combined/              # 4 SVGs comparativos
 ├── site/                         # sitio web del storytelling (Astro, ES + EN)
-└── 0*.js                         # el pipeline
+└── package.json                  # scripts de npm que envuelven el CLI
 ```
 
 ## Contratos auditados
