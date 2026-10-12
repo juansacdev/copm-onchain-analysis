@@ -14,25 +14,21 @@ const emptyDay = (day) => ({
 });
 
 // Replays Transfer events into one row per UTC day, filling quiet days so the
-// series is continuous. `tsByBlock` maps block number -> unix seconds; events
-// whose block has no timestamp are skipped (reported via `timestamped`).
+// series is continuous. Every row carries its exact block timestamp `ts` (unix
+// seconds), as written by the scan. `approvalsByDay` maps YYYY-MM-DD -> count
+// of Approval events; days outside the transfer range are ignored.
 //
 // Supply is derived, not read from the chain: a mint (from the zero address)
 // adds, a burn (to the zero address) subtracts, anything else only moves
 // balances between holders.
-export function buildDailySeries(transfers, tsByBlock) {
+export function buildDailySeries(transfers, approvalsByDay = {}) {
   const daily = new Map();
   const supplyByDay = new Map();
   const totals = { gross: 0n, mint: 0n, burn: 0n, supply: 0n };
 
   const sorted = transfers
-    .map((t) => {
-      const ts = tsByBlock[t.b];
-      if (!ts) return null;
-      return { ...t, ts, day: dayOf(ts) };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.ts - b.ts || a.i - b.i);
+    .map((t) => ({ ...t, day: dayOf(t.ts) }))
+    .sort((a, b) => a.ts - b.ts || a.b - b.b || a.i - b.i);
 
   for (const t of sorted) {
     if (!daily.has(t.day)) daily.set(t.day, emptyDay(t.day));
@@ -82,17 +78,17 @@ export function buildDailySeries(transfers, tsByBlock) {
         burnVolume: row.burnVolume,
         mintCount: row.mintCount,
         burnCount: row.burnCount,
+        approvals: approvalsByDay[day] ?? 0,
       });
     }
   }
 
-  return { series, totals, timestamped: sorted.length };
+  return { series, totals };
 }
 
 const maxBy = (rows, key) => rows.reduce((a, b) => (b[key] > a[key] ? b : a));
 
-// Totals, averages and peaks for summary.json. `transferEvents` is the raw
-// event count (including events that had no timestamp).
+// Totals, averages and peaks for summary.json.
 export function summarize({ manifest, chainKey, series, totals, transferEvents, copPerUsd }) {
   const dec = 10n ** BigInt(manifest.decimals);
   const avgSupply =
@@ -153,7 +149,7 @@ export function summarize({ manifest, chainKey, series, totals, transferEvents, 
 }
 
 export const CSV_HEADER =
-  "day,supply_end_copm,transfers,unique_txs,active_addresses,gross_volume_copm,net_volume_copm,mint_copm,burn_copm,mint_count,burn_count";
+  "day,supply_end_copm,transfers,unique_txs,active_addresses,gross_volume_copm,net_volume_copm,mint_copm,burn_copm,mint_count,burn_count,approvals";
 
 // daily.csv, no trailing newline (matches the committed files byte for byte).
 export function dailyCsv(series) {
@@ -170,6 +166,7 @@ export function dailyCsv(series) {
       toCOPM(r.burnVolume),
       r.mintCount,
       r.burnCount,
+      r.approvals,
     ].join(",")
   );
   return [CSV_HEADER, ...rows].join("\n");

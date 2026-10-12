@@ -47,19 +47,52 @@ En septiembre de 2025, **La República** (el diario financiero colombiano) cubri
 Un pipeline de Node.js, liviano a propósito (una sola dependencia: [viem](https://viem.sh)), que corre por chain:
 
 ```
-discover          → encuentra el bloque de deploy (búsqueda binaria sobre eth_getCode)
-scan              → descarga todos los eventos Transfer (eth_getLogs, workers paralelos,
-                     backoff adaptativo ante rate limits)
-timestamps        → timestamps por muestreo e interpolación
-aggregate         → serie diaria: volumen, mints, burns, supply derivado
+discover          → actualiza los metadatos estáticos del token (manifest.json)
+scan              → scan incremental y verificado de todos los eventos del contrato
+                     (eth_getLogs, workers paralelos); continúa desde el último checkpoint
+holders           → snapshot de holders en el bloque del checkpoint, cada balance
+                     verificado con balanceOf (holders.csv, holders.json)
+aggregate         → serie diaria: volumen, mints, burns, supply derivado, approvals
 charts            → SVGs autocontenidos (sin canvas, sin headless browser)
 charts:combined   → gráficos Polygon + Celo en los mismos ejes
-validate          → 12 checks por chain, incluyendo spot checks contra la chain en vivo
+validate          → 17 reglas estrictas por chain, offline y sin tolerancia; exit 1 si falla alguna
 ```
 
 Cada paso es un comando de un único CLI: `node pipeline/cli.js <comando> [--chain polygon|celo] [--fresh]`. `--chain` toma por defecto la variable de entorno `CHAIN` y, si no existe, `polygon`. Los scripts de `npm run` de abajo lo envuelven.
 
-**La única fuente es un endpoint RPC.** Sin indexers, sin APIs de terceros, sin exploradores de bloques. Funciona con un RPC de pago (más rápido) o con uno público (gratis; el scanner se autorregula).
+**La única fuente es un endpoint RPC.** Sin indexers, sin APIs de terceros, sin exploradores de bloques. Funciona con un RPC de pago (más rápido) o con uno público (gratis; el scanner reintenta y contrasta sus respuestas).
+
+### Por qué se puede confiar en el scan
+
+Los endpoints públicos están detrás de balanceadores de carga, y un backend al que le falta parte del índice de logs responde `eth_getLogs` con un arreglo vacío y sin error. Un scan simple guarda esos huecos. Este no avanza hasta que los eventos que tiene cuadran con el contrato:
+
+- **Canario y verificación del head en cada lote.** Un lote es `[eth_blockNumber, un bloque con cantidad de logs conocida, ...rangos]`; se descarta salvo que el canario devuelva exactamente esa cantidad y el head cubra los rangos.
+- **Los rangos vacíos se confirman.** Una respuesta con eventos es definitiva; una vacía debe repetirse `emptyConfirmations` veces (2 en Polygon, 6 en Celo) en lotes independientes.
+- **Reconciliación exacta antes de mover el checkpoint.** Minted − burned debe ser igual a `totalSupply()` en el último bloque de la etapa, al wei (un `eth_call` fijado a ese bloque y enviado por separado). Si no cuadra, la corrida falla y no escribe nada de esa etapa.
+- **Timestamps exactos.** Cada transferencia lleva el timestamp de su bloque (del log, o del header del bloque cuando el nodo devuelve `0x0`), así que los días no se interpolan.
+- **Idempotente y reanudable.** Las escrituras son atómicas; `data/<chain>/state.json` se escribe al final, y una nueva corrida tras una caída descarta todo lo que esté por encima del checkpoint.
+
+**Lo que estas verificaciones no prueban.** El canario es un filtro, no una prueba: los elementos de un mismo lote pueden ser respondidos por backends distintos. La reconciliación prueba el libro de saldos, pero un rango perdido cuyo mint, pago y burn se cancelen dejaría intactos la oferta y los saldos; contra eso solo protege la confirmación repetida de los rangos vacíos. En un endpoint que falla seguido, sube `emptyConfirmations`.
+
+**Procedencia del historial de Celo.** El 2026-10-11 el endpoint público de Celo (`forno.celo.org`) devolvió respuestas vacías para entre el 11 % y el 75 % de los rangos con eventos y casi nunca pasó el canario del bloque de despliegue, así que un scan del historial completo no pudo terminar ahí. El historial hasta el bloque 79.856.063 se armó con la unión de siete scans más el dataset anterior, se cargó a este formato y luego se certificó con las mismas verificaciones: oferta igual a `totalSupply()` al wei y cada uno de los 3.123 saldos igual a `balanceOf`. Las transferencias quedan cubiertas por esa prueba; los contadores de approvals de Celo son una cota inferior. Las corridas diarias continúan desde ese checkpoint, donde el canario es reciente y el endpoint responde bien. `scan --fresh --chain celo` contra un endpoint de archivo lo reconstruye desde el deploy block.
+
+### El snapshot de holders
+
+`holders` lee las transferencias que guardó `scan` y la chain en el mismo bloque, `state.lastBlock`, nunca en el head actual. No escribe nada salvo que se cumplan tres cosas, al wei:
+
+- toda dirección que aparece alguna vez en una transferencia tiene un balance del libro igual a `balanceOf` en ese bloque;
+- los balances positivos on-chain suman `totalSupply()`;
+- ningún balance del libro es negativo.
+
+Un `eth_call` fijado a un bloque o falla o responde bien, y los ítems de un lote pueden ser atendidos por backends distintos, así que cada ítem se verifica por separado y se reintenta (lotes de máximo 100 llamadas, `--max-batch-attempts` por ítem). Un error nunca se interpreta como cero. El paso también lee `paused()`, el slot de implementación ERC-1967, los miembros de cada rol, `eth_getCode` de cada holder (`contract` o `wallet`) e `isFrozen` de las cuentas que aparecen en eventos `Frozen`, `Thawed` o `BurnedFrozen`.
+
+Escribe `data/<chain>/holders.csv` (una fila por dirección con balance positivo: `rank,address,balance_copm,share_pct,kind,frozen,received_copm,sent_copm,transfers_in,transfers_out,first_seen,last_seen`) y `data/<chain>/holders.json` (bloque, supply, cantidad de holders, concentración del top 1/5/10/50, rangos de balance, miembros de cada rol, estado de pausa, implementación, top 25).
+
+### Validación
+
+`validate` es estricto y offline: lee solo los archivos que escriben `scan`, `holders` y `aggregate`, así que el CI puede correrlo en cada push. Entre sus 17 reglas: minted − burned es igual a `totalSupply` al wei, recorrer las transferencias guardadas reproduce el checkpoint, ningún balance negativo, `holders.csv` suma `totalSupply` en el bloque del checkpoint, las particiones están estrictamente ordenadas y cada fila está en su mes UTC, nada queda por encima del checkpoint y `daily.csv` es exactamente lo que producen las transferencias. El resultado va a `data/<chain>/validation.json`.
+
+Ajustes, todos opcionales: `--workers`, `--max-log-range`, `--ranges-per-batch`, `--empty-confirmations`, `--confirmations`, `--stage-blocks`, `--max-batch-attempts` (o las variables `SCAN_*` equivalentes). Los valores por defecto están por chain en `pipeline/config/chains.js`. `scan --fresh` descarta lo que el scan generó para esa chain y empieza de cero.
 
 ## Reprodúcelo
 
@@ -69,12 +102,12 @@ cd copm-onchain-analysis
 cp .env.example .env   # configura tus RPCs (el de Celo público ya viene puesto)
 npm install
 
-npm run audit:polygon  # solo Polygon (~15 min con RPC de pago)
-npm run audit:celo     # solo Celo (~25 min con el RPC público)
+npm run audit:polygon  # solo Polygon (~10 min desde el deploy block con RPC de pago)
+npm run audit:celo     # solo Celo (segundos desde el checkpoint versionado)
 npm run audit:all      # ambas + charts combinados
 ```
 
-Cada corrida es completa e idempotente: escanea desde el deploy block hasta `latest`, valida y regenera todo. Requiere Node.js 22+; `npm test` corre los tests unitarios (sin red).
+El primer `scan` recorre todo el historial desde el deploy block; las corridas siguientes solo escanean los bloques agregados desde el checkpoint. Requiere Node.js 22+; `npm test` corre los tests unitarios (sin red).
 
 ## Estructura del repositorio
 
@@ -88,17 +121,21 @@ Cada corrida es completa e idempotente: escanea desde el deploy block hasta `lat
 ├── pipeline/
 │   ├── cli.js                    # punto de entrada: node pipeline/cli.js <comando>
 │   ├── config/                   # tabla de chains y rutas (sin efectos secundarios)
-│   ├── domain/                   # lógica pura: agregación, unidades, reglas de validación
-│   ├── adapters/                 # fábrica del cliente RPC, utilidades de archivos
+│   ├── domain/                   # lógica pura: eventos, ledger, rangos, integridad, agregación, reglas de validación
+│   ├── adapters/                 # cliente JSON-RPC, almacenamiento del scan (escrituras atómicas)
 │   ├── steps/                    # un módulo por comando
 │   └── charts/                   # librería de gráficos SVG
 ├── tests/                        # node --test, sin dependencias adicionales
 ├── data/<chain>/                 # datos crudos y derivados por chain
-│   ├── transfers.jsonl           # cada evento Transfer (crudo)
+│   ├── transfers/YYYY-MM.jsonl   # cada evento Transfer, un archivo por mes UTC
+│   ├── admin-events.jsonl        # upgrades, roles, pausas, congelamientos
+│   ├── approvals.json            # conteo de Approval por día y por spender
+│   ├── state.json                # checkpoint del scan (solo se escribe tras reconciliar)
+│   ├── holders.csv / holders.json # snapshot de holders en el bloque del checkpoint
 │   ├── daily.csv                 # serie diaria agregada
 │   ├── summary.json              # totales, promedios, picos
-│   ├── manifest.json             # metadatos del contrato y del scan
-│   └── validation.json           # resultado de los 12 checks
+│   ├── manifest.json             # metadatos estáticos del contrato
+│   └── validation.json           # resultado de las 17 reglas
 ├── charts/<chain>/               # 6 SVGs por chain
 ├── charts/combined/              # 4 SVGs comparativos
 ├── site/                         # sitio web del storytelling (Astro, ES + EN)

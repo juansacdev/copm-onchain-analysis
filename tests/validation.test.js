@@ -1,158 +1,203 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  checkEventCount,
-  checkNoDuplicates,
-  checkBlockRange,
-  checkScanCompleted,
-  checkTimestampCoverage,
-  checkTimestampWindow,
-  checkSeriesLength,
-  checkSeriesContinuity,
-  checkCsvTransferTotal,
-  checkSupplyInvariant,
-  checkLiveSupply,
-  offlineChecks,
-} from "../pipeline/domain/validation.js";
+import { strictChecks } from "../pipeline/domain/validation.js";
+import { A, fixture } from "./helpers/validation-fixture.js";
 
-const tx = (b, i, t = `0x${b}-${i}`) => ({ b, i, t });
+const results = (fx) => Object.fromEntries(strictChecks(fx).map((c) => [c.id, c]));
+const failing = (fx) => strictChecks(fx).filter((c) => !c.ok).map((c) => c.id);
 
-test("event count must equal the scan's own total", () => {
-  assert.equal(checkEventCount([tx(1, 0), tx(1, 1)], { totalEvents: 2 }).ok, true);
+test("a consistent dataset passes every rule, in report order", () => {
+  const checks = strictChecks(fixture());
+  assert.deepEqual(checks.map((c) => c.id), [
+    "event-count",
+    "supply-exact",
+    "ledger-matches-state",
+    "no-negative-balance",
+    "holders-sum-exact",
+    "partitions-ordered-unique",
+    "partition-month-matches-ts",
+    "no-row-above-checkpoint",
+    "no-row-before-deploy",
+    "timestamps-exact",
+    "timestamps-in-window",
+    "admin-events-ordered",
+    "admin-events-count",
+    "daily-matches-ledger",
+    "series-length",
+    "series-continuous",
+    "csv-transfer-total",
+  ]);
+  assert.deepEqual(failing(fixture()), []);
+});
 
-  const bad = checkEventCount([tx(1, 0)], { totalEvents: 2 });
+test("event-count: the partitions must hold exactly the checkpoint's transfers", () => {
+  const fx = fixture();
+  fx.state.transfers += 1;
+  assert.deepEqual(failing(fx).includes("event-count"), true);
+  assert.equal(results(fx)["event-count"].detail, "partitions=3 checkpoint=4");
+});
+
+test("supply-exact: minted - burned must equal totalSupply to the wei, with no tolerance", () => {
+  const fx = fixture();
+  fx.state.totalSupply = (BigInt(fx.state.totalSupply) + 1n).toString();
+  assert.ok(failing(fx).includes("supply-exact"));
+  assert.match(results(fx)["supply-exact"].detail, /diff -1/);
+});
+
+test("ledger-matches-state: folding the partitions must reproduce minted, burned and the count", () => {
+  const fx = fixture();
+  fx.state.burned = (BigInt(fx.state.burned) + 1n).toString();
+  fx.state.totalSupply = (BigInt(fx.state.minted) - BigInt(fx.state.burned)).toString(); // keep supply-exact green
+  const r = results(fx);
+  assert.equal(r["supply-exact"].ok, true);
+  assert.equal(r["ledger-matches-state"].ok, false);
+});
+
+test("no-negative-balance: an address that spent more than it received fails", () => {
+  const fx = fixture();
+  fx.partitions[0].rows.shift(); // drop the mint that funded A
+  fx.transfers = fx.partitions.flatMap((p) => p.rows);
+  const bad = results(fx)["no-negative-balance"];
   assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "jsonl=1 scan=2");
+  assert.ok(bad.detail.includes(A));
 });
 
-test("duplicate (tx, logIndex) pairs are counted", () => {
-  assert.equal(checkNoDuplicates([tx(1, 0, "0xa"), tx(1, 1, "0xa")]).ok, true);
+test("holders-sum-exact: holders.csv must add up to totalSupply and be taken at the checkpoint", () => {
+  const ok = results(fixture())["holders-sum-exact"];
+  assert.equal(ok.ok, true);
 
-  const bad = checkNoDuplicates([tx(1, 0, "0xa"), tx(2, 0, "0xa")]);
+  const off = fixture();
+  off.holders.csv = off.holders.csv.replace(/,70,/, ",69.999999999999999999,");
+  assert.equal(results(off)["holders-sum-exact"].ok, false);
+
+  const stale = fixture();
+  stale.holders.json.block -= 1;
+  assert.equal(results(stale)["holders-sum-exact"].ok, false);
+  assert.match(results(stale)["holders-sum-exact"].detail, /block/);
+
+  const missing = fixture();
+  missing.holders = { csv: null, json: null };
+  assert.equal(results(missing)["holders-sum-exact"].ok, false);
+  assert.match(results(missing)["holders-sum-exact"].detail, /run "holders/);
+});
+
+test("partitions-ordered-unique: rows must strictly increase by (block, log index) across partitions", () => {
+  const dup = fixture();
+  dup.partitions[1].rows.push({ ...dup.partitions[1].rows[0] });
+  dup.transfers = dup.partitions.flatMap((p) => p.rows);
+  assert.ok(failing(dup).includes("partitions-ordered-unique"));
+
+  const swapped = fixture();
+  swapped.partitions[0].rows.reverse();
+  swapped.transfers = swapped.partitions.flatMap((p) => p.rows);
+  assert.ok(failing(swapped).includes("partitions-ordered-unique"));
+
+  const acrossMonths = fixture();
+  acrossMonths.partitions.reverse();
+  acrossMonths.transfers = acrossMonths.partitions.flatMap((p) => p.rows);
+  assert.ok(failing(acrossMonths).includes("partitions-ordered-unique"));
+});
+
+test("partition-month-matches-ts: a row must sit in the partition of its UTC month", () => {
+  const fx = fixture();
+  fx.partitions[0].rows[1].ts = Date.UTC(2024, 1, 1, 0, 0, 1) / 1000; // February, in the January file
+  fx.transfers = fx.partitions.flatMap((p) => p.rows);
+  const bad = results(fx)["partition-month-matches-ts"];
   assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "duplicates=1");
+  assert.match(bad.detail, /2024-01/);
+
+  const edge = fixture(); // 23:59:59 on Jan 31 is still January
+  edge.partitions[0].rows[1].ts = Date.UTC(2024, 0, 31, 23, 59, 59) / 1000;
+  assert.equal(results(edge)["partition-month-matches-ts"].ok, true);
 });
 
-test("events outside the scanned block range fail", () => {
-  const manifest = { deployBlock: "10", latestBlockAtRun: "20" };
-  assert.equal(checkBlockRange([tx(10, 0), tx(20, 0)], manifest).ok, true);
+test("no-row-above-checkpoint and no-row-before-deploy bound the block range exactly", () => {
+  const above = fixture();
+  above.state.lastBlock = above.partitions[1].rows[0].b - 1;
+  assert.ok(failing(above).includes("no-row-above-checkpoint"));
 
-  const bad = checkBlockRange([tx(9, 0), tx(21, 0), tx(15, 0)], manifest);
-  assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "outOfRange=2 (range 10 → 20)");
+  const edge = fixture();
+  edge.state.lastBlock = edge.partitions[1].rows[0].b;
+  assert.equal(results(edge)["no-row-above-checkpoint"].ok, true);
+
+  const below = fixture();
+  below.deployBlock = below.partitions[0].rows[0].b + 1;
+  assert.ok(failing(below).includes("no-row-before-deploy"));
 });
 
-test("scan is complete only when every slice cursor passed its end", () => {
-  const done = { slices: [{ cursor: "11", end: "10" }], completedAt: "2024-01-01T00:00:00.000Z" };
-  const result = checkScanCompleted(done);
-  assert.equal(result.ok, true);
-  assert.equal(result.detail, "completedAt=2024-01-01T00:00:00.000Z");
+test("timestamps-exact: every row needs a timestamp and time never goes back along the block order", () => {
+  const missing = fixture();
+  delete missing.partitions[0].rows[0].ts;
+  missing.transfers = missing.partitions.flatMap((p) => p.rows);
+  assert.equal(results(missing)["timestamps-exact"].detail, "events=3 missing=1 outOfOrder=0");
 
-  const partial = checkScanCompleted({ slices: [{ cursor: "10", end: "10" }] });
-  assert.equal(partial.ok, false);
-  assert.equal(partial.detail, "no completedAt marker");
+  const back = fixture();
+  back.partitions[1].rows[0].ts = back.partitions[0].rows[0].ts - 1;
+  back.transfers = back.partitions.flatMap((p) => p.rows);
+  assert.equal(results(back)["timestamps-exact"].ok, false);
 });
 
-test("every event block needs a timestamp", () => {
-  assert.equal(checkTimestampCoverage([tx(1, 0), tx(2, 0)], { 1: 100, 2: 200 }).ok, true);
+test("timestamps-in-window: rows must sit between the deployment and the checkpoint, with two minutes of slack", () => {
+  const fx = fixture();
+  const deploy = Date.parse(fx.manifest.deployTimestamp) / 1000;
+  fx.partitions[0].rows[0].ts = deploy - 120;
+  fx.transfers = fx.partitions.flatMap((p) => p.rows);
+  assert.equal(results(fx)["timestamps-in-window"].ok, true);
 
-  const bad = checkTimestampCoverage([tx(1, 0), tx(2, 0), tx(2, 1)], { 1: 100 });
-  assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "uniqueBlocks=2 missing=1");
+  fx.partitions[0].rows[0].ts = deploy - 121;
+  fx.transfers = fx.partitions.flatMap((p) => p.rows);
+  assert.equal(results(fx)["timestamps-in-window"].ok, false);
 });
 
-test("timestamps must sit inside the deploy to latest window, with slack", () => {
-  const manifest = {
-    deployTimestamp: "2024-01-01T00:00:00.000Z",
-    latestBlockTimestamp: "2024-01-02T00:00:00.000Z",
-  };
-  const deploy = Date.parse(manifest.deployTimestamp) / 1000;
-  const latest = Date.parse(manifest.latestBlockTimestamp) / 1000;
+test("admin events must be strictly ordered, inside the checkpoint, and as many as the checkpoint says", () => {
+  const unordered = fixture();
+  unordered.adminEvents = [
+    { b: 9, i: 1, name: "Frozen" },
+    { b: 9, i: 0, name: "Upgraded" },
+  ];
+  unordered.state.adminEvents = 2;
+  assert.ok(failing(unordered).includes("admin-events-ordered"));
 
-  assert.equal(
-    checkTimestampWindow({ 1: deploy - 120, 2: latest + 120 }, manifest).ok,
-    true
-  );
+  const above = fixture();
+  above.adminEvents[0].b = above.state.lastBlock + 1;
+  assert.ok(failing(above).includes("admin-events-ordered"));
 
-  const bad = checkTimestampWindow({ 1: deploy - 121, 2: deploy + 5 }, manifest);
-  assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "outside=1 of 2");
+  const lost = fixture();
+  lost.state.adminEvents = 2;
+  assert.deepEqual(failing(lost), ["admin-events-count"]);
 });
 
-test("daily series length must match the summary range", () => {
-  const rows = ["2024-01-01,a", "2024-01-02,b"];
-  assert.equal(checkSeriesLength(rows, { range: { totalDays: 2 } }).ok, true);
-  assert.equal(checkSeriesLength(rows, { range: { totalDays: 3 } }).ok, false);
+test("daily-matches-ledger: daily.csv must be exactly what the transfers and approvals produce", () => {
+  const stale = fixture();
+  stale.csvText = stale.csvText.split("\n").map((l, i) => (i === 1 ? l.replace(/,\d+$/, ",9") : l)).join("\n");
+  assert.ok(failing(stale).includes("daily-matches-ledger"));
+  assert.match(results(stale)["daily-matches-ledger"].detail, /line 2/);
+
+  const short = fixture();
+  short.csvText = short.csvText.split("\n").slice(0, -1).join("\n");
+  assert.ok(failing(short).includes("daily-matches-ledger"));
 });
 
-test("a missing day breaks continuity", () => {
-  assert.equal(checkSeriesContinuity(["2024-02-28,x", "2024-02-29,x", "2024-03-01,x"]).ok, true);
+test("series rules compare daily.csv with summary.json: length, continuity and the transfer total", () => {
+  const length = fixture();
+  length.summary.range.totalDays += 1;
+  assert.deepEqual(failing(length), ["series-length"]);
 
-  const bad = checkSeriesContinuity(["2024-01-01,x", "2024-01-03,x"]);
-  assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "gaps=1");
+  const gap = fixture();
+  const lines = gap.csvText.split("\n");
+  lines.splice(2, 0, "2024-02-03,0");
+  gap.csvText = lines.join("\n");
+  assert.ok(failing(gap).includes("series-continuous"));
+
+  const total = fixture();
+  total.summary.totals.transferEvents += 1;
+  assert.ok(failing(total).includes("csv-transfer-total"));
 });
 
-test("csv transfer column must add up to the summary total", () => {
-  const rows = ["2024-01-01,0,5", "2024-01-02,0,7"];
-  assert.equal(checkCsvTransferTotal(rows, { totals: { transferEvents: 12 } }).ok, true);
-
-  const bad = checkCsvTransferTotal(rows, { totals: { transferEvents: 13 } });
-  assert.equal(bad.ok, false);
-  assert.equal(bad.detail, "csv=12 summary=13");
-});
-
-test("mints minus burns must equal the derived supply within rounding", () => {
-  const ok = { totals: { totalMintedCOPM: 100, totalBurnedCOPM: 40, currentSupplyCOPM: 60.5 } };
-  assert.equal(checkSupplyInvariant(ok).ok, true);
-
-  const bad = { totals: { totalMintedCOPM: 100, totalBurnedCOPM: 40, currentSupplyCOPM: 70 } };
-  assert.equal(checkSupplyInvariant(bad).ok, false);
-});
-
-test("derived supply may deviate from live totalSupply by less than 25%", () => {
-  const summary = { totals: { currentSupplyCOPM: 100 } };
-  const near = checkLiveSupply(summary, 110);
-  assert.equal(near.ok, true);
-  assert.equal(near.detail, "derived=100 onChain=110 deviation=9.1%");
-
-  assert.equal(checkLiveSupply(summary, 140).ok, false);
-});
-
-test("offlineChecks runs the file-based rules in the original report order", () => {
-  const manifest = {
-    deployBlock: "1",
-    latestBlockAtRun: "10",
-    deployTimestamp: "2024-01-01T00:00:00.000Z",
-    latestBlockTimestamp: "2024-01-02T00:00:00.000Z",
-  };
-  const ts = Date.parse(manifest.deployTimestamp) / 1000 + 60;
-  const checks = offlineChecks({
-    transfers: [tx(2, 0)],
-    manifest,
-    progress: { totalEvents: 1, slices: [{ cursor: "11", end: "10" }] },
-    tsCache: { 2: ts },
-    csvRows: ["2024-01-01,0,1"],
-    summary: {
-      range: { totalDays: 1 },
-      totals: { transferEvents: 1, totalMintedCOPM: 1, totalBurnedCOPM: 0, currentSupplyCOPM: 1 },
-    },
-  });
-
-  assert.deepEqual(
-    checks.map((c) => c.name),
-    [
-      "event count matches scan progress",
-      "no duplicate (tx, logIndex) pairs",
-      "all events inside scanned block range",
-      "scan completed (all slices reached their end)",
-      "every event block has a timestamp",
-      "timestamps inside deploy → latest window",
-      "daily series length matches summary range",
-      "daily series is continuous (no missing days)",
-      "csv transfer total equals summary total",
-      "mints − burns equals derived supply",
-    ]
-  );
-  assert.ok(checks.every((c) => c.ok));
+test("no rule has a tolerance: one wei of supply difference fails even when the rest is consistent", () => {
+  const fx = fixture();
+  fx.state.minted = (BigInt(fx.state.minted) + 1n).toString();
+  const bad = failing(fx);
+  assert.ok(bad.includes("supply-exact"));
+  assert.ok(bad.includes("ledger-matches-state"));
 });

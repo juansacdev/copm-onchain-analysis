@@ -1,12 +1,12 @@
 import { pathToFileURL } from "node:url";
-import { CHAIN_KEYS } from "./config/chains.js";
+import { CHAIN_KEYS, SCAN_SETTING_KEYS } from "./config/chains.js";
 
 // command -> step module. Steps are imported on demand so that a command
 // only loads (and only needs the environment of) the step it runs.
 const STEPS = {
   discover: "./steps/discover.js",
   scan: "./steps/scan.js",
-  timestamps: "./steps/timestamps.js",
+  holders: "./steps/holders.js",
   aggregate: "./steps/aggregate.js",
   charts: "./steps/charts.js",
   "charts:combined": "./steps/combined-charts.js",
@@ -17,6 +17,10 @@ export const COMMANDS = Object.keys(STEPS);
 
 export class UsageError extends Error {}
 
+// --max-log-range -> maxLogRange. Values are validated by scanSettings().
+const kebab = (name) => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+const TUNING_FLAGS = new Map(SCAN_SETTING_KEYS.map((name) => [`--${kebab(name)}`, name]));
+
 export function usage() {
   return [
     "usage: node pipeline/cli.js <command> [--chain polygon|celo] [--fresh]",
@@ -25,6 +29,9 @@ export function usage() {
     `chains:   ${CHAIN_KEYS.join(", ")} (default: $CHAIN, then polygon)`,
     "",
     "  --fresh   scan only: discard previous output and start over",
+    "",
+    "scan tuning (defaults are per chain; env SCAN_* also works, flags win):",
+    `  ${[...TUNING_FLAGS.keys()].join(" <n>  ")} <n>`,
   ].join("\n");
 }
 
@@ -32,6 +39,7 @@ export function parseArgs(argv, env = process.env) {
   let command;
   let chain;
   let fresh = false;
+  const overrides = {};
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -40,6 +48,12 @@ export function parseArgs(argv, env = process.env) {
       if (!chain || chain.startsWith("--")) throw new UsageError("--chain requires a value");
     } else if (arg === "--fresh") {
       fresh = true;
+    } else if (TUNING_FLAGS.has(arg)) {
+      const value = argv[++i];
+      if (value === undefined || value.startsWith("--")) {
+        throw new UsageError(`${arg} requires a value`);
+      }
+      overrides[TUNING_FLAGS.get(arg)] = value;
     } else if (arg.startsWith("--")) {
       throw new UsageError(`unknown option "${arg}"`);
     } else if (command === undefined) {
@@ -57,7 +71,7 @@ export function parseArgs(argv, env = process.env) {
     throw new UsageError(`unknown chain "${chain}". valid values: ${CHAIN_KEYS.join(", ")}`);
   }
 
-  return { command, chain, fresh };
+  return { command, chain, fresh, overrides };
 }
 
 export async function main(argv, env = process.env) {
@@ -70,9 +84,22 @@ export async function main(argv, env = process.env) {
     return 1;
   }
 
-  const { run } = await import(STEPS[args.command]);
-  const result = await run({ chainKey: args.chain, fresh: args.fresh, env });
-  return result?.exitCode ?? 0;
+  // Steps report failures by throwing. Only the message is printed: a stack
+  // trace adds nothing for the operator and must never be the place an
+  // endpoint URL shows up.
+  try {
+    const { run } = await import(STEPS[args.command]);
+    const result = await run({
+      chainKey: args.chain,
+      fresh: args.fresh,
+      overrides: args.overrides,
+      env,
+    });
+    return result?.exitCode ?? 0;
+  } catch (err) {
+    console.error(`error: ${err.message}`);
+    return 1;
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

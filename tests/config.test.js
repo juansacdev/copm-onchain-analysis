@@ -8,6 +8,7 @@ import {
   dataPath,
   chartsDir,
   copPerUsd,
+  scanSettings,
 } from "../pipeline/config/chains.js";
 
 test("lists the supported chains", () => {
@@ -40,4 +41,40 @@ test("data and charts paths are scoped per chain under the repository root", () 
 test("copPerUsd reads the override and falls back to 4000", () => {
   assert.equal(copPerUsd({}), 4000);
   assert.equal(copPerUsd({ COP_PER_USD: "3900" }), 3900);
+});
+
+test("each chain carries its deploy block", () => {
+  assert.equal(getChain("polygon").deployBlock, 47747145);
+  assert.equal(getChain("celo").deployBlock, 27680993);
+});
+
+test("scanSettings returns the per-chain defaults", () => {
+  assert.deepEqual(scanSettings("polygon", {}), {
+    maxLogRange: 10000,
+    rangesPerBatch: 10,
+    emptyConfirmations: 2,
+    confirmations: 128,
+    workers: 6,
+    stageBlocks: 2_000_000,
+    maxBatchAttempts: 400,
+  });
+  const celo = scanSettings("celo", {});
+  assert.equal(celo.maxLogRange, 5000);
+  assert.equal(celo.emptyConfirmations, 6);
+  assert.equal(celo.confirmations, 30);
+  assert.equal(celo.workers, 12);
+});
+
+test("scanSettings lets the environment override a default, and the CLI override the environment", () => {
+  const env = { SCAN_WORKERS: "3", SCAN_MAX_LOG_RANGE: "2000" };
+  assert.equal(scanSettings("celo", env).workers, 3);
+  assert.equal(scanSettings("celo", env).maxLogRange, 2000);
+  assert.equal(scanSettings("celo", env, { workers: 5 }).workers, 5);
+});
+
+test("scanSettings rejects values that are not integers in range, naming the setting", () => {
+  assert.throws(() => scanSettings("celo", { SCAN_WORKERS: "abc" }), /workers/);
+  assert.throws(() => scanSettings("celo", {}, { maxLogRange: 0 }), /maxLogRange/);
+  assert.throws(() => scanSettings("celo", {}, { emptyConfirmations: -1 }), /emptyConfirmations/);
+  assert.equal(scanSettings("celo", {}, { confirmations: 0 }).confirmations, 0);
 });
