@@ -18,7 +18,7 @@ The data in this document doesn't come from a dashboard or a third party. It com
 | **Total redeemed (burns)** | <!-- copm:polygon.burned -->1.246T<!-- /copm --> COPM ≈ <!-- copm:polygon.burnedUsd -->$311.5M<!-- /copm --> USD |
 | **Daily average** | <!-- copm:polygon.avgDailyTransfers -->217<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->$1.9M<!-- /copm --> USD |
 | **Average ticket per transfer** | ~<!-- copm:polygon.avgTicketUsd -->$8,952<!-- /copm --> USD |
-| **Peak transactions in one day** | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
+| **Peak transfers in one day** | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | **Peak volume in one day** | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | **Peak month** | **<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->: <!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** |
 | **Supply peak** | <!-- copm:polygon.peakSupplyCopm -->11.36B<!-- /copm --> COPM ≈ <!-- copm:polygon.peakSupplyUsd -->$2.8M<!-- /copm --> USD (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->) |
@@ -39,7 +39,7 @@ Unfamiliar with a term? It's in the [glossary](../GLOSSARY.md).
 
 ![Daily gross volume USD](../../charts/polygon/02-daily-volume-usd.svg)
 
-### The token existed for 16.5 months (counted from deployment) before crossing 100 transactions per day.
+### The token existed for 16.5 months (counted from deployment) before crossing 100 transfers per day.
 
 Deploy: <!-- copm:polygon.deployDate -->2023-09-19<!-- /copm -->. First day above 100 transfers: **<!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->**.
 
@@ -49,9 +49,9 @@ That gap tells you how a B2B settlement layer scales: not through retail user ac
 
 ### <!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->: the month that changed everything.
 
-**<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD in a single month. <!-- copm:polygon.peakMonthTransfers -->30,983<!-- /copm --> transactions.** The record day for activity is <!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->: **<!-- copm:polygon.topTx.1.usd -->$38.6M<!-- /copm -->** across **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transactions**. The record day for volume is <!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->, with **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm -->**.
+**<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD in a single month. <!-- copm:polygon.peakMonthTransfers -->30,983<!-- /copm --> transfers.** The record day for activity is <!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->: **<!-- copm:polygon.topTx.1.usd -->$38.6M<!-- /copm -->** across **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transfers**. The record day for volume is <!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->, with **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm -->**.
 
-Nearly all of the 10 highest-transaction days in the token's entire history happened between October and November 2025 (see the table below). That's not noise: it's the signature of a major integration or a new use case entering production.
+Nearly all of the 10 highest-transfer days in the token's entire history happened between October and November 2025 (see the table below). That's not noise: it's the signature of a major integration or a new use case entering production.
 
 ![Monthly volume USD](../../charts/polygon/04-monthly-volume-usd.svg)
 
@@ -86,9 +86,9 @@ Volume settled between December and April, jumped in May 2026, and has declined 
 
 - Average supply (last 30 days): ~<!-- copm:polygon.last30AvgSupply -->6.21B<!-- /copm --> COPM
 - Gross volume (last 30 days): ~<!-- copm:polygon.last30GrossUsd -->$21.2M<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.93B<!-- /copm --> COPM
-- **Implied turnover: ~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm -->x per month, ~<!-- copm:polygon.turnoverYearly -->164<!-- /copm -->x per year**
+- **Implied turnover: ~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm -->x per month, ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm -->x per year**
 
-For reference: USDT and USDC turn over on the order of 10–20x **per year**. COPM rotates its supply roughly an order of magnitude faster than that range. The reading is direct: nobody holds COPM for long — the average COPM changes hands ~<!-- copm:polygon.turnoverYearly -->164<!-- /copm --> times a year. That is the behavior of a *settlement rail*, not a store of value.
+For reference: USDT and USDC turn over on the order of 10–20x **per year**. COPM rotates its supply roughly an order of magnitude faster than that range. The reading is direct: nobody holds COPM for long — the average COPM changes hands ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm --> times a year. That is the behavior of a *settlement rail*, not a store of value.
 
 ![Circulating supply](../../charts/polygon/03-supply-over-time.svg)
 
@@ -114,7 +114,7 @@ The six roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_ROL
 
 ## Top 10 days
 
-### By transactions
+### By transfers
 
 | Day | Transfers | Gross volume |
 | :--- | ---: | ---: |

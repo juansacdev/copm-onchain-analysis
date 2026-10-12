@@ -85,11 +85,17 @@ jobs:
           # data. This job only adds generated files, so a rebase onto the
           # remote is safe; if it conflicts, a person edited generated files
           # and the job must fail loudly instead of guessing.
+          # Every rebase is followed by a push; only a failed last push fails
+          # the job.
           for attempt in 1 2 3 4 5; do
             if git push; then
               exit 0
             fi
-            echo "push rejected (attempt $attempt of 5), rebasing onto origin/$GITHUB_REF_NAME"
+            echo "push rejected (attempt $attempt of 5)"
+            if [ "$attempt" -eq 5 ]; then
+              break
+            fi
+            echo "rebasing onto origin/$GITHUB_REF_NAME"
             sleep $((attempt * 5))
             if ! git pull --rebase origin "$GITHUB_REF_NAME"; then
               git rebase --abort || true

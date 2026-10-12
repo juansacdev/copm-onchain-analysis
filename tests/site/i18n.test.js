@@ -47,6 +47,36 @@ test("no figure is typed in a dictionary: digit runs only appear in cited text",
   }
 });
 
+// The figures are Transfer events (one transaction can emit several), so the
+// page says "transfers". "Transaction" stays only where it names the blockchain
+// concept or a quote.
+const TRANSACTION_OK = new Set(["chapters.prensa.quote", "chapters.glosario.items.1.def"]);
+
+test("the page never calls a transfer count a transaction", () => {
+  for (const lang of ["es", "en"]) {
+    for (const [key, value] of Object.entries(flattenDictionary(dictionaries[lang]))) {
+      if (TRANSACTION_OK.has(key)) continue;
+      assert.doesNotMatch(value, /transacci|transaction|\btx\b/i, `${lang}:${key}`);
+    }
+  }
+});
+
+test("the page says what is proven about events: transfers exact, approvals a lower bound on Celo", () => {
+  const es = flattenDictionary(dictionaries.es);
+  const en = flattenDictionary(dictionaries.en);
+  const claims = Object.entries(en).filter(([, v]) => /Celo/.test(v) && /lower bound/.test(v));
+  assert.ok(claims.length > 0, "an English sentence states the Celo approvals lower bound");
+  assert.ok(
+    Object.values(es).some((v) => /Celo/.test(v) && /cota inferior/.test(v)),
+    "a Spanish sentence states the Celo approvals lower bound",
+  );
+  for (const dict of [es, en]) {
+    for (const value of Object.values(dict)) {
+      assert.doesNotMatch(value, /<strong>(all|todos)<\/strong> (the )?(events|los eventos)/i);
+    }
+  }
+});
+
 test("every string of both dictionaries renders against the data, with no gaps", () => {
   const data = fixtureData();
   for (const lang of ["es", "en"]) {
@@ -73,6 +103,14 @@ test("variables are formatted for the language", () => {
   assert.equal(es.polygonTakeoffWeeks, "6");
   assert.equal(es.polygonLatestPct, "60 %");
   assert.equal(en.polygonLatestPct, "60%");
+});
+
+test("yearly turnover annualizes the 30-day window by 365 / window days", () => {
+  const data = fixtureData();
+  const monthly = data.chains.polygon.turnoverMonthly;
+  const vars = buildVars(data, "en", { pressMonth: PRESS_MONTH });
+  assert.equal(vars.polygonTurnoverYearly, String(Math.round((monthly * 365) / 30)));
+  assert.notEqual(vars.polygonTurnoverYearly, String(Math.round(monthly * 12)));
 });
 
 test("the page refuses to build a claim the data no longer supports", () => {

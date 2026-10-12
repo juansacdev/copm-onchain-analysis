@@ -18,7 +18,7 @@ Los datos de este documento no salen de un dashboard ni de un tercero. Salen de 
 | **Total redimido (burns)** | <!-- copm:polygon.burned -->1,246 billones<!-- /copm --> COPM ≈ <!-- copm:polygon.burnedUsd -->US$311,5 millones<!-- /copm --> |
 | **Promedio diario** | <!-- copm:polygon.avgDailyTransfers -->217<!-- /copm --> transfers · <!-- copm:polygon.avgDailyGrossUsd -->US$1,9 millones<!-- /copm --> |
 | **Ticket promedio por transfer** | ~<!-- copm:polygon.avgTicketUsd -->US$8.952<!-- /copm --> |
-| **Pico de transacciones en un día** | **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
+| **Pico de transferencias en un día** | **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm -->** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | **Pico de volumen en un día** | **<!-- copm:polygon.peakVolumeUsd -->US$38,6 millones<!-- /copm -->** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
 | **Mes pico** | **<!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->: <!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm -->** |
 | **Pico de supply** | <!-- copm:polygon.peakSupplyCopm -->11.363 millones<!-- /copm --> COPM ≈ <!-- copm:polygon.peakSupplyUsd -->US$2,8 millones<!-- /copm --> (<!-- copm:polygon.peakSupplyDay -->2026-05-07<!-- /copm -->) |
@@ -39,7 +39,7 @@ Los datos de este documento no salen de un dashboard ni de un tercero. Salen de 
 
 ![Volumen bruto diario USD](../../charts/polygon/02-daily-volume-usd.svg)
 
-### El token existió 16,5 meses (contados desde el despliegue) antes de cruzar 100 transacciones por día.
+### El token existió 16,5 meses (contados desde el despliegue) antes de cruzar 100 transferencias por día.
 
 Deploy: <!-- copm:polygon.deployDate -->2023-09-19<!-- /copm -->. Primer día con más de 100 transfers: **<!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->**.
 
@@ -49,9 +49,9 @@ Ese gap cuenta cómo escala un settlement layer B2B: no por adquisición de usua
 
 ### <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->: el mes que lo cambió todo.
 
-**<!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm --> en un solo mes. <!-- copm:polygon.peakMonthTransfers -->30.983<!-- /copm --> transacciones.** El día récord de actividad es el <!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->: **<!-- copm:polygon.topTx.1.usd -->US$38,6 millones<!-- /copm -->** en **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> transacciones**. El día récord de volumen es el <!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->, con **<!-- copm:polygon.peakVolumeUsd -->US$38,6 millones<!-- /copm -->**.
+**<!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm --> en un solo mes. <!-- copm:polygon.peakMonthTransfers -->30.983<!-- /copm --> transferencias.** El día récord de actividad es el <!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->: **<!-- copm:polygon.topTx.1.usd -->US$38,6 millones<!-- /copm -->** en **<!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> transferencias**. El día récord de volumen es el <!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->, con **<!-- copm:polygon.peakVolumeUsd -->US$38,6 millones<!-- /copm -->**.
 
-Casi todos los 10 días con más transacciones de toda la historia del token cayeron entre octubre y noviembre de 2025 (ver la tabla más abajo). Eso no es ruido: es la firma de una integración mayor o un caso de uso nuevo entrando en producción.
+Casi todos los 10 días con más transferencias de toda la historia del token cayeron entre octubre y noviembre de 2025 (ver la tabla más abajo). Eso no es ruido: es la firma de una integración mayor o un caso de uso nuevo entrando en producción.
 
 ![Volumen mensual USD](../../charts/polygon/04-monthly-volume-usd.svg)
 
@@ -86,9 +86,9 @@ El volumen se asentó entre diciembre y abril, saltó en mayo de 2026 y ha bajad
 
 - Supply promedio (últimos 30 días): ~<!-- copm:polygon.last30AvgSupply -->6.209 millones<!-- /copm --> COPM
 - Volumen bruto (últimos 30 días): ~<!-- copm:polygon.last30GrossUsd -->US$21,2 millones<!-- /copm --> ≈ <!-- copm:polygon.last30GrossCopm -->84.925 millones<!-- /copm --> COPM
-- **Rotación implícita: ~<!-- copm:polygon.turnoverMonthly -->13,7<!-- /copm -->x al mes, ~<!-- copm:polygon.turnoverYearly -->164<!-- /copm -->x al año**
+- **Rotación implícita: ~<!-- copm:polygon.turnoverMonthly -->13,7<!-- /copm -->x al mes, ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm -->x al año**
 
-Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota su supply aproximadamente un orden de magnitud más rápido que ese rango. La lectura es directa: nadie acumula COPM por mucho tiempo — el COPM promedio cambia de manos ~<!-- copm:polygon.turnoverYearly -->164<!-- /copm --> veces al año. Es el comportamiento de un *settlement rail*, no de una reserva de valor.
+Para comparar: USDT y USDC rotan en el orden de 10–20x **al año**. COPM rota su supply aproximadamente un orden de magnitud más rápido que ese rango. La lectura es directa: nadie acumula COPM por mucho tiempo — el COPM promedio cambia de manos ~<!-- copm:polygon.turnoverYearly -->166<!-- /copm --> veces al año. Es el comportamiento de un *settlement rail*, no de una reserva de valor.
 
 ![Supply circulante](../../charts/polygon/03-supply-over-time.svg)
 
@@ -114,7 +114,7 @@ Los seis roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `UPGRADER_RO
 
 ## Top 10 días
 
-### Por transacciones
+### Por transferencias
 
 | Día | Transfers | Volumen bruto |
 | :--- | ---: | ---: |

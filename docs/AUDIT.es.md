@@ -18,7 +18,7 @@ Datos al bloque <!-- copm:polygon.checkpointBlock -->95.370.448<!-- /copm --> de
 | Volumen bruto (USD) | <!-- copm:polygon.grossVolumeUsd -->US$2.165 millones<!-- /copm --> | <!-- copm:celo.grossVolumeUsd -->US$13 millones<!-- /copm --> | **~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm -->** |
 | Volumen neto (USD) | <!-- copm:polygon.netVolumeUsd -->US$1.541 millones<!-- /copm --> | <!-- copm:celo.netVolumeUsd -->US$10,5 millones<!-- /copm --> | **<!-- copm:combined.netVolumeUsd -->US$1.551 millones<!-- /copm -->** |
 | Ticket promedio | ~<!-- copm:polygon.avgTicketUsd -->US$8.952<!-- /copm --> | ~<!-- copm:celo.avgTicketUsd -->US$98<!-- /copm --> | — |
-| Pico de transacciones/día | <!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) | <!-- copm:celo.peakTxCount -->1.919<!-- /copm --> (<!-- copm:celo.peakTxDay -->2025-01-19<!-- /copm -->) | — |
+| Pico de transferencias/día | <!-- copm:polygon.peakTxCount -->2.597<!-- /copm --> (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) | <!-- copm:celo.peakTxCount -->1.919<!-- /copm --> (<!-- copm:celo.peakTxDay -->2025-01-19<!-- /copm -->) | — |
 | Pico de volumen/día | <!-- copm:polygon.peakVolumeUsd -->US$38,6 millones<!-- /copm --> (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) | <!-- copm:celo.peakVolumeUsd -->US$737 mil<!-- /copm --> (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) | — |
 | Mes pico (volumen) | <!-- copm:polygon.peakMonthUsd -->US$318,4 millones<!-- /copm --> (<!-- copm:polygon.peakMonthShort -->nov 2025<!-- /copm -->) | <!-- copm:celo.peakMonthUsd -->US$2,2 millones<!-- /copm --> (<!-- copm:celo.peakMonthShort -->jul 2025<!-- /copm -->) | — |
 | Supply on-chain actual | <!-- copm:polygon.supplyCompact -->4.482 millones<!-- /copm --> COPM | <!-- copm:celo.supplyCompact -->418,6 millones<!-- /copm --> COPM | **<!-- copm:combined.supply -->4.901 millones<!-- /copm --> COPM ≈ <!-- copm:combined.supplyUsd -->US$1,2 millones<!-- /copm -->** |
@@ -33,17 +33,17 @@ Datos al bloque <!-- copm:polygon.checkpointBlock -->95.370.448<!-- /copm --> de
 
 Mira el ticket promedio: **<!-- copm:polygon.avgTicketUsd -->US$8.952<!-- /copm --> en Polygon, <!-- copm:celo.avgTicketUsd -->US$98<!-- /copm --> en Celo**. Esa diferencia de unos dos órdenes de magnitud no es ruido — es arquitectura.
 
-Polygon es el rail institucional: settlement B2B, montos grandes, casi todo el volumen histórico. Celo es la red de pagos pequeños: remesas, micropagos, billeteras de usuario final — con un conteo de transacciones diarias del mismo orden que el de Polygon (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> vs ~<!-- copm:polygon.avgDailyTransfers -->217<!-- /copm -->), pero moviendo una fracción pequeña del valor.
+Polygon es el rail institucional: settlement B2B, montos grandes, casi todo el volumen histórico. Celo es la red de pagos pequeños: remesas, micropagos, billeteras de usuario final — con un conteo de transferencias diarias del mismo orden que el de Polygon (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> vs ~<!-- copm:polygon.avgDailyTransfers -->217<!-- /copm -->), pero moviendo una fracción pequeña del valor.
 
 ![Volumen mensual por chain](../charts/combined/01-monthly-volume-by-chain.svg)
 
 ## El relevo entre chains se ve a simple vista
 
-El gráfico de transacciones mensuales cuenta una historia que ningún dashboard interno podría contar mejor: **Celo despegó primero en actividad** (su pico de <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> transacciones fue en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->, apenas cuatro meses después del deploy), y **Polygon tomó el relevo** con la ola institucional de mediados-finales de 2025 que culminó en <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->, su mes de mayor volumen.
+El gráfico de transferencias mensuales cuenta una historia que ningún dashboard interno podría contar mejor: **Celo despegó primero en actividad** (su pico de <!-- copm:celo.peakTxMonthCount -->18.491<!-- /copm --> transferencias fue en <!-- copm:celo.peakTxMonth -->enero 2025<!-- /copm -->, apenas cuatro meses después del deploy), y **Polygon tomó el relevo** con la ola institucional de mediados-finales de 2025 que culminó en <!-- copm:polygon.peakMonth -->noviembre 2025<!-- /copm -->, su mes de mayor volumen.
 
 ![Transfers mensuales por chain](../charts/combined/02-monthly-transfers-by-chain.svg)
 
-También explica por qué la segunda chain despega más rápido: COPM tardó **16,5 meses** desde el despliegue en superar las 100 transacciones diarias en Polygon (primer día: <!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->), y **7 semanas** desde el despliegue en lograrlo en Celo, unas 6 desde su primera transferencia (primer día: <!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->). La segunda chain no empieza de cero — hereda partners, operación y casos de uso ya probados.
+También explica por qué la segunda chain despega más rápido: COPM tardó **16,5 meses** desde el despliegue en superar las 100 transferencias diarias en Polygon (primer día: <!-- copm:polygon.firstDayAbove100 -->2025-02-03<!-- /copm -->), y **7 semanas** desde el despliegue en lograrlo en Celo, unas 6 desde su primera transferencia (primer día: <!-- copm:celo.firstDayAbove100 -->2024-10-30<!-- /copm -->). La segunda chain no empieza de cero — hereda partners, operación y casos de uso ya probados.
 
 ## El acumulado: ~<!-- copm:combined.grossVolumeUsd -->US$2.178 millones<!-- /copm --> y subiendo
 

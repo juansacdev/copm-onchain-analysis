@@ -20,6 +20,8 @@ function daysBetween(from, to) {
   return out;
 }
 
+// overrides[chain].plan replaces keys of the default plan; overrides[chain].validation
+// replaces the validation file.
 // plan: { from, to, usdPerDay: {"2025-01": 10}, txPerDay: {"2025-01": 10},
 //         overrides: {"2025-03-15": { usd: 500, tx: 200 }} }
 function dailyCsv(plan) {
@@ -88,7 +90,7 @@ export function writeSiteFixture(overrides = {}) {
   for (const [key, spec] of Object.entries(CHAINS)) {
     const dir = join(root, key);
     mkdirSync(dir, { recursive: true });
-    const csv = dailyCsv(spec.plan);
+    const csv = dailyCsv({ ...spec.plan, ...overrides[key]?.plan });
     write(dir, "daily.csv", csv);
     const rows = csv.trim().split("\n").slice(1).map((l) => l.split(","));
     const totalGross = rows.reduce((sum, r) => sum + Number(r[5]), 0);

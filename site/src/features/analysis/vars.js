@@ -20,7 +20,7 @@ import { shortAddress } from "../../lib/links.js";
 export const PRESS_MONTH = "2025-09";
 
 const DAYS_PER_MONTH = 30.4375;
-const MONTHS_PER_YEAR = 12;
+const DAYS_PER_YEAR = 365;
 
 function claim(condition, message) {
   if (!condition) throw new Error(`the analysis page can no longer say this: ${message}`);
@@ -67,7 +67,7 @@ function chainVars(prefix, c, locale) {
     WindowFrom: month(c.topTxWindow.from),
     WindowTo: month(c.topTxWindow.to),
     TurnoverMonthly: formatDecimal(c.turnoverMonthly, 1, locale),
-    TurnoverYearly: int(Math.round(c.turnoverMonthly * MONTHS_PER_YEAR)),
+    TurnoverYearly: int(Math.round((c.turnoverMonthly * DAYS_PER_YEAR) / TURNOVER_WINDOW_DAYS)),
   };
 
   if (c.takeoff) {

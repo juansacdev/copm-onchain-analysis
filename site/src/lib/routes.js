@@ -6,7 +6,7 @@ export const DEFAULT_LANG = "es";
 
 export const ROUTES = {
   dashboard: { es: "/", en: "/en/" },
-  analysis: { es: "/analisis", en: "/en/analysis" },
+  analysis: { es: "/analisis/", en: "/en/analysis/" },
 };
 
 export function routePath(page, lang) {

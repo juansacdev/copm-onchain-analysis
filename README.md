@@ -33,7 +33,7 @@ So instead of asking you to take my word for it, I audited it: **<!-- copm:combi
 | Audited `Transfer` events | **<!-- copm:combined.transfers -->374,802<!-- /copm -->** |
 | Peak month (Polygon) | **<!-- copm:polygon.peakMonthUsd -->$318.4M<!-- /copm --> USD** (<!-- copm:polygon.peakMonth -->November 2025<!-- /copm -->) |
 | Peak volume day (Polygon) | **<!-- copm:polygon.peakVolumeUsd -->$38.6M<!-- /copm --> USD** (<!-- copm:polygon.peakVolumeDay -->2025-11-24<!-- /copm -->) |
-| Busiest day (Polygon) | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transactions** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
+| Busiest day (Polygon) | **<!-- copm:polygon.peakTxCount -->2,597<!-- /copm --> transfers** (<!-- copm:polygon.peakTxDay -->2025-11-24<!-- /copm -->) |
 | Supply turnover (Polygon, last 30 days) | **~<!-- copm:polygon.turnoverMonthly -->13.7<!-- /copm -->x per month** |
 | Supply reconciliation | **Exact on both chains**: minted − burned equals `totalSupply()` to the wei |
 | Validation | **<!-- copm:combined.checksPassed -->34<!-- /copm -->/<!-- copm:combined.checksTotal -->34<!-- /copm --> strict checks** — offline, no tolerance, every balance checked against `balanceOf` |
