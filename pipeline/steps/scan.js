@@ -24,6 +24,7 @@ import { mapPool } from "../adapters/pool.js";
 import { createRpc, requireRpcUrl } from "../adapters/rpc.js";
 import { createStore, ensureDir } from "../adapters/store.js";
 import { applyApprovals } from "../domain/approvals.js";
+import { parseWord } from "../domain/contract.js";
 import { EVENT_TOPICS, decodeLog } from "../domain/events.js";
 import { checkBatch, checkRangeLogs, newRangeState, observeRange } from "../domain/integrity.js";
 import { createLedger, foldTransfers } from "../domain/ledger.js";
@@ -299,13 +300,15 @@ export async function runScan({
     return known;
   }
 
-  // R4. The pinned eth_call goes alone, never inside a batch whose items may be
+  // R4. Anything but one 32-byte word is a failed attempt: BigInt("") is 0n and
+  // BigInt("123") is 123n, so a lenient parse would turn an empty or truncated
+  // answer into a supply to reconcile against. The pinned eth_call goes alone, never inside a batch whose items may be
   // served by different backends: a backend with full log history can lack
   // recent state, and then it errors instead of lying.
   const readTotalSupply = (block) =>
     withAttempts(`totalSupply() at block ${block}`, async () => {
       const raw = await rpc.call("eth_call", [{ to: chain.address, data: TOTAL_SUPPLY_SELECTOR }, hex(block)]);
-      return BigInt(raw);
+      return parseWord(raw);
     });
 
   function persistStage(state, stage, { transferRows, adminRows, approvalRows, ledger, supply, canary, lastBlockTime }) {

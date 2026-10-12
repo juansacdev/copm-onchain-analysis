@@ -1,7 +1,7 @@
 {
   "chain": "polygon",
   "block": 95378468,
-  "validatedAt": "2026-10-12T02:46:36.559Z",
+  "validatedAt": "2026-10-12T03:14:01.832Z",
   "checks": [
     {
       "id": "event-count",
@@ -76,7 +76,7 @@
     {
       "id": "daily-matches-ledger",
       "ok": true,
-      "detail": "rows=1118 lastSupply=4478360707.754852 totalSupply=4478360707.754852"
+      "detail": "rows=1118 lastSupply=4478360707.754852 ledgerSupply=4478360707754852048213337676 totalSupply=4478360707754852048213337676"
     },
     {
       "id": "series-length",

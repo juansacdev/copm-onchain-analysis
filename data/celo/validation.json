@@ -1,7 +1,7 @@
 {
   "chain": "celo",
   "block": 79872373,
-  "validatedAt": "2026-10-12T02:46:53.630Z",
+  "validatedAt": "2026-10-12T03:14:03.223Z",
   "checks": [
     {
       "id": "event-count",
@@ -76,7 +76,7 @@
     {
       "id": "daily-matches-ledger",
       "ok": true,
-      "detail": "rows=754 lastSupply=418585134.62811 totalSupply=418585134.62811"
+      "detail": "rows=754 lastSupply=418585134.62811 ledgerSupply=418585134628110192879069442 totalSupply=418585134628110192879069442"
     },
     {
       "id": "series-length",

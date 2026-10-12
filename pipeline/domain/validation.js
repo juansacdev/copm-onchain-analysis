@@ -8,7 +8,6 @@ import { parseHoldersCsv, formatUnits } from "./holders.js";
 import { createLedger, foldTransfers, negativeBalances } from "./ledger.js";
 import { monthKey } from "./partition.js";
 import { reconcileSupply } from "./reconcile.js";
-import { toCOPM } from "./units.js";
 
 const check = (id, ok, detail) => ({ id, ok, detail });
 
@@ -202,12 +201,15 @@ export function checkDailyMatchesLedger({ transfers, approvals, csvText, state }
     const where = line >= 0 ? `line ${line + 1}` : `length (${actual.length} lines, expected ${expected.length})`;
     return check("daily-matches-ledger", false, `daily.csv differs from the transfers at ${where}`);
   }
-  const lastSupply = actual.at(-1)?.split(",")[1];
-  const wanted = String(toCOPM(BigInt(state.totalSupply)));
+  // The csv prints 6 decimals, so comparing its last cell with totalSupply
+  // would let up to 1e12 wei through. The exact part is the ledger's own
+  // cumulative supply at the last day against the checkpoint's totalSupply.
+  const ledgerSupply = series.at(-1)?.supplyEnd ?? 0n;
+  const totalSupply = BigInt(state.totalSupply);
   return check(
     "daily-matches-ledger",
-    lastSupply === wanted,
-    `rows=${actual.length - 1} lastSupply=${lastSupply} totalSupply=${wanted}`
+    ledgerSupply === totalSupply,
+    `rows=${actual.length - 1} lastSupply=${actual.at(-1)?.split(",")[1]} ledgerSupply=${ledgerSupply} totalSupply=${totalSupply}`
   );
 }
 

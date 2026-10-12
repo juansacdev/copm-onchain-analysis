@@ -206,6 +206,21 @@ test("daily-matches-ledger: daily.csv must be exactly what the transfers and app
   assert.ok(failing(short).includes("daily-matches-ledger"));
 });
 
+test("daily-matches-ledger: the last day's supply is tied to totalSupply to the wei", () => {
+  const exact = fixture();
+  assert.equal(results(exact)["daily-matches-ledger"].ok, true);
+  assert.match(results(exact)["daily-matches-ledger"].detail, /ledgerSupply=\d+ totalSupply=\d+/);
+
+  // A difference far below the 6 decimals daily.csv prints must still fail.
+  for (const delta of [1n, -1n]) {
+    const off = fixture();
+    off.state.totalSupply = (BigInt(off.state.totalSupply) + delta).toString();
+    const r = results(off)["daily-matches-ledger"];
+    assert.equal(r.ok, false, `delta ${delta}`);
+    assert.match(r.detail, /ledgerSupply=\d+ totalSupply=\d+/);
+  }
+});
+
 test("series rules compare daily.csv with summary.json: length, continuity and the transfer total", () => {
   const length = fixture();
   length.summary.range.totalDays += 1;

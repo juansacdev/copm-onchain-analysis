@@ -544,3 +544,36 @@ test("a crashed stage with transfers, approvals and an admin event is repaired w
 
   assert.deepEqual(snapshot(dir), snapshot(reference.dir));
 });
+
+// The supply read is the ground truth every stage is reconciled against, so an
+// answer that is not exactly one 32-byte word is a failed read, never a number
+// (BigInt("") is 0n, BigInt("123") is 123n).
+for (const [label, bad] of [
+  ["an empty string", ""],
+  ["0x", "0x"],
+  ["a decimal string", "123"],
+  ["null", null],
+  ["a short hex word", "0x1234"],
+  ["a word with a stray suffix", `0x${"0".repeat(64)}zz`],
+]) {
+  test(`a supply answer of ${label} is retried until a proper word arrives`, async () => {
+    const { fake, store, scan } = setup();
+    let reads = 0;
+    fake.faults.supplyRaw = () => (reads++ < 2 ? bad : undefined);
+    await scan();
+    assert.equal(store.readState().lastBlock, 2200);
+    assert.equal(reads, 3 + 2, "three stages plus the two answers that were thrown away");
+  });
+}
+
+test("a proper 32-byte supply word is accepted at once, without a retry", async () => {
+  const { fake, store, scan } = setup();
+  const seen = [];
+  fake.faults.supplyRaw = ({ attempt }) => {
+    seen.push(attempt);
+    return undefined;
+  };
+  await scan();
+  assert.equal(store.readState().lastBlock, 2200);
+  assert.equal(seen.length, 3, "one supply read per stage, no retries");
+});
