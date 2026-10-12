@@ -8,24 +8,24 @@
     "totalDays": 1118
   },
   "totals": {
-    "transferEvents": 241885,
-    "grossVolumeCOPM": 8660659032180.576,
-    "grossVolumeUSD": 2265907211.83,
-    "netVolumeCOPM": 6163847299816.33,
-    "netVolumeUSD": 1612785335.41,
+    "transferEvents": 241949,
+    "grossVolumeCOPM": 8660693384493.074,
+    "grossVolumeUSD": 2265917965.61,
+    "netVolumeCOPM": 6163874720869.83,
+    "netVolumeUSD": 1612793919.4,
     "totalMintedCOPM": 1250644898317,
     "totalMintedUSD": 327061432.88,
-    "totalBurnedCOPM": 1246166834047.245,
-    "totalBurnedUSD": 326060443.46,
-    "currentSupplyCOPM": 4478064269.754852,
-    "currentSupplyUSD": 1401830.77
+    "totalBurnedCOPM": 1246173765306.245,
+    "totalBurnedUSD": 326062613.25,
+    "currentSupplyCOPM": 4471133010.754852,
+    "currentSupplyUSD": 1399660.98
   },
   "averages": {
-    "avgEndOfDaySupplyCOPM": 3922945769.906754,
-    "avgEndOfDaySupplyUSD": 1037097.23,
-    "avgDailyTransfers": 216.35509838998212,
-    "avgDailyGrossVolumeCOPM": 7746564429.49962,
-    "avgDailyGrossVolumeUSD": 2026750.6366994632
+    "avgEndOfDaySupplyCOPM": 3922939570.211763,
+    "avgEndOfDaySupplyUSD": 1037095.28,
+    "avgDailyTransfers": 216.412343470483,
+    "avgDailyGrossVolumeCOPM": 7746595156.076095,
+    "avgDailyGrossVolumeUSD": 2026760.2554651164
   },
   "peaks": {
     "maxTransfersInOneDay": {
