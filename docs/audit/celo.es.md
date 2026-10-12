@@ -120,7 +120,7 @@ El `FREEZER_ROLE` puede bloquear una dirección; el contrato emitió <!-- copm:c
 
 ## Validación
 
-Las mismas <!-- copm:celo.checksTotal -->17<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->17<!-- /copm --> pasaron (última corrida <!-- copm:celo.validatedDate -->2026-10-11<!-- /copm -->):
+Las mismas <!-- copm:celo.checksTotal -->17<!-- /copm --> reglas estrictas que en Polygon, offline y sin tolerancia, <!-- copm:celo.checksPassed -->17<!-- /copm --> pasaron (última corrida <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
 
 | # | Regla | Resultado |
 | :--- | :--- | :--- |

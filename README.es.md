@@ -116,6 +116,24 @@ npm run audit:all      # ambas + charts combinados + cifras de los reportes
 
 El primer `scan` recorre todo el historial desde el deploy block; las corridas siguientes solo escanean los bloques agregados desde el checkpoint. Requiere Node.js 22+; `npm test` corre los tests unitarios (sin red).
 
+## Automatización diaria
+
+Dos workflows de GitHub Actions mantienen los datos al día y verificados:
+
+- **`.github/workflows/daily-scan.yml`** corre todos los días a las 09:17 UTC (04:17 en Colombia) y a demanda. Para cada chain ejecuta `scan`, `holders`, `aggregate` y `validate`, y luego hace commit de `data/`. El scan solo cubre los bloques agregados desde el checkpoint versionado, así que una corrida toma un par de minutos. Si el supply no reconcilia, un saldo difiere de `balanceOf` o falla cualquier regla de validación, el job falla y no hace commit de nada.
+- **`.github/workflows/ci.yml`** corre en cada pull request y en cada push a `main`: tests unitarios, la validación estricta de los datos versionados y el build del sitio. No necesita endpoint RPC.
+
+Los charts y las cifras de estos documentos se regeneran el primer día de cada mes (o cuando el workflow se lanza a mano con `month_close`), así los reportes son un corte mensual coherente mientras los datos y el dashboard se mueven a diario.
+
+Configuración, una sola vez:
+
+```bash
+gh secret set POLYGON_RPC_URL   # obligatorio: los endpoints públicos de Polygon no sirven el historial de logs de forma confiable
+gh secret set CELO_RPC_URL      # opcional: sin él se usa el endpoint público
+```
+
+El workflow hace push a la rama por defecto con el token del repositorio, así que esa rama debe aceptar pushes de GitHub Actions. En un repositorio público los runners estándar son gratuitos. GitHub desactiva los workflows programados tras 60 días sin actividad en el repositorio; el commit diario cuenta como actividad.
+
 ## Estructura del repositorio
 
 ```

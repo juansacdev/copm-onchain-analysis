@@ -1,0 +1,82 @@
+name: Daily on-chain scan
+
+# Scans the blocks added since the committed checkpoint on both chains, checks
+# the result against the contracts, and commits the data. A failed check stops
+# the job before anything is committed.
+
+on:
+  schedule:
+    # 09:17 UTC is 04:17 in Colombia. Off the hour on purpose: scheduled runs
+    # queue at :00 and GitHub may delay or drop them under load.
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+    inputs:
+      month_close:
+        description: "Also regenerate the SVG charts and the report figures"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Two runs writing the same checkpoint would race on the push.
+concurrency:
+  group: daily-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
+      # The public endpoint is enough for the daily range; set the secret to
+      # use an archive endpoint instead.
+      CELO_RPC_URL: ${{ secrets.CELO_RPC_URL || 'https://forno.celo.org' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+
+      - name: Scan, snapshot holders, aggregate and validate
+        run: |
+          for chain in polygon celo; do
+            node pipeline/cli.js scan --chain "$chain"
+            node pipeline/cli.js holders --chain "$chain"
+            node pipeline/cli.js aggregate --chain "$chain"
+            node pipeline/cli.js validate --chain "$chain"
+          done
+
+      # Charts and report figures move once a month so that the documents stay
+      # a coherent monthly cut instead of changing every day.
+      - name: Is it the first day of the month?
+        id: day
+        run: echo "first=$([ "$(date -u +%d)" = "01" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Month close
+        if: ${{ inputs.month_close || steps.day.outputs.first == 'true' }}
+        run: |
+          for chain in polygon celo; do
+            node pipeline/cli.js charts --chain "$chain"
+          done
+          node pipeline/cli.js charts:combined
+          node pipeline/cli.js reports
+
+      - name: Commit the data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data charts docs README.md README.es.md
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+            exit 0
+          fi
+          git commit -m "data: daily scan $(date -u +%F)"
+          git push
