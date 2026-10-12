@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rowAmount, tileNotes, utcDateTime } from "../../site/src/lib/dashboard-format.js";
+import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rowAmount, shortDate, tileNotes, utcDateTime } from "../../site/src/lib/dashboard-format.js";
 
 test("compact amounts follow the unit: COPM through the shared formatter, USD as the value already in dollars", () => {
   assert.equal(amountCompact(2_000_000, "usd", "en"), "$2M");
@@ -66,4 +66,10 @@ test("tile notes carry the checkpoint date, the contract count and the last-comp
   assert.equal(notes.holders, "244 contracts");
   assert.equal(notes.volume, "volume");
   assert.equal(notes.block, "");
+});
+
+test("a short date keeps the day, the month name and the year in few characters", () => {
+  assert.equal(shortDate("2026-05-07", "es"), "7 may 2026");
+  assert.equal(shortDate("2026-05-07", "en"), "May 7, 2026");
+  assert.equal(shortDate("2025-12-31", "es"), "31 dic 2025");
 });

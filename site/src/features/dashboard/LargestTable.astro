@@ -1,0 +1,45 @@
+---
+// One table of the largest-transfers list. The first five rows sit in the page
+// and the rest inside a disclosure, so both use this table; the browser fills
+// them again with the same columns when a filter changes (client.js).
+import { rowAmount, amountFull } from '../../lib/dashboard-format.js';
+import { formatDate } from '../../lib/format.js';
+import { explorerAddressUrl, explorerTxUrl, middleEllipsis } from '../../lib/links.js';
+
+interface Props {
+  rows: any[];
+  lang: 'es' | 'en';
+  unit: 'copm' | 'usd';
+  t: any;
+  chainLabel: Record<string, string>;
+  /** Marks the table for the browser: "head" or "rest". */
+  slot: 'head' | 'rest';
+  caption: string;
+}
+const { rows, lang, unit, t, chainLabel, slot, caption } = Astro.props;
+---
+
+<div class="table-scroll" role="region" tabindex="0" aria-label={caption}>
+  <table class="tbl mixed largest" data-largest={slot}>
+    <caption class="visually-hidden">{caption}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{t.columns.day}</th><th scope="col">{t.columns.chain}</th><th scope="col">{t.columns.kind}</th><th scope="col" class="num">{t.columns.amount}</th>
+        <th scope="col">{t.columns.from}</th><th scope="col">{t.columns.to}</th><th scope="col">{t.columns.tx}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr>
+          <th scope="row">{formatDate(r.day, lang)}</th>
+          <td>{chainLabel[r.chain]}</td>
+          <td>{t.columns.kindValue[r.kind]}</td>
+          <td class="num">{amountFull(rowAmount(r, unit), unit, lang)}</td>
+          <td><a class="addr" href={explorerAddressUrl(r.chain, r.from)} title={r.from} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.from, 6, 4)}</a></td>
+          <td><a class="addr" href={explorerAddressUrl(r.chain, r.to)} title={r.to} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.to, 6, 4)}</a></td>
+          <td><a class="addr" href={explorerTxUrl(r.chain, r.tx)} title={r.tx} target="_blank" rel="noopener noreferrer">{middleEllipsis(r.tx, 8, 6)}</a></td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

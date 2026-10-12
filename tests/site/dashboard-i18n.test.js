@@ -4,6 +4,10 @@ import { dashboardDictionaries, flattenDictionary } from "../../site/src/i18n/in
 import { placeholdersOf } from "../../site/src/lib/template.js";
 import { strictChecks } from "../../pipeline/domain/validation.js";
 import { fixture } from "../helpers/validation-fixture.js";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { globSync } from "node:fs";
 
 const flat = (lang) => flattenDictionary(dashboardDictionaries[lang]);
 
@@ -73,6 +77,38 @@ test("the dashboard says where the dollar rate comes from, with the latest rate 
     assert.match(rate, /datos\.gov\.co/, lang);
     for (const [key, value] of Object.entries(flat(lang))) {
       assert.doesNotMatch(value, /fixed\s+rate|tasa\s+fija/i, `${lang}:${key}`);
+    }
+  }
+});
+
+// Every string of the dictionaries is read by the dashboard. A key nobody reads
+// is dead text that still has to be translated and kept in step.
+const ROOT = fileURLToPath(new URL("../../site/src", import.meta.url));
+const sources = [...globSync("features/dashboard/*.{astro,js}", { cwd: ROOT }), ...globSync("lib/dashboard-*.js", { cwd: ROOT })]
+  .map((file) => readFileSync(join(ROOT, file), "utf8"))
+  .join("\n");
+
+// Maps the code indexes by a computed key; every entry under them counts as read.
+const INDEXED_BY_NAME = ["control.roleMeaning", "control.eventMeaning", "trust.ruleLabel", "columns.kindValue", "filters.chain", "filters.unit", "charts.bucket", "tiles.vsPeriod", "tiles.vsStart", "cards.redemption", "cards.issuance"];
+
+test("no dictionary key is left unused by the dashboard", () => {
+  const unused = [];
+  for (const key of Object.keys(flat("es"))) {
+    const path = key.replace(/\.\d+$/, "");
+    if (INDEXED_BY_NAME.some((prefix) => path === prefix || path.startsWith(`${prefix}.`))) continue;
+    // The cards module receives the `cards` branch as its `t`.
+    const reads = [`t.${path}`, path.startsWith("cards.") ? `t.${path.slice("cards.".length)}` : null].filter(Boolean);
+    if (!reads.some((read) => sources.includes(read))) unused.push(path);
+  }
+  assert.deepEqual([...new Set(unused)], []);
+});
+
+test("the dictionaries hold short labels: no string is longer than a line of the dashboard", () => {
+  const allowed = new Set(["meta.description", "trust.ruleLabel", "control.eventMeaning", "control.roleMeaning"]);
+  for (const lang of ["es", "en"]) {
+    for (const [key, value] of Object.entries(flat(lang))) {
+      if ([...allowed].some((prefix) => key === prefix || key.startsWith(`${prefix}.`))) continue;
+      assert.ok(value.length <= 130, `${lang}:${key} has ${value.length} characters`);
     }
   }
 });

@@ -2,6 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   bucketize,
+  flowComposition,
+  flowStats,
+  holderComposition,
+  rateSeries,
   granularityFor,
   heatCells,
   largestRows,
@@ -204,4 +208,76 @@ test("tiles in USD compare windows in USD and the supply with the day before at 
 test("the largest transfers keep their COPM order whatever the unit", () => {
   const rows = (unit) => largestRows({ polygon: chain("polygon", { largest: { d30: [{ ...big("p", 9), usd: 1 }, { ...big("p", 3), usd: 5 }] } }) }, { chain: "polygon", period: "30d", unit }, 25);
   assert.deepEqual(rows("usd").map((r) => r.amount), [9, 3]);
+});
+
+
+/* Composition, flows and the rate -------------------------------------------- */
+
+test("holder composition: the largest address, the next nine and everyone else add up to 100 %", () => {
+  const shares = [40.5, 10, 8, 6, 5, 4, 3, 2.5, 2, 1.5, 1, 0.5];
+  const top = shares.map((share, k) => ({ rank: k + 1, share }));
+  const c = holderComposition({ holders: { top } });
+  assert.equal(c.largest, 40.5);
+  assert.equal(c.next, 10 + 8 + 6 + 5 + 4 + 3 + 2.5 + 2 + 1.5);
+  assert.ok(c.rest >= 0);
+  assert.ok(Math.abs(c.largest + c.next + c.rest - 100) < 1e-9);
+});
+
+test("holder composition with fewer than ten holders leaves nothing negative and still adds up", () => {
+  const c = holderComposition({ holders: { top: [{ share: 70 }, { share: 30 }] } });
+  assert.deepEqual(c, { largest: 70, next: 30, rest: 0 });
+  assert.deepEqual(holderComposition({ holders: { top: [] } }), { largest: 0, next: 0, rest: 100 });
+});
+
+test("flow composition: minted, wallet to wallet and burned are shares of the gross volume that add up to 100 %", () => {
+  const c = flowComposition({ minted: 200, burned: 300, wallet: 500, gross: 1000 });
+  assert.deepEqual(c, { minted: 20, wallet: 50, burned: 30 });
+  const odd = flowComposition({ minted: 1, burned: 1, wallet: 1, gross: 3 });
+  assert.ok(Math.abs(odd.minted + odd.wallet + odd.burned - 100) < 1e-9);
+  assert.equal(flowComposition({ minted: 0, burned: 0, wallet: 0, gross: 0 }), null);
+});
+
+test("flow stats: totals of the window per chain in the chosen unit, turnover in COPM, shares of the gross", () => {
+  const a = chain("polygon", { count: 30 });
+  const state = { chain: "polygon", period: "30d", unit: "usd" };
+  const [stat] = flowStats({ polygon: a }, state);
+  assert.equal(stat.key, "polygon");
+  assert.equal(stat.totals.minted, 30 * 2.5);
+  assert.equal(stat.totals.gross, 30 * 5);
+  // turnover is a ratio of COPM: 30 days of 10 over 30 days of 5
+  assert.equal(stat.turnover, 2);
+  assert.ok(Math.abs(stat.shares.minted + stat.shares.wallet + stat.shares.burned - 100) < 1e-9);
+});
+
+test("flow stats omit the turnover of a window that minted almost nothing", () => {
+  const a = chain("polygon", { count: 30 });
+  a.daily.mint = a.daily.mint.map(() => 0);
+  a.daily.mintUsd = a.daily.mintUsd.map(() => 0);
+  const [stat] = flowStats({ polygon: a }, { chain: "polygon", period: "30d", unit: "copm" });
+  assert.equal(stat.turnover, null);
+});
+
+test("rate series: the daily rate over the window, and the latest value with its day", () => {
+  const a = chain("polygon", { count: 100 });
+  a.daily.rate = a.daily.day.map((_, k) => 3000 + k);
+  const r = rateSeries({ polygon: a }, { chain: "both", period: "30d", unit: "copm" });
+  assert.equal(r.days.length, 30);
+  assert.equal(r.values.at(-1), 3099);
+  assert.deepEqual(r.latest, { day: a.daily.day.at(-1), value: 3099 });
+  assert.equal(r.values.length, r.days.length);
+});
+
+test("rate series is one line even with two chains: the first chain with days in the window gives it", () => {
+  const a = chain("polygon", { count: 100 });
+  const b = chain("celo", { from: "2025-02-01", count: 60 });
+  a.daily.rate = a.daily.day.map(() => 4000);
+  b.daily.rate = b.daily.day.map(() => 4000);
+  const r = rateSeries({ polygon: a, celo: b }, { chain: "both", period: "all", unit: "copm" });
+  assert.equal(r.days.length, 100);
+  assert.equal(rateSeries({ polygon: a, celo: b }, { chain: "celo", period: "all", unit: "copm" }).days.length, 60);
+});
+
+test("rate series is null when the window has no days or the payload predates the rate", () => {
+  const a = chain("polygon", { count: 10 });
+  assert.equal(rateSeries({ polygon: a }, { chain: "both", period: "30d", unit: "copm" }), null);
 });

@@ -174,3 +174,68 @@ export function periodTurnover({ gross, minted }) {
   const ratio = gross / minted;
   return ratio > MAX_PERIOD_TURNOVER ? null : ratio;
 }
+
+/* Flows, composition and the rate ------------------------------------------- */
+
+// Windowed totals of one chain in the chosen unit: what the period minted,
+// burned, moved between wallets, and the gross volume that is all of them
+// together. In USD they are sums of the daily dollars.
+export function flowTotalsOf(chain, { fromDay, toDay }, unit) {
+  const slice = sliceDaily(chain.daily, fromDay, toDay);
+  const sum = (name) => {
+    const total = slice[measureKey(name, unit)].reduce((a, b) => a + b, 0);
+    return unit === "usd" ? cents(total) : total;
+  };
+  const minted = sum("mint");
+  const burned = sum("burn");
+  const gross = sum("volume");
+  const rest = gross - minted - burned;
+  const wallet = unit === "usd" ? Math.max(0, cents(rest)) : Math.max(0, rest);
+  return { minted, burned, gross, wallet, has: slice.day.length > 0 };
+}
+
+// Minted, wallet to wallet and burned as shares of the gross volume. They add
+// up to 100 because the gross volume is exactly those three. Null when
+// nothing moved.
+export function flowComposition({ minted, burned, wallet, gross }) {
+  if (!(gross > 0)) return null;
+  return { minted: (minted / gross) * 100, wallet: (wallet / gross) * 100, burned: (burned / gross) * 100 };
+}
+
+// Per chain in view: the totals of the period in the chosen unit, the turnover
+// (a ratio of COPM, so it never depends on the unit or the rate) and the
+// composition. Chains with no days in the window are left out.
+export function flowStats(chains, state) {
+  const window = viewWindow(chains, state);
+  return selectedChains(chains, state)
+    .map((c) => {
+      const totals = flowTotalsOf(c, window, state.unit);
+      if (!totals.has) return null;
+      const copm = state.unit === "copm" ? totals : flowTotalsOf(c, window, "copm");
+      return { key: c.key, label: c.label, totals, turnover: periodTurnover(copm), shares: flowComposition(totals) };
+    })
+    .filter(Boolean);
+}
+
+// The largest address, the next nine and everyone else, as shares of the
+// supply of one chain. They add up to 100.
+export function holderComposition(chain) {
+  const shares = chain.holders.top.map((h) => h.share);
+  const largest = shares[0] ?? 0;
+  const next = shares.slice(1, 10).reduce((a, b) => a + b, 0);
+  return { largest, next, rest: Math.max(0, 100 - largest - next) };
+}
+
+// The COP-per-USD rate of every day of the window: one line, because the rate
+// does not depend on the chain. It comes from the first chain in view that has
+// days in the window. Null when no chain has a day, or the data has no rate.
+export function rateSeries(chains, state) {
+  const { fromDay, toDay } = viewWindow(chains, state);
+  for (const c of selectedChains(chains, state)) {
+    if (!c.daily.rate) continue;
+    const slice = sliceDaily(c.daily, fromDay, toDay);
+    if (slice.day.length === 0) continue;
+    return { days: slice.day, values: slice.rate, latest: { day: slice.day.at(-1), value: slice.rate.at(-1) } };
+  }
+  return null;
+}

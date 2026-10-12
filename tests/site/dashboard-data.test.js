@@ -52,10 +52,12 @@ test("the client payload keeps what the charts and tables need and leaves the re
   const data = loadDashboardData({ dataDir: writeData() });
   const payload = clientPayload(data);
   const chain = payload.chains.polygon;
-  assert.deepEqual(Object.keys(chain.daily).sort(), ["burn", "burnUsd", "day", "mint", "mintUsd", "supply", "supplyUsd", "transfers", "volume", "volumeUsd"]);
+  assert.deepEqual(Object.keys(chain.daily).sort(), ["burn", "burnUsd", "day", "mint", "mintUsd", "rate", "supply", "supplyUsd", "transfers", "volume", "volumeUsd"]);
   assert.ok(chain.largest.d30 && chain.largest.all);
   assert.ok(chain.sizes && chain.holders.top && chain.activity.endDay);
-  assert.equal(chain.governance, undefined, "governance is rendered on the server");
+  assert.deepEqual(chain.governance, { roleHolders: 1, roleCount: 1, frozen: [] }, "only what the headline cards read; the rest is rendered on the server");
+  assert.deepEqual(Object.keys(chain.issuance.burn).sort(), ["addresses", "top", "topSharePct", "volume"]);
+  assert.equal(chain.issuance.burn.top.length, 1, "only the largest party travels");
   assert.equal(chain.monthly, undefined);
   assert.equal(chain.label, "Polygon");
   assert.equal(chain.key, "polygon");

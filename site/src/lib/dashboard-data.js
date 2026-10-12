@@ -49,15 +49,18 @@ function rateOf(chains) {
   };
 }
 
+// One side of the issuance (mints or burns) with only its largest party.
+const party = ({ addresses, volume, topSharePct, top }) => ({ addresses, volume, topSharePct, top: top.slice(0, 1) });
+
 // The part of the data the browser needs to draw and filter: the daily
-// series (COPM and USD), the lists and the headline figures. Governance, monthly tables and
-// the validation rules are rendered on the server and stay out of the page's
-// JSON.
+// series (COPM and USD), the lists and the headline figures. The admin events and roles, the
+// monthly tables and the validation rules are rendered on the server and stay
+// out of the page's JSON.
 export function clientPayload(data) {
   const chains = {};
   for (const [key, c] of Object.entries(data.chains)) {
     const d = c.dashboard;
-    const { day, transfers, volume, mint, burn, supply, volumeUsd, mintUsd, burnUsd, supplyUsd } = d.daily;
+    const { day, transfers, volume, mint, burn, supply, rate, volumeUsd, mintUsd, burnUsd, supplyUsd } = d.daily;
     chains[key] = {
       key,
       label: c.label,
@@ -66,7 +69,13 @@ export function clientPayload(data) {
       flows: d.flows,
       supplyPeak: d.supplyPeak,
       activity: d.activity,
-      daily: { day, transfers, volume, mint, burn, supply, volumeUsd, mintUsd, burnUsd, supplyUsd },
+      daily: { day, transfers, volume, mint, burn, supply, rate, volumeUsd, mintUsd, burnUsd, supplyUsd },
+      issuance: { mint: party(d.issuance.mint), burn: party(d.issuance.burn) },
+      governance: {
+        roleHolders: d.governance.roleHolders,
+        roleCount: Object.values(d.governance.roles).filter((members) => members.length > 0).length,
+        frozen: d.governance.frozen,
+      },
       sizes: d.sizes.map(({ min, count }) => ({ min, count })),
       holders: { count: d.holders.count, contracts: d.holders.contracts, top1Pct: d.holders.top1Pct, top10Pct: d.holders.top10Pct, top: d.holders.top },
       largest: d.largest,

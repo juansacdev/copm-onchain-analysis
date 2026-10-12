@@ -12,15 +12,18 @@ import { movingAverage } from "../../../../pipeline/domain/dashboard.js";
 import { amountCompact, amountFull } from "../../lib/dashboard-format.js";
 import {
   bucketize,
+  flowStats,
+  flowTotalsOf,
   granularityFor,
   heatCells,
+  holderComposition,
   measureKey,
+  rateSeries,
   selectedChains,
   sliceDaily,
   viewWindow,
 } from "../../lib/dashboard-view.js";
 import { formatCopmCompact, formatDate, formatDecimal, formatInt, formatMonthShort, formatUsd, rangeLabels } from "../../lib/format.js";
-import { middleEllipsis } from "../../lib/links.js";
 
 const BAR_MAX = 24;
 const PLOT_HEIGHT = 220;
@@ -160,6 +163,9 @@ function supply(ctx, width) {
     const data = slice.day.map((day, k) => ({ day, d: asDate(day), v: slice[f.key("supply")][k] }));
     const last = data.at(-1);
     const color = colorOf(ctx, chain.key);
+    // The peak of the supply, when it falls inside the window and is not
+    // today's value: a dot with its label.
+    const peakRow = chain.supplyPeak && chain.supplyPeak.day !== last.day ? data.find((r) => r.day === chain.supplyPeak.day) : undefined;
     const plot = Plot.plot({
       ...baseOptions(ctx, width, PLOT_HEIGHT),
       marginLeft: MONEY_MARGIN,
@@ -171,6 +177,12 @@ function supply(ctx, width) {
         Plot.lineY(data, { x: "d", y: (r) => r.v, stroke: color, strokeWidth: 2 }),
         Plot.dot([last], { x: "d", y: (r) => r.v, r: 4, fill: color, stroke: ctx.tok.panel, strokeWidth: 2 }),
         Plot.text([last], { x: "d", y: (r) => r.v, text: (r) => f.moneyShort(r.v), dy: -12, textAnchor: "end", fill: ctx.tok.text, fontWeight: 600 }),
+        ...(peakRow
+          ? [
+              Plot.dot([peakRow], { x: "d", y: (r) => r.v, r: 4, fill: ctx.tok.panel, stroke: ctx.tok.text, strokeWidth: 2 }),
+              Plot.text([peakRow], { x: "d", y: (r) => r.v, text: (r) => `${ctx.t.charts.supply.peak} ${f.moneyShort(r.v)}`, dy: -12, textAnchor: "middle", fill: ctx.tok.text, fontWeight: 600 }),
+            ]
+          : []),
         Plot.tip(data, Plot.pointerX({ x: "d", y: (r) => r.v, title: (r) => `${f.date(r.day)}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
       ],
     });
@@ -236,59 +248,106 @@ function mintBurn(ctx, width) {
   };
 }
 
-// Windowed totals of one chain: what the period minted, burned, moved between
-// wallets, and the gross volume that is all of them together.
+// Windowed totals of one chain in the chosen unit (see dashboard-view.js).
 export function flowTotals(ctx, chain) {
-  const slice = sliceFor(ctx, chain);
-  const unit = ctx.state.unit;
-  // Sums of the days in the chosen unit; in USD they are sums of daily dollars.
-  const sum = (name) => {
-    const total = slice[measureKey(name, unit)].reduce((a, b) => a + b, 0);
-    return unit === "usd" ? Math.round(total * 100) / 100 : total;
-  };
-  const minted = sum("mint");
-  const burned = sum("burn");
-  const gross = sum("volume");
-  const wallet = unit === "usd" ? Math.max(0, Math.round((gross - minted - burned) * 100) / 100) : Math.max(0, gross - minted - burned);
-  return { minted, burned, gross, wallet, has: hasData(slice) };
+  return flowTotalsOf(chain, viewWindow(ctx.payload.chains, ctx.state), ctx.state.unit);
+}
+
+// A bar split into parts that add up to the whole, labelled directly: the
+// first and the last label sit above the bar at its ends and the ones between
+// below it, so neighbouring labels never meet.
+function compositionBar(ctx, width, segments) {
+  const pct = (n) => `${formatDecimal(n, n < 10 ? 1 : 0, ctx.lang)}${ctx.lang === "es" ? " %" : "%"}`;
+  let start = 0;
+  const rows = segments.map((segment, k) => {
+    const row = { ...segment, x1: start, x2: start + segment.share, k };
+    start = row.x2;
+    return row;
+  });
+  const label = (r) => `${r.name} ${pct(r.share)}`;
+  const shown = rows.filter((r) => r.share > 0);
+  const first = shown.filter((r) => r.k === 0);
+  const last = shown.filter((r) => r.k === rows.length - 1 && r.k !== 0);
+  // A middle label is centred on its part, or pulled to an end of the bar
+  // when it would run past it.
+  const middle = shown.filter((r) => r.k !== 0 && r.k !== rows.length - 1).map((r) => {
+    const centre = (r.x1 + r.x2) / 2;
+    return centre > 75 ? { ...r, at: r.x2, anchor: "end" } : centre < 25 ? { ...r, at: r.x1, anchor: "start" } : { ...r, at: centre, anchor: "middle" };
+  });
+  return Plot.plot({
+    ...baseOptions(ctx, width, 104),
+    marginLeft: 8,
+    marginRight: 8,
+    marginTop: 30,
+    marginBottom: 30,
+    x: { axis: null, domain: [0, 100] },
+    y: { axis: null },
+    marks: [
+      Plot.rectX(rows, { x1: "x1", x2: "x2", fill: "fill", fillOpacity: (r) => r.opacity ?? 1, insetLeft: 0.5, insetRight: 0.5, rx: 2 }),
+      Plot.text(first, { x: "x1", text: label, textAnchor: "start", frameAnchor: "top", lineAnchor: "bottom", dy: -6, fill: ctx.tok.text }),
+      Plot.text(last, { x: "x2", text: label, textAnchor: "end", frameAnchor: "top", lineAnchor: "bottom", dy: -6, fill: ctx.tok.text }),
+      Plot.text(middle.filter((r) => r.anchor === "start"), { x: "at", text: label, textAnchor: "start", frameAnchor: "bottom", lineAnchor: "top", dy: 6, fill: ctx.tok.text }),
+      Plot.text(middle.filter((r) => r.anchor === "middle"), { x: "at", text: label, textAnchor: "middle", frameAnchor: "bottom", lineAnchor: "top", dy: 6, fill: ctx.tok.text }),
+      Plot.text(middle.filter((r) => r.anchor === "end"), { x: "at", text: label, textAnchor: "end", frameAnchor: "bottom", lineAnchor: "top", dy: 6, fill: ctx.tok.text }),
+      Plot.tip(rows, Plot.pointer({ x: (r) => (r.x1 + r.x2) / 2, title: (r) => `${r.name}\n${pct(r.share)}${r.amount ? `\n${r.amount}` : ""}`, ...tipOptions(ctx) })),
+    ],
+  });
 }
 
 function flows(ctx, width) {
   const f = makeFormat(ctx);
   const nodes = [];
   const rows = [];
-  for (const chain of chainsInView(ctx)) {
-    const totals = flowTotals(ctx, chain);
-    if (!totals.has) continue;
-    const data = [
-      { name: ctx.t.columns.minted, v: totals.minted, fill: ctx.tok.mint },
-      { name: ctx.t.columns.burned, v: totals.burned, fill: ctx.tok.burn },
-      { name: ctx.t.columns.wallet, v: totals.wallet, fill: colorOf(ctx, chain.key) },
-      { name: ctx.t.columns.gross, v: totals.gross, fill: ctx.tok.faint },
+  for (const stat of flowStats(ctx.payload.chains, ctx.state)) {
+    const { totals, shares } = stat;
+    if (!shares) continue;
+    const segments = [
+      { name: ctx.t.columns.minted, share: shares.minted, fill: ctx.tok.mint, amount: f.moneyShort(totals.minted) },
+      { name: ctx.t.legend.wallet, share: shares.wallet, fill: colorOf(ctx, stat.key), amount: f.moneyShort(totals.wallet) },
+      { name: ctx.t.columns.burned, share: shares.burned, fill: ctx.tok.burn, amount: f.moneyShort(totals.burned) },
     ];
-    const plot = Plot.plot({
-      ...baseOptions(ctx, width, 190),
-      marginLeft: 112,
-      marginRight: 16,
-      // Every bar carries its value, so the axis shows only the grid. The
-      // domain leaves room on the right for the label of the longest bar.
-      x: { grid: true, label: null, ticks: 3, tickFormat: () => "", tickSize: 0, domain: [0, Math.max(...data.map((r) => r.v)) * 1.6 || 1] },
-      y: { label: null, domain: data.map((r) => r.name), padding: 0.45 },
-      marks: [
-        Plot.barX(data, { y: "name", x: (r) => r.v, fill: "fill", insetLeft: 0 }),
-        Plot.text(data, { y: "name", x: (r) => r.v, text: (r) => f.moneyShort(r.v), dx: 6, textAnchor: "start", fill: ctx.tok.text }),
-        Plot.ruleX([0], { stroke: ctx.tok.muted }),
-        Plot.tip(data, Plot.pointer({ y: "name", x: (r) => r.v, title: (r) => `${r.name}\n${f.money(r.v)}`, ...tipOptions(ctx) })),
-      ],
-    });
-    nodes.push(panel(ctx, chain.key, plot));
-    rows.push([chain.label, f.money(totals.minted), f.money(totals.burned), f.money(totals.wallet), f.money(totals.gross)]);
+    nodes.push(panel(ctx, stat.key, compositionBar(ctx, width, segments)));
+    rows.push([stat.label, f.money(totals.minted), f.money(totals.wallet), f.money(totals.burned), f.money(totals.gross)]);
   }
   return {
     nodes,
     legend: [],
-    table: { columns: [ctx.t.columns.chain, ctx.t.columns.minted, ctx.t.columns.burned, ctx.t.columns.wallet, ctx.t.columns.gross], rows },
-    columnsClass: "cols",
+    table: { columns: [ctx.t.columns.chain, ctx.t.columns.minted, ctx.t.columns.wallet, ctx.t.columns.burned, ctx.t.columns.gross], rows },
+  };
+}
+
+// The exchange rate behind every dollar figure: one line, the latest value
+// labelled. The rate does not depend on the chain, so there is one panel.
+function rate(ctx, width) {
+  const f = makeFormat(ctx);
+  const series = rateSeries(ctx.payload.chains, ctx.state);
+  if (!series) return { nodes: [], legend: [], table: { columns: [], rows: [] } };
+  const data = series.days.map((day, k) => ({ day, d: asDate(day), v: series.values[k] }));
+  const last = data.at(-1);
+  const low = Math.min(...data.map((r) => r.v));
+  const high = Math.max(...data.map((r) => r.v));
+  const pad = (high - low || high * 0.02) * 0.15;
+  const value = (n) => formatDecimal(n, 2, ctx.lang, { trim: true });
+  const plot = Plot.plot({
+    ...baseOptions(ctx, width, PLOT_HEIGHT),
+    marginLeft: 56,
+    marginRight: 64,
+    x: timeAxis(ctx, f, { day: series.days }, width),
+    y: { grid: true, label: null, tickFormat: (v) => formatInt(v, ctx.lang), domain: [low - pad, high + pad], nice: true },
+    marks: [
+      Plot.lineY(data, { x: "d", y: "v", stroke: ctx.tok.text, strokeWidth: 2 }),
+      Plot.dot([last], { x: "d", y: "v", r: 4, fill: ctx.tok.text, stroke: ctx.tok.panel, strokeWidth: 2 }),
+      Plot.text([last], { x: "d", y: "v", text: (r) => value(r.v), dx: 8, textAnchor: "start", fill: ctx.tok.text, fontWeight: 600 }),
+      Plot.tip(data, Plot.pointerX({ x: "d", y: "v", title: (r) => `${f.date(r.day)}\n${value(r.v)}`, ...tipOptions(ctx) })),
+    ],
+  });
+  const wrap = document.createElement("div");
+  wrap.className = "plot-scroll";
+  wrap.append(plot);
+  return {
+    nodes: [wrap],
+    legend: [],
+    table: { columns: [ctx.t.columns.day, ctx.t.columns.rate], rows: sampleRows(data.map((r) => [r.day, value(r.v)])) },
   };
 }
 
@@ -468,30 +527,18 @@ function holders(ctx, width) {
   const nodes = [];
   const rows = [];
   for (const chain of chainsInView(ctx)) {
-    const top = chain.holders.top.slice(0, 10);
-    const rest = Math.max(0, 100 - top.reduce((a, h) => a + h.share, 0));
-    const data = [
-      ...top.map((h) => ({ label: `${h.rank}. ${middleEllipsis(h.address, 6, 4)}`, share: h.share, fill: colorOf(ctx, chain.key), address: h.address })),
-      { label: ctx.t.legend.others, share: rest, fill: ctx.tok.faint, address: "" },
+    const c = holderComposition(chain);
+    const color = colorOf(ctx, chain.key);
+    const segments = [
+      { name: ctx.t.legend.largest, share: c.largest, fill: color },
+      { name: ctx.t.legend.next, share: c.next, fill: color, opacity: 0.5 },
+      { name: ctx.t.legend.others, share: c.rest, fill: ctx.tok.faint },
     ];
+    nodes.push(panel(ctx, chain.key, compositionBar(ctx, width, segments)));
     const pct = (n) => `${formatDecimal(n, 1, ctx.lang)}${ctx.lang === "es" ? " %" : "%"}`;
-    const plot = Plot.plot({
-      ...baseOptions(ctx, width, data.length * 26 + 40),
-      marginLeft: 108,
-      marginRight: 56,
-      x: { grid: true, label: null, domain: [0, 100], tickFormat: (v) => `${v}%`, ticks: 5 },
-      y: { label: null, domain: data.map((r) => r.label), padding: 0.4 },
-      marks: [
-        Plot.barX(data, { y: "label", x: "share", fill: "fill" }),
-        Plot.text(data.filter((_, k) => k === 0 || k === data.length - 1), { y: "label", x: "share", text: (r) => pct(r.share), dx: 6, textAnchor: "start", fill: ctx.tok.text }),
-        Plot.ruleX([0], { stroke: ctx.tok.muted }),
-        Plot.tip(data, Plot.pointer({ y: "label", x: "share", title: (r) => `${r.address || r.label}\n${pct(r.share)}`, ...tipOptions(ctx) })),
-      ],
-    });
-    nodes.push(panel(ctx, chain.key, plot));
-    for (const r of data) rows.push([chain.label, r.address || r.label, pct(r.share)]);
+    for (const s of segments) rows.push([chain.label, s.name, pct(s.share)]);
   }
-  return { nodes, legend: [], table: { columns: [ctx.t.columns.chain, ctx.t.columns.holder, ctx.t.columns.share], rows }, columnsClass: "cols" };
+  return { nodes, legend: [], table: { columns: [ctx.t.columns.chain, ctx.t.columns.holder, ctx.t.columns.share], rows } };
 }
 
-export const RENDERERS = { supply, mintBurn, flows, transfers, volume, calendar, daily, sizes, holders };
+export const RENDERERS = { supply, mintBurn, flows, rate, transfers, volume, calendar, daily, sizes, holders };

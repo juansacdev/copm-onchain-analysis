@@ -1,7 +1,7 @@
 // How the dashboard writes amounts, changes and times. Built on the shared
 // formatter, so the page, the Markdown reports and the browser agree on every
 // number. Plain JS, no DOM and no Astro imports.
-import { formatCopmCompact, formatCopmExact, formatDate, formatDecimal, formatInt, formatUsd, formatUsdFull } from "./format.js";
+import { formatCopmCompact, formatCopmExact, formatDate, formatDecimal, formatInt, formatMonthShort, formatUsd, formatUsdFull } from "./format.js";
 import { interpolate } from "./template.js";
 
 // Amounts arrive already in the chosen unit: the pipeline values every day at
@@ -38,6 +38,13 @@ export function arrowFor(pct) {
 
 // Unix seconds to "2026-10-11 23:22 UTC", from the number alone.
 export const utcDateTime = (seconds) => `${new Date(seconds * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC`;
+
+// A day in few characters: "7 may 2026" / "May 7, 2026".
+export function shortDate(iso, lang) {
+  const [year, month, day] = iso.split("-");
+  const named = formatMonthShort(`${year}-${month}`, lang);
+  return lang === "es" ? `${Number(day)} ${named}` : `${named.split(" ")[0]} ${Number(day)}, ${year}`;
+}
 
 // An argument of an admin event as text. BurnedFrozen reports its amount in
 // raw wei; the page shows COPM, like every other amount.
