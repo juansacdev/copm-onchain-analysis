@@ -136,6 +136,24 @@ gh secret set CELO_RPC_URL      # optional: without it the public endpoint is us
 
 The workflow pushes to the default branch with the repository token, so that branch must accept pushes from GitHub Actions. On a public repository standard runners are free. GitHub disables scheduled workflows after 60 days without repository activity; the daily commit counts as activity.
 
+## Deployment
+
+The site at [copm.juansac.dev](https://copm.juansac.dev) is a static Astro build served through Cloudflare. This repository holds no deployment configuration, so the publishing step lives in the Cloudflare project.
+
+| Setting | Value |
+| :--- | :--- |
+| Root directory | `site` |
+| Build command | `npm run build` |
+| Output directory | `dist` (that is, `site/dist`) |
+| Node.js | 22 (`site/.node-version`) |
+
+Two things to know:
+
+- **The build reads `data/` and `charts/` from the repository root.** The checkout must contain the whole repository, not only `site/`.
+- **The daily commit publishes only if the Cloudflare project is connected to this repository** and builds on pushes to the production branch. A project deployed by direct upload does not rebuild on its own; in that case add a deploy step at the end of `daily-scan.yml`. To check, open the project in the Cloudflare dashboard and look in its settings for a connected Git repository.
+
+Every route ends with a slash (`/`, `/analisis/`, `/en/`, `/en/analysis/`), matching the files the build writes. After the first deployment, open `/analisis` without the slash: if the host does not redirect it, add a redirect rule.
+
 ## Repository layout
 
 ```

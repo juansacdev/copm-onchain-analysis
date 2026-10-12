@@ -136,6 +136,24 @@ gh secret set CELO_RPC_URL      # opcional: sin él se usa el endpoint público
 
 El workflow hace push a la rama por defecto con el token del repositorio, así que esa rama debe aceptar pushes de GitHub Actions. En un repositorio público los runners estándar son gratuitos. GitHub desactiva los workflows programados tras 60 días sin actividad en el repositorio; el commit diario cuenta como actividad.
 
+## Despliegue
+
+El sitio en [copm.juansac.dev](https://copm.juansac.dev) es un build estático de Astro servido a través de Cloudflare. Este repositorio no contiene configuración de despliegue, así que el paso de publicación vive en el proyecto de Cloudflare.
+
+| Ajuste | Valor |
+| :--- | :--- |
+| Directorio raíz | `site` |
+| Comando de build | `npm run build` |
+| Directorio de salida | `dist` (es decir, `site/dist`) |
+| Node.js | 22 (`site/.node-version`) |
+
+Dos cosas que hay que saber:
+
+- **El build lee `data/` y `charts/` desde la raíz del repositorio.** El checkout debe contener el repositorio completo, no solo `site/`.
+- **El commit diario solo se publica si el proyecto de Cloudflare está conectado a este repositorio** y hace build en cada push a la rama de producción. Un proyecto desplegado por subida directa no se reconstruye solo; en ese caso hay que agregar un paso de despliegue al final de `daily-scan.yml`. Para comprobarlo, abre el proyecto en el panel de Cloudflare y busca en sus ajustes un repositorio Git conectado.
+
+Todas las rutas terminan en barra (`/`, `/analisis/`, `/en/`, `/en/analysis/`), igual que los archivos que escribe el build. Después del primer despliegue, abre `/analisis` sin la barra: si el host no redirige, agrega una regla de redirección.
+
 ## Estructura del repositorio
 
 ```
