@@ -75,7 +75,6 @@ export const dashboardEs = {
     block: { k: "Último bloque verificado" },
     vsPeriod: "{change} frente a los {n} días anteriores",
     vsStart: "{change} frente al inicio del período",
-    noBase: "Sin período anterior",
   },
   sections: {
     supply: { eyebrow: "Pregunta 1", title: "¿Cuánto COPM hay?" },

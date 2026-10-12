@@ -37,6 +37,15 @@ export function arrowFor(pct) {
 }
 
 // Unix seconds to "2026-10-11 23:22 UTC", from the number alone.
+// The change line of a stat tile. Without an earlier period to compare with
+// (the "all" view) there is nothing to say, so the line is empty and the page
+// hides it instead of printing a placeholder.
+export function tileDelta(change, key, { t, lang, days }) {
+  const text = changeText(change, lang);
+  if (text === null) return "";
+  return `${arrowFor(change)} ${interpolate(t[key], { change: text, n: days ?? "" })}`;
+}
+
 export const utcDateTime = (seconds) => `${new Date(seconds * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC`;
 
 // A day in few characters: "7 may 2026" / "May 7, 2026".

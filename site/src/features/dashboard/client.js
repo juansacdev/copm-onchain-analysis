@@ -7,7 +7,7 @@
 import { RENDERERS, readTokens } from "./charts.js";
 import { headlineCards } from "../../lib/dashboard-cards.js";
 import { DEFAULT_STATE, decodeState, encodeState } from "../../lib/dashboard-filters.js";
-import { amountCompact, amountFull, arrowFor, changeText, rowAmount, tileNotes, utcDateTime } from "../../lib/dashboard-format.js";
+import { amountCompact, amountFull, rowAmount, tileDelta, tileNotes, utcDateTime } from "../../lib/dashboard-format.js";
 import { flowStats, granularityFor, largestRows, selectedChains, tilesFor, viewWindow } from "../../lib/dashboard-view.js";
 import { formatDate, formatDecimal, formatInt } from "../../lib/format.js";
 import { middleEllipsis } from "../../lib/links.js";
@@ -107,16 +107,14 @@ export function mountDashboard(doc) {
 
   function renderTiles() {
     const tiles = tilesFor(payload.chains, state);
-    const delta = (change, key) => {
-      const text = changeText(change, lang);
-      if (text === null) return t.tiles.noBase;
-      return `${arrowFor(change)} ${interpolate(t.tiles[key], { change: text, n: tiles.window.days ?? "" })}`;
-    };
+    const delta = (change, key) => tileDelta(change, key, { t: t.tiles, lang, days: tiles.window.days });
     const notes = tileNotes({ tiles, t, lang });
     const set = (id, value, delta) => {
       const tile = root.querySelector(`[data-tile="${id}"]`);
       tile.querySelector("[data-v]").textContent = value;
-      tile.querySelector("[data-d]").textContent = delta;
+      const line = tile.querySelector("[data-d]");
+      line.textContent = delta;
+      line.hidden = delta === "";
       const note = tile.querySelector("[data-n]");
       note.textContent = notes[id];
       note.hidden = notes[id] === "";

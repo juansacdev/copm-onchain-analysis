@@ -20,7 +20,7 @@ import { clientPayload, loadDashboardData } from '../../lib/dashboard-data.js';
 import { headlineCards } from '../../lib/dashboard-cards.js';
 import { CHAIN_CHOICES, DEFAULT_STATE, PERIOD_CHOICES, UNIT_CHOICES } from '../../lib/dashboard-filters.js';
 import { PERIOD_DAYS, flowStats, granularityFor, largestRows, tilesFor } from '../../lib/dashboard-view.js';
-import { amountCompact, amountFull, arrowFor, changeText, eventArgText, rateLine, shortDate, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
+import { amountCompact, amountFull, eventArgText, rateLine, shortDate, tileDelta, tileNotes, utcDateTime } from '../../lib/dashboard-format.js';
 import { formatDate, formatDecimal, formatInt, formatMonthShort, rangeLabels } from '../../lib/format.js';
 import { formatSerialBlock } from '../../lib/serial.js';
 import {
@@ -63,11 +63,8 @@ const pct = (n: number, digits = 1) => `${formatDecimal(n, digits, lang)}${lang 
 // the browser uses when a filter changes.
 const cards = headlineCards({ chains: payload.chains, chain: state.chain, t: t.cards, lang });
 const tiles = tilesFor(payload.chains, state);
-const deltaText = (change: number | null, key: 'vsPeriod' | 'vsStart') => {
-  const text = changeText(change, lang);
-  if (text === null) return t.tiles.noBase;
-  return `${arrowFor(change)} ${interpolate(t.tiles[key], { change: text, n: tiles.window.days ?? '' })}`;
-};
+const deltaText = (change: number | null, key: 'vsPeriod' | 'vsStart') =>
+  tileDelta(change, key, { t: t.tiles, lang, days: tiles.window.days });
 const serial = tiles.blocks.map((b) => `${b.chain === 'polygon' ? 'POL' : 'CELO'} ${formatSerialBlock(b.block)}`).join(' · ');
 const latestTime = Math.max(...tiles.blocks.map((b) => b.time));
 const notes = tileNotes({ tiles, t, lang });
@@ -233,7 +230,7 @@ const clientData = { ...payload, t: clientText };
         <li class="dtile" data-tile={tile.id}>
           <p class="v" data-v>{tile.v}</p>
           <p class="k">{tile.k}</p>
-          <p class="d" data-d>{tile.d}</p>
+          <p class="d" data-d hidden={tile.d === ''}>{tile.d}</p>
           <p class="n" data-n hidden={!tile.n}>{tile.n}</p>
         </li>
       ))}

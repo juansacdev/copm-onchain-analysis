@@ -101,3 +101,13 @@ test("one provisional day is written in the singular", () => {
   assert.match(rateLine({ fx, t: dashboardDictionaries.en, lang: "en" }), /1 day\b(?!s)/);
   assert.match(rateLine({ fx, t: dashboardDictionaries.es, lang: "es" }), /1 día\b(?!s)/);
 });
+
+test("a tile shows its change against the previous period, and nothing at all when there is no previous period", async () => {
+  const { tileDelta } = await import("../../site/src/lib/dashboard-format.js");
+  const t = { vsPeriod: "{change} vs the previous {n} days", vsStart: "{change} vs the start of the period" };
+  assert.equal(tileDelta(5.562, "vsPeriod", { t, lang: "en", days: 30 }), "↑ +5.6% vs the previous 30 days");
+  assert.equal(tileDelta(-30.8, "vsStart", { t, lang: "en", days: 30 }), "↓ -30.8% vs the start of the period");
+  // "all" has no earlier period to compare with: the line is left out, not filled with a placeholder
+  assert.equal(tileDelta(null, "vsPeriod", { t, lang: "en", days: null }), "");
+  assert.equal(tileDelta(null, "vsStart", { t, lang: "es", days: null }), "");
+});
