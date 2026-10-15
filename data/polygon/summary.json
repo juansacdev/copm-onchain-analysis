@@ -4,28 +4,28 @@
   "address": "0x12050c705152931cFEe3DD56c52Fb09Dea816C23",
   "range": {
     "firstDay": "2023-09-21",
-    "lastDay": "2026-10-14",
-    "totalDays": 1120
+    "lastDay": "2026-10-15",
+    "totalDays": 1121
   },
   "totals": {
-    "transferEvents": 242337,
-    "grossVolumeCOPM": 8665940135996.984,
-    "grossVolumeUSD": 2267560499.43,
-    "netVolumeCOPM": 6167792775546.739,
-    "netVolumeUSD": 1614020494.38,
-    "totalMintedCOPM": 1251618773145.9998,
-    "totalMintedUSD": 327366298.47,
-    "totalBurnedCOPM": 1246528587304.2454,
-    "totalBurnedUSD": 326173706.49,
-    "currentSupplyCOPM": 5090185841.754852,
-    "currentSupplyUSD": 1599812
+    "transferEvents": 242555,
+    "grossVolumeCOPM": 8667253067234.896,
+    "grossVolumeUSD": 2267973045.79,
+    "netVolumeCOPM": 6168706460071.652,
+    "netVolumeUSD": 1614307588.33,
+    "totalMintedCOPM": 1251757936396,
+    "totalMintedUSD": 327410036.57,
+    "totalBurnedCOPM": 1246788670767.245,
+    "totalBurnedUSD": 326255420.82,
+    "currentSupplyCOPM": 4969265628.754852,
+    "currentSupplyUSD": 1554036.75
   },
   "averages": {
-    "avgEndOfDaySupplyCOPM": 3925010864.348447,
-    "avgEndOfDaySupplyUSD": 1038090.36,
-    "avgDailyTransfers": 216.37232142857144,
-    "avgDailyGrossVolumeCOPM": 7737446549.997308,
-    "avgDailyGrossVolumeUSD": 2024607.5887767856
+    "avgEndOfDaySupplyCOPM": 3925850621.4701295,
+    "avgEndOfDaySupplyUSD": 1038521.77,
+    "avgDailyTransfers": 216.37377341659231,
+    "avgDailyGrossVolumeCOPM": 7731715492.627027,
+    "avgDailyGrossVolumeUSD": 2023169.5323728814
   },
   "peaks": {
     "maxTransfersInOneDay": {
@@ -47,8 +47,8 @@
     }
   },
   "fx": {
-    "latestDay": "2026-10-14",
-    "latestCopPerUsd": 3181.74,
+    "latestDay": "2026-10-15",
+    "latestCopPerUsd": 3197.65,
     "provisionalDays": 0,
     "provisionalFrom": null,
     "minCopPerUsd": 3048.12,
