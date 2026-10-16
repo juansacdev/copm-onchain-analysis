@@ -8,11 +8,11 @@
     "totalDays": 759
   },
   "totals": {
-    "transferEvents": 133009,
-    "grossVolumeCOPM": 52118921490.96041,
-    "grossVolumeUSD": 13420298.23,
-    "netVolumeCOPM": 41974160459.149216,
-    "netVolumeUSD": 10814356.5,
+    "transferEvents": 133012,
+    "grossVolumeCOPM": 52741774330.96041,
+    "grossVolumeUSD": 13615082.79,
+    "netVolumeCOPM": 42597013299.149216,
+    "netVolumeUSD": 11009141.06,
     "totalMintedCOPM": 5281673083.219653,
     "totalMintedUSD": 1333007.27,
     "totalBurnedCOPM": 4863087948.591542,
@@ -23,9 +23,9 @@
   "averages": {
     "avgEndOfDaySupplyCOPM": 568427040.2382735,
     "avgEndOfDaySupplyUSD": 154307.29,
-    "avgDailyTransfers": 175.24242424242425,
-    "avgDailyGrossVolumeCOPM": 68667880.7522535,
-    "avgDailyGrossVolumeUSD": 17681.55234519104
+    "avgDailyTransfers": 175.2463768115942,
+    "avgDailyGrossVolumeCOPM": 69488503.72985561,
+    "avgDailyGrossVolumeUSD": 17938.185494071146
   },
   "peaks": {
     "maxTransfersInOneDay": {
