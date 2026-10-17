@@ -2,17 +2,17 @@
   "schema": 1,
   "chain": "celo",
   "address": "0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606",
-  "lastBlock": 80258258,
-  "lastBlockTime": 1792159016,
+  "lastBlock": 80341126,
+  "lastBlockTime": 1792241884,
   "minted": "5281673083219653188086304764",
   "burned": "4863087948591542995207235322",
   "totalSupply": "418585134628110192879069442",
-  "transfers": 133012,
+  "transfers": 133035,
   "approvals": 82627,
   "adminEvents": 12,
   "canary": {
-    "block": 80198753,
+    "block": 80338927,
     "logs": 1
   },
-  "updatedAt": "2026-10-16T13:57:33.794Z"
+  "updatedAt": "2026-10-17T12:58:39.121Z"
 }

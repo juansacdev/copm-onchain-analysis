@@ -1,17 +1,17 @@
 {
-  "block": 80258258,
-  "blockTime": "2026-10-16T13:56:56.000Z",
+  "block": 80341126,
+  "blockTime": "2026-10-17T12:58:04.000Z",
   "totalSupply": "418585134.628110192879069442",
-  "holders": 952,
+  "holders": 949,
   "addressesEverSeen": 3123,
-  "contracts": 52,
+  "contracts": 49,
   "frozen": [
     "0x1ca33cff95e7eef86b080ab13851034cd3e9e457"
   ],
   "concentration": {
-    "top1Pct": 76.7171,
-    "top5Pct": 96.6733,
-    "top10Pct": 99.4131,
+    "top1Pct": 78.1366,
+    "top5Pct": 98.0524,
+    "top10Pct": 99.6408,
     "top50Pct": 99.9998
   },
   "buckets": [
@@ -19,25 +19,25 @@
       "label": ">= 100M",
       "min": "100000000",
       "holders": 1,
-      "copm": "321126420.064160972371367262"
+      "copm": "327068400.11992033492116806"
     },
     {
       "label": "10M – 100M",
       "min": "10000000",
       "holders": 3,
-      "copm": "77947442.915926905007355784"
+      "copm": "77993289.085748085753250663"
     },
     {
       "label": "1M – 10M",
       "min": "1000000",
-      "holders": 5,
-      "copm": "16443248.975656291319970095"
+      "holders": 4,
+      "copm": "10860422.744686236280423583"
     },
     {
       "label": "100k – 1M",
       "min": "100000",
-      "holders": 7,
-      "copm": "2089114.46163798284000552"
+      "holders": 6,
+      "copm": "1684114.46163798284000552"
     },
     {
       "label": "10k – 100k",
@@ -49,19 +49,19 @@
       "label": "1k – 10k",
       "min": "1000",
       "holders": 6,
-      "copm": "14940.993767816731869855"
+      "copm": "14941.16384946410056034"
     },
     {
       "label": "1 – 1k",
       "min": "1",
       "holders": 31,
-      "copm": "2800.838585814900874973"
+      "copm": "2801.518912404375636917"
     },
     {
       "label": "< 1",
       "min": "0",
-      "holders": 880,
-      "copm": "437.913717211960617421"
+      "holders": 879,
+      "copm": "437.068698486861015827"
     }
   ],
   "roles": {
@@ -90,24 +90,24 @@
     {
       "rank": 1,
       "address": "0x5bd35ee3c1975b2d735d2023bd4f38e3b0cfc122",
-      "balance": "321126420.064160972371367262",
-      "sharePct": "76.7171",
+      "balance": "327068400.11992033492116806",
+      "sharePct": "78.1366",
       "kind": "wallet",
       "frozen": false
     },
     {
       "rank": 2,
       "address": "0xeaf297815ec765eecda15e3fd3509d5b2acaa272",
-      "balance": "35919075.8126",
-      "sharePct": "8.5811",
+      "balance": "35968256.7974",
+      "sharePct": "8.5928",
       "kind": "contract",
       "frozen": false
     },
     {
       "rank": 3,
       "address": "0x4495f525c4ecacf9713a51ec3e8d1e81d7dff870",
-      "balance": "25451717.103326905007355784",
-      "sharePct": "6.0804",
+      "balance": "25448382.288348085753250663",
+      "sharePct": "6.0796",
       "kind": "contract",
       "frozen": false
     },
@@ -121,22 +121,14 @@
     },
     {
       "rank": 5,
-      "address": "0x6ed48aa99c318939f64bca7aa7bb463b71ae8630",
-      "balance": "5586160.195540637450199204",
-      "sharePct": "1.3345",
+      "address": "0x288dc841a52fca2707c6947b3a777c5e56cd87bc",
+      "balance": "5371069.965404141880164261",
+      "sharePct": "1.2831",
       "kind": "contract",
       "frozen": false
     },
     {
       "rank": 6,
-      "address": "0x288dc841a52fca2707c6947b3a777c5e56cd87bc",
-      "balance": "5367736.000833559469511569",
-      "sharePct": "1.2824",
-      "kind": "contract",
-      "frozen": false
-    },
-    {
-      "rank": 7,
       "address": "0x054ca5a947551bd62ab82acb344780c7da24acbe",
       "balance": "2487982.1",
       "sharePct": "0.5944",
@@ -144,7 +136,7 @@
       "frozen": false
     },
     {
-      "rank": 8,
+      "rank": 7,
       "address": "0x8ff7dd8fae37da2b8454c8e76bb1dc4f5ca5ad81",
       "balance": "1681370.679282094400259322",
       "sharePct": "0.4017",
@@ -152,7 +144,7 @@
       "frozen": false
     },
     {
-      "rank": 9,
+      "rank": 8,
       "address": "0xe856e3c47c41ba67e3847aefdbd7c26b2eb91ab6",
       "balance": "1320000",
       "sharePct": "0.3153",
@@ -160,7 +152,7 @@
       "frozen": false
     },
     {
-      "rank": 10,
+      "rank": 9,
       "address": "0x3c634c5935986b1ae21a79dba7001dffb0922937",
       "balance": "611452.300597609561752989",
       "sharePct": "0.1461",
@@ -168,7 +160,7 @@
       "frozen": false
     },
     {
-      "rank": 11,
+      "rank": 10,
       "address": "0x83203cfb749590d107c815a6e7fcb1343d127b3b",
       "balance": "548173.508",
       "sharePct": "0.1310",
@@ -176,15 +168,7 @@
       "frozen": false
     },
     {
-      "rank": 12,
-      "address": "0xbbf2f0c8e4b0a237b0887268c694aa31a2193bea",
-      "balance": "405000",
-      "sharePct": "0.0968",
-      "kind": "contract",
-      "frozen": false
-    },
-    {
-      "rank": 13,
+      "rank": 11,
       "address": "0xe2606e9f3b35a527aa1cce94f74f7b8d3b24e728",
       "balance": "174024.413639639965774256",
       "sharePct": "0.0416",
@@ -192,7 +176,7 @@
       "frozen": false
     },
     {
-      "rank": 14,
+      "rank": 12,
       "address": "0xd647263e6e913ab88c5aec9a84fbb4c833386232",
       "balance": "150000",
       "sharePct": "0.0358",
@@ -200,7 +184,7 @@
       "frozen": false
     },
     {
-      "rank": 15,
+      "rank": 13,
       "address": "0x3dfaddacfd9b74c4c22c023e7e3af7955d3ead3c",
       "balance": "100464.174348207171314742",
       "sharePct": "0.0240",
@@ -208,7 +192,7 @@
       "frozen": false
     },
     {
-      "rank": 16,
+      "rank": 14,
       "address": "0xd3a111a010a2a4e373358c32966660131cc7ce63",
       "balance": "100000.065052526141163533",
       "sharePct": "0.0239",
@@ -216,7 +200,7 @@
       "frozen": false
     },
     {
-      "rank": 17,
+      "rank": 15,
       "address": "0xdb67b304d264267e337a80306dc5d7df096957dd",
       "balance": "90538.935241035856573706",
       "sharePct": "0.0216",
@@ -224,7 +208,7 @@
       "frozen": false
     },
     {
-      "rank": 18,
+      "rank": 16,
       "address": "0x7534f9618ace34107b73261082e037cdb2b726a9",
       "balance": "90503.403398406374501993",
       "sharePct": "0.0216",
@@ -232,7 +216,7 @@
       "frozen": false
     },
     {
-      "rank": 19,
+      "rank": 17,
       "address": "0x8acf74db5d39b241250be4edefd52df87671e651",
       "balance": "90468.375222310756972112",
       "sharePct": "0.0216",
@@ -240,7 +224,7 @@
       "frozen": false
     },
     {
-      "rank": 20,
+      "rank": 18,
       "address": "0x4b87c4ac5611208e90988d9e6f92a6820fe926b5",
       "balance": "90447.725931075697211156",
       "sharePct": "0.0216",
@@ -248,7 +232,7 @@
       "frozen": false
     },
     {
-      "rank": 21,
+      "rank": 19,
       "address": "0xddbf0f1c273958dbde9343eaaccd266842966945",
       "balance": "88162.29",
       "sharePct": "0.0211",
@@ -256,7 +240,7 @@
       "frozen": false
     },
     {
-      "rank": 22,
+      "rank": 20,
       "address": "0x316a45a2a28f71a799e2939043b96262bcd77aa6",
       "balance": "83240.455196883379694446",
       "sharePct": "0.0199",
@@ -264,7 +248,7 @@
       "frozen": false
     },
     {
-      "rank": 23,
+      "rank": 21,
       "address": "0x879f6918c3c376983e861aaa88322a53a9c28440",
       "balance": "80000",
       "sharePct": "0.0191",
@@ -272,7 +256,7 @@
       "frozen": false
     },
     {
-      "rank": 24,
+      "rank": 22,
       "address": "0x231c930fa31538e6800d6f34dcae8dd4b004a419",
       "balance": "49871.74",
       "sharePct": "0.0119",
@@ -280,11 +264,27 @@
       "frozen": false
     },
     {
-      "rank": 25,
+      "rank": 23,
       "address": "0x21d06974f8863b1b0c236bc3c5526dbf0051eab5",
       "balance": "47367.472087024939971464",
       "sharePct": "0.0113",
       "kind": "contract",
+      "frozen": false
+    },
+    {
+      "rank": 24,
+      "address": "0x7988fd7069f904d45a1e52e07248c9840b1a4498",
+      "balance": "44522",
+      "sharePct": "0.0106",
+      "kind": "wallet",
+      "frozen": false
+    },
+    {
+      "rank": 25,
+      "address": "0x532fa0ee9575691eccb174d34b13e1c9392399a9",
+      "balance": "36786.512360350923122866",
+      "sharePct": "0.0088",
+      "kind": "wallet",
       "frozen": false
     }
   ]
