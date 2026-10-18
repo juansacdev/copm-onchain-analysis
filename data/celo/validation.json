@@ -1,7 +1,7 @@
 {
   "chain": "celo",
-  "block": 80341126,
-  "validatedAt": "2026-10-17T12:58:55.112Z",
+  "block": 80428599,
+  "validatedAt": "2026-10-18T13:16:48.399Z",
   "checks": [
     {
       "id": "event-count",
@@ -26,7 +26,7 @@
     {
       "id": "holders-sum-exact",
       "ok": true,
-      "detail": "sum=418585134628110192879069442 totalSupply=418585134628110192879069442 holders.json block=80341126 checkpoint=80341126"
+      "detail": "sum=418585134628110192879069442 totalSupply=418585134628110192879069442 holders.json block=80428599 checkpoint=80428599"
     },
     {
       "id": "partitions-ordered-unique",
@@ -41,7 +41,7 @@
     {
       "id": "no-row-above-checkpoint",
       "ok": true,
-      "detail": "above=0 checkpoint=80341126"
+      "detail": "above=0 checkpoint=80428599"
     },
     {
       "id": "no-row-before-deploy",
@@ -71,7 +71,7 @@
     {
       "id": "approvals-consistent",
       "ok": true,
-      "detail": "block=80179595 checkpoint=80341126 state=82627 daily=82627 spenders=82627"
+      "detail": "block=80179595 checkpoint=80428599 state=82627 daily=82627 spenders=82627"
     },
     {
       "id": "rates-cover-series",
@@ -101,7 +101,7 @@
     {
       "id": "dashboard-matches-ledger",
       "ok": true,
-      "detail": "block=80341126 checkpoint=80341126 sections=15"
+      "detail": "block=80428599 checkpoint=80428599 sections=15"
     },
     {
       "id": "summary-matches-ledger",
