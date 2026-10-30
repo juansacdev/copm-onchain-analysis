@@ -1,10 +1,10 @@
 {
-  "block": 81389246,
-  "blockTime": "2026-10-29T16:06:44.000Z",
+  "block": 81474970,
+  "blockTime": "2026-10-30T15:55:28.000Z",
   "totalSupply": "107258714.628110192879069442",
-  "holders": 939,
+  "holders": 938,
   "addressesEverSeen": 3123,
-  "contracts": 39,
+  "contracts": 38,
   "frozen": [
     "0x1ca33cff95e7eef86b080ab13851034cd3e9e457"
   ],
@@ -31,7 +31,7 @@
       "label": "1M – 10M",
       "min": "1000000",
       "holders": 2,
-      "copm": "7073971.073170589061486367"
+      "copm": "7073971.073173897896600004"
     },
     {
       "label": "100k – 1M",
@@ -60,8 +60,8 @@
     {
       "label": "< 1",
       "min": "0",
-      "holders": 879,
-      "copm": "437.068698486861015961"
+      "holders": 878,
+      "copm": "437.068695178025902324"
     }
   ],
   "roles": {
@@ -121,10 +121,10 @@
     },
     {
       "rank": 5,
-      "address": "0x6c6dc3d4869d9812d80600b9f7f291e13ee73d49",
-      "balance": "5392600.393888494661227045",
+      "address": "0x27a11f1b573878c53e250415f964e664a6ad5d84",
+      "balance": "5392600.393891803496340682",
       "sharePct": "5.0277",
-      "kind": "contract",
+      "kind": "wallet",
       "frozen": false
     },
     {
