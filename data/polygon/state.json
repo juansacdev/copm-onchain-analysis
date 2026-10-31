@@ -2,17 +2,17 @@
   "schema": 1,
   "chain": "polygon",
   "address": "0x12050c705152931cFEe3DD56c52Fb09Dea816C23",
-  "lastBlock": 96446730,
-  "lastBlockTime": 1793375551,
-  "minted": "1254393009950000000000000000000",
-  "burned": "1249958757164245147951786662324",
-  "totalSupply": "4434252785754852048213337676",
-  "transfers": 247277,
-  "approvals": 122900,
+  "lastBlock": 96502875,
+  "lastBlockTime": 1793459769,
+  "minted": "1254497692196000000000000000000",
+  "burned": "1250337373273245147951786662324",
+  "totalSupply": "4160318922754852048213337676",
+  "transfers": 247710,
+  "approvals": 122919,
   "adminEvents": 11,
   "canary": {
-    "block": 96446707,
-    "logs": 1
+    "block": 96502768,
+    "logs": 4
   },
-  "updatedAt": "2026-10-30T15:55:43.843Z"
+  "updatedAt": "2026-10-31T15:19:21.907Z"
 }

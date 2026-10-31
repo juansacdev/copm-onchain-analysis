@@ -1,22 +1,22 @@
 {
   "chain": "polygon",
-  "block": 96446730,
-  "validatedAt": "2026-10-30T15:55:59.982Z",
+  "block": 96502875,
+  "validatedAt": "2026-10-31T15:19:45.233Z",
   "checks": [
     {
       "id": "event-count",
       "ok": true,
-      "detail": "partitions=247277 checkpoint=247277"
+      "detail": "partitions=247710 checkpoint=247710"
     },
     {
       "id": "supply-exact",
       "ok": true,
-      "detail": "minted-burned=4434252785754852048213337676 totalSupply=4434252785754852048213337676 diff 0"
+      "detail": "minted-burned=4160318922754852048213337676 totalSupply=4160318922754852048213337676 diff 0"
     },
     {
       "id": "ledger-matches-state",
       "ok": true,
-      "detail": "partitions minted=1254393009950000000000000000000 burned=1249958757164245147951786662324 transfers=247277; checkpoint minted=1254393009950000000000000000000 burned=1249958757164245147951786662324 transfers=247277"
+      "detail": "partitions minted=1254497692196000000000000000000 burned=1250337373273245147951786662324 transfers=247710; checkpoint minted=1254497692196000000000000000000 burned=1250337373273245147951786662324 transfers=247710"
     },
     {
       "id": "no-negative-balance",
@@ -26,7 +26,7 @@
     {
       "id": "holders-sum-exact",
       "ok": true,
-      "detail": "sum=4434252785754852048213337676 totalSupply=4434252785754852048213337676 holders.json block=96446730 checkpoint=96446730"
+      "detail": "sum=4160318922754852048213337676 totalSupply=4160318922754852048213337676 holders.json block=96502875 checkpoint=96502875"
     },
     {
       "id": "partitions-ordered-unique",
@@ -41,7 +41,7 @@
     {
       "id": "no-row-above-checkpoint",
       "ok": true,
-      "detail": "above=0 checkpoint=96446730"
+      "detail": "above=0 checkpoint=96502875"
     },
     {
       "id": "no-row-before-deploy",
@@ -51,12 +51,12 @@
     {
       "id": "timestamps-exact",
       "ok": true,
-      "detail": "events=247277 missing=0 outOfOrder=0"
+      "detail": "events=247710 missing=0 outOfOrder=0"
     },
     {
       "id": "timestamps-in-window",
       "ok": true,
-      "detail": "outside=0 of 247277"
+      "detail": "outside=0 of 247710"
     },
     {
       "id": "admin-events-ordered",
@@ -71,22 +71,22 @@
     {
       "id": "approvals-consistent",
       "ok": true,
-      "detail": "block=96441681 checkpoint=96446730 state=122900 daily=122900 spenders=122900"
+      "detail": "block=96502768 checkpoint=96502875 state=122919 daily=122919 spenders=122919"
     },
     {
       "id": "rates-cover-series",
       "ok": true,
-      "detail": "days=1136 rates=2023-09-19..2026-10-30 provisional=0"
+      "detail": "days=1137 rates=2023-09-19..2026-11-03 provisional=0"
     },
     {
       "id": "daily-matches-ledger",
       "ok": true,
-      "detail": "rows=1136 lastSupply=4434252785.754852 ledgerSupply=4434252785754852048213337676 totalSupply=4434252785754852048213337676"
+      "detail": "rows=1137 lastSupply=4160318922.754852 ledgerSupply=4160318922754852048213337676 totalSupply=4160318922754852048213337676"
     },
     {
       "id": "series-length",
       "ok": true,
-      "detail": "csv=1136 summary=1136"
+      "detail": "csv=1137 summary=1137"
     },
     {
       "id": "series-continuous",
@@ -96,12 +96,12 @@
     {
       "id": "csv-transfer-total",
       "ok": true,
-      "detail": "csv=247277 summary=247277"
+      "detail": "csv=247710 summary=247710"
     },
     {
       "id": "dashboard-matches-ledger",
       "ok": true,
-      "detail": "block=96446730 checkpoint=96446730 sections=15"
+      "detail": "block=96502875 checkpoint=96502875 sections=15"
     },
     {
       "id": "summary-matches-ledger",
