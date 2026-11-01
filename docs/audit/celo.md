@@ -4,29 +4,29 @@
 >
 > 🇪🇸 [Versión en español](./celo.es.md) · 📖 [Glossary](../GLOSSARY.md) · 🔔 [Contract events](../EVENTS.md) · 🔗 [Unified Polygon + Celo audit](../AUDIT.md)
 
-If COPM's story on [Polygon](./polygon.md) is that of an institutional rail, the Celo story is a completely different one — and seeing them side by side is where it gets interesting. Same stablecoin, two roles. Every figure below is filled from `data/celo/` by `npm run reports`; the checkpoint is block <!-- copm:celo.checkpointBlock -->79,872,373<!-- /copm --> (<!-- copm:celo.checkpointDate -->2026-10-12<!-- /copm -->).
+If COPM's story on [Polygon](./polygon.md) is that of an institutional rail, the Celo story is a completely different one — and seeing them side by side is where it gets interesting. Same stablecoin, two roles. Every figure below is filled from `data/celo/` by `npm run reports`; the checkpoint is block <!-- copm:celo.checkpointBlock -->81,648,067<!-- /copm --> (<!-- copm:celo.checkpointDate -->2026-11-01<!-- /copm -->).
 
 ## Executive summary
 
 | Metric | Value |
 | :--- | :--- |
-| **Audited period** | <!-- copm:celo.firstDay -->2024-09-17<!-- /copm --> → <!-- copm:celo.lastDay -->2026-10-10<!-- /copm --> (<!-- copm:celo.totalDays -->754<!-- /copm --> days, ~<!-- copm:celo.years -->2.1<!-- /copm --> years) |
-| **`Transfer` events** | **<!-- copm:celo.transfers -->132,944<!-- /copm -->** |
-| **Gross volume moved** | <!-- copm:celo.grossVolumeCopm -->52.12B<!-- /copm --> COPM ≈ **<!-- copm:celo.grossVolumeUsd -->$13.4M<!-- /copm --> USD** |
-| **Net volume** (excl. mints/burns) | <!-- copm:celo.netVolumeCopm -->41.97B<!-- /copm --> COPM ≈ **<!-- copm:celo.netVolumeUsd -->$10.8M<!-- /copm --> USD** |
+| **Audited period** | <!-- copm:celo.firstDay -->2024-09-17<!-- /copm --> → <!-- copm:celo.lastDay -->2026-10-30<!-- /copm --> (<!-- copm:celo.totalDays -->774<!-- /copm --> days, ~<!-- copm:celo.years -->2.1<!-- /copm --> years) |
+| **`Transfer` events** | **<!-- copm:celo.transfers -->133,200<!-- /copm -->** |
+| **Gross volume moved** | <!-- copm:celo.grossVolumeCopm -->54.03B<!-- /copm --> COPM ≈ **<!-- copm:celo.grossVolumeUsd -->$14M<!-- /copm --> USD** |
+| **Net volume** (excl. mints/burns) | <!-- copm:celo.netVolumeCopm -->43.57B<!-- /copm --> COPM ≈ **<!-- copm:celo.netVolumeUsd -->$11.3M<!-- /copm --> USD** |
 | **Total issued (mints)** | <!-- copm:celo.minted -->5.28B<!-- /copm --> COPM ≈ <!-- copm:celo.mintedUsd -->$1.3M<!-- /copm --> USD |
-| **Total redeemed (burns)** | <!-- copm:celo.burned -->4.86B<!-- /copm --> COPM ≈ <!-- copm:celo.burnedUsd -->$1.3M<!-- /copm --> USD |
-| **Average ticket per transfer** | **~<!-- copm:celo.avgTicketUsd -->$101<!-- /copm --> USD** |
-| **Daily average** | <!-- copm:celo.avgDailyTransfers -->176<!-- /copm --> transfers · <!-- copm:celo.avgDailyGrossUsd -->$17.8K<!-- /copm --> USD |
+| **Total redeemed (burns)** | <!-- copm:celo.burned -->5.18B<!-- /copm --> COPM ≈ <!-- copm:celo.burnedUsd -->$1.4M<!-- /copm --> USD |
+| **Average ticket per transfer** | **~<!-- copm:celo.avgTicketUsd -->$105<!-- /copm --> USD** |
+| **Daily average** | <!-- copm:celo.avgDailyTransfers -->172<!-- /copm --> transfers · <!-- copm:celo.avgDailyGrossUsd -->$18.1K<!-- /copm --> USD |
 | **Peak transfers in one day** | **<!-- copm:celo.peakTxCount -->1,919<!-- /copm -->** (<!-- copm:celo.peakTxDay -->2025-01-19<!-- /copm -->) |
 | **Peak volume in one day** | **<!-- copm:celo.peakVolumeUsd -->$726K<!-- /copm --> USD** (<!-- copm:celo.peakVolumeDay -->2025-07-23<!-- /copm -->) |
 | **Peak month (volume)** | <!-- copm:celo.peakMonth -->July 2025<!-- /copm -->: <!-- copm:celo.peakMonthUsd -->$2.1M<!-- /copm --> USD |
 | **Peak month (transfers)** | <!-- copm:celo.peakTxMonth -->January 2025<!-- /copm -->: <!-- copm:celo.peakTxMonthCount -->18,491<!-- /copm --> |
 | **Supply peak** | <!-- copm:celo.peakSupplyCopm -->1.14B<!-- /copm --> COPM (<!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->); in USD, <!-- copm:celo.peakSupplyUsd -->$340K<!-- /copm --> (<!-- copm:celo.peakSupplyUsdDay -->2026-07-11<!-- /copm -->) |
-| **Current supply** | <!-- copm:celo.supply -->418,585,134.63<!-- /copm --> COPM ≈ <!-- copm:celo.supplyUsd -->$131K<!-- /copm --> USD |
-| **Holders with a balance** | <!-- copm:celo.holders -->998<!-- /copm --> (the largest holds <!-- copm:celo.top1Pct -->76.2%<!-- /copm -->, the top 10 hold <!-- copm:celo.top10Pct -->98.8%<!-- /copm -->) |
+| **Current supply** | <!-- copm:celo.supply -->101,866,114.63<!-- /copm --> COPM ≈ <!-- copm:celo.supplyUsd -->$32.2K<!-- /copm --> USD |
+| **Holders with a balance** | <!-- copm:celo.holders -->936<!-- /copm --> (the largest holds <!-- copm:celo.top1Pct -->35.3%<!-- /copm -->, the top 10 hold <!-- copm:celo.top10Pct -->99.6%<!-- /copm -->) |
 
-> **Exchange rate:** USD figures value every day at that day's TRM (the official daily rate of the Superintendencia Financiera de Colombia, read from datos.gov.co): the latest is <!-- copm:fx.latestRate -->3,194.44<!-- /copm --> COP per USD (<!-- copm:fx.latestDate -->2026-10-12<!-- /copm -->), and it ranged from <!-- copm:fx.minRate -->3,048.12<!-- /copm --> to <!-- copm:fx.maxRate -->4,478.21<!-- /copm --> over the token's life.
+> **Exchange rate:** USD figures value every day at that day's TRM (the official daily rate of the Superintendencia Financiera de Colombia, read from datos.gov.co): the latest is <!-- copm:fx.latestRate -->3,182.99<!-- /copm --> COP per USD (<!-- copm:fx.latestDate -->2026-11-01<!-- /copm -->), and it ranged from <!-- copm:fx.minRate -->3,048.12<!-- /copm --> to <!-- copm:fx.maxRate -->4,478.21<!-- /copm --> over the token's life.
 
 Unfamiliar with a term? It's in the [glossary](../GLOSSARY.md).
 
@@ -34,9 +34,9 @@ Unfamiliar with a term? It's in the [glossary](../GLOSSARY.md).
 
 ## The story the chain tells
 
-### Same token, different movie: the average ticket here is <!-- copm:celo.avgTicketUsd -->$101<!-- /copm -->.
+### Same token, different movie: the average ticket here is <!-- copm:celo.avgTicketUsd -->$105<!-- /copm -->.
 
-On Polygon, the average COPM transfer moves **~<!-- copm:polygon.avgTicketUsd -->$9,368<!-- /copm -->**. On Celo it moves **~<!-- copm:celo.avgTicketUsd -->$101<!-- /copm -->**. About two orders of magnitude apart.
+On Polygon, the average COPM transfer moves **~<!-- copm:polygon.avgTicketUsd -->$9,179<!-- /copm -->**. On Celo it moves **~<!-- copm:celo.avgTicketUsd -->$105<!-- /copm -->**. About two orders of magnitude apart.
 
 The reading: Polygon carries the institutional settlement — large amounts, B2B partners. Celo carries small, frequent payments — the profile of remittances, micropayments, and end-user wallets. Both living under the same token is precisely the multi-chain design doing its job: each network serves the use case where it's strongest.
 
@@ -50,7 +50,7 @@ The explanation is textbook: by the time COPM reached Celo, the operation, the p
 
 ### The volume is small; the activity is not.
 
-<!-- copm:celo.grossVolumeUsd -->$13.4M<!-- /copm --> gross over <!-- copm:celo.years -->2.1<!-- /copm --> years sounds tiny next to Polygon's <!-- copm:polygon.grossVolumeUsd -->$2.27B<!-- /copm --> — and it is. But the surprising number is a different one: **the average daily transfer count is of the same order on both chains** (~<!-- copm:celo.avgDailyTransfers -->176<!-- /copm -->/day on Celo vs ~<!-- copm:polygon.avgDailyTransfers -->216<!-- /copm -->/day on Polygon). Celo processes a steady flow of small operations: there was activity on <!-- copm:celo.activeDays -->688<!-- /copm --> of the <!-- copm:celo.totalDays -->754<!-- /copm --> audited days (<!-- copm:celo.activeDaysPct -->91%<!-- /copm -->).
+<!-- copm:celo.grossVolumeUsd -->$14M<!-- /copm --> gross over <!-- copm:celo.years -->2.1<!-- /copm --> years sounds tiny next to Polygon's <!-- copm:polygon.grossVolumeUsd -->$2.28B<!-- /copm --> — and it is. But the surprising number is a different one: **the average daily transfer count is of the same order on both chains** (~<!-- copm:celo.avgDailyTransfers -->172<!-- /copm -->/day on Celo vs ~<!-- copm:polygon.avgDailyTransfers -->218<!-- /copm -->/day on Polygon). Celo processes a steady flow of small operations: there was activity on <!-- copm:celo.activeDays -->704<!-- /copm --> of the <!-- copm:celo.totalDays -->774<!-- /copm --> audited days (<!-- copm:celo.activeDaysPct -->91%<!-- /copm -->).
 
 Activity comes in waves, though. Recent months are quiet: <!-- copm:celo.month.2026-09.transfers -->448<!-- /copm --> transfers in September 2026 against <!-- copm:celo.month.2026-06.transfers -->9,135<!-- /copm --> in June 2026 and <!-- copm:celo.peakTxMonthCount -->18,491<!-- /copm --> in <!-- copm:celo.peakTxMonth -->January 2025<!-- /copm -->.
 
@@ -62,17 +62,17 @@ Activity comes in waves, though. Recent months are quiet: <!-- copm:celo.month.2
 
 ### The supply reconciles exactly. To the wei.
 
-Replaying the <!-- copm:celo.transfers -->132,944<!-- /copm --> events yields a derived supply of **<!-- copm:celo.supply -->418,585,134.63<!-- /copm --> COPM**. The contract's `totalSupply()` at the same block reports **<!-- copm:celo.supply -->418,585,134.63<!-- /copm --> COPM**.
+Replaying the <!-- copm:celo.transfers -->133,200<!-- /copm --> events yields a derived supply of **<!-- copm:celo.supply -->101,866,114.63<!-- /copm --> COPM**. The contract's `totalSupply()` at the same block reports **<!-- copm:celo.supply -->101,866,114.63<!-- /copm --> COPM**.
 
-**Difference: zero, to the wei.** Every mint and every burn in the contract's history on Celo is classified and reconciles against the on-chain state, and the <!-- copm:celo.holders -->998<!-- /copm --> balances add up to the same total. It's the perfect reconciliation an accountant would call "balanced books" — derived exclusively from public events. The supply peaked at <!-- copm:celo.peakSupplyCopm -->1.14B<!-- /copm --> COPM on <!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->.
+**Difference: zero, to the wei.** Every mint and every burn in the contract's history on Celo is classified and reconciles against the on-chain state, and the <!-- copm:celo.holders -->936<!-- /copm --> balances add up to the same total. It's the perfect reconciliation an accountant would call "balanced books" — derived exclusively from public events. The supply peaked at <!-- copm:celo.peakSupplyCopm -->1.14B<!-- /copm --> COPM on <!-- copm:celo.peakSupplyDay -->2026-03-24<!-- /copm -->.
 
 ![Circulating supply](../../charts/celo/03-supply-over-time.svg)
 
 ### Mints and burns: the peg operated bidirectionally here too.
 
 - Total issued: **<!-- copm:celo.minted -->5.28B<!-- /copm --> COPM**
-- Total redeemed: **<!-- copm:celo.burned -->4.86B<!-- /copm --> COPM** (<!-- copm:celo.burnedPct -->92.1%<!-- /copm --> of issuance)
-- Difference: <!-- copm:celo.supplyCompact -->418.6M<!-- /copm --> COPM = exactly the current supply ✓
+- Total redeemed: **<!-- copm:celo.burned -->5.18B<!-- /copm --> COPM** (<!-- copm:celo.burnedPct -->98.1%<!-- /copm --> of issuance)
+- Difference: <!-- copm:celo.supplyCompact -->101.9M<!-- /copm --> COPM = exactly the current supply ✓
 
 ![Monthly mints vs burns](../../charts/celo/06-monthly-mints-burns.svg)
 
@@ -107,12 +107,12 @@ The `FREEZER_ROLE` can block an address; the contract emitted <!-- copm:celo.eve
 | <!-- copm:celo.topVol.2.day -->2026-09-16<!-- /copm --> | <!-- copm:celo.topVol.2.usd -->$387K<!-- /copm --> | <!-- copm:celo.topVol.2.transfers -->43<!-- /copm --> |
 | <!-- copm:celo.topVol.3.day -->2025-07-17<!-- /copm --> | <!-- copm:celo.topVol.3.usd -->$256K<!-- /copm --> | <!-- copm:celo.topVol.3.transfers -->20<!-- /copm --> |
 | <!-- copm:celo.topVol.4.day -->2025-07-24<!-- /copm --> | <!-- copm:celo.topVol.4.usd -->$232K<!-- /copm --> | <!-- copm:celo.topVol.4.transfers -->90<!-- /copm --> |
-| <!-- copm:celo.topVol.5.day -->2024-10-03<!-- /copm --> | <!-- copm:celo.topVol.5.usd -->$193K<!-- /copm --> | <!-- copm:celo.topVol.5.transfers -->8<!-- /copm --> |
-| <!-- copm:celo.topVol.6.day -->2025-07-25<!-- /copm --> | <!-- copm:celo.topVol.6.usd -->$191K<!-- /copm --> | <!-- copm:celo.topVol.6.transfers -->786<!-- /copm --> |
-| <!-- copm:celo.topVol.7.day -->2025-12-19<!-- /copm --> | <!-- copm:celo.topVol.7.usd -->$181K<!-- /copm --> | <!-- copm:celo.topVol.7.transfers -->174<!-- /copm --> |
-| <!-- copm:celo.topVol.8.day -->2026-09-10<!-- /copm --> | <!-- copm:celo.topVol.8.usd -->$161K<!-- /copm --> | <!-- copm:celo.topVol.8.transfers -->15<!-- /copm --> |
-| <!-- copm:celo.topVol.9.day -->2025-11-13<!-- /copm --> | <!-- copm:celo.topVol.9.usd -->$160K<!-- /copm --> | <!-- copm:celo.topVol.9.transfers -->26<!-- /copm --> |
-| <!-- copm:celo.topVol.10.day -->2025-07-03<!-- /copm --> | <!-- copm:celo.topVol.10.usd -->$151K<!-- /copm --> | <!-- copm:celo.topVol.10.transfers -->37<!-- /copm --> |
+| <!-- copm:celo.topVol.5.day -->2026-10-20<!-- /copm --> | <!-- copm:celo.topVol.5.usd -->$199K<!-- /copm --> | <!-- copm:celo.topVol.5.transfers -->49<!-- /copm --> |
+| <!-- copm:celo.topVol.6.day -->2026-10-16<!-- /copm --> | <!-- copm:celo.topVol.6.usd -->$196K<!-- /copm --> | <!-- copm:celo.topVol.6.transfers -->5<!-- /copm --> |
+| <!-- copm:celo.topVol.7.day -->2026-10-15<!-- /copm --> | <!-- copm:celo.topVol.7.usd -->$195K<!-- /copm --> | <!-- copm:celo.topVol.7.transfers -->17<!-- /copm --> |
+| <!-- copm:celo.topVol.8.day -->2024-10-03<!-- /copm --> | <!-- copm:celo.topVol.8.usd -->$193K<!-- /copm --> | <!-- copm:celo.topVol.8.transfers -->8<!-- /copm --> |
+| <!-- copm:celo.topVol.9.day -->2025-07-25<!-- /copm --> | <!-- copm:celo.topVol.9.usd -->$191K<!-- /copm --> | <!-- copm:celo.topVol.9.transfers -->786<!-- /copm --> |
+| <!-- copm:celo.topVol.10.day -->2025-12-19<!-- /copm --> | <!-- copm:celo.topVol.10.usd -->$181K<!-- /copm --> | <!-- copm:celo.topVol.10.transfers -->174<!-- /copm --> |
 
 ![Top 10 days by gross volume](../../charts/celo/05-top10-volume-days.svg)
 
@@ -120,25 +120,25 @@ The `FREEZER_ROLE` can block an address; the contract emitted <!-- copm:celo.eve
 
 ## Validation
 
-The same <!-- copm:celo.checksTotal -->21<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->21<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-10-12<!-- /copm -->):
+The same <!-- copm:celo.checksTotal -->21<!-- /copm --> strict rules as Polygon, offline and with no tolerance, <!-- copm:celo.checksPassed -->21<!-- /copm --> passed (validated on <!-- copm:celo.validatedDate -->2026-11-01<!-- /copm -->):
 
 | # | Rule | Result |
 | :--- | :--- | :--- |
-| 1 | Event count: stored transfers equal the checkpoint | ✅ <!-- copm:celo.transfers -->132,944<!-- /copm --> = <!-- copm:celo.transfers -->132,944<!-- /copm --> |
+| 1 | Event count: stored transfers equal the checkpoint | ✅ <!-- copm:celo.transfers -->133,200<!-- /copm --> = <!-- copm:celo.transfers -->133,200<!-- /copm --> |
 | 2 | Supply: minted − burned equals `totalSupply()` at the checkpoint block | ✅ difference 0 wei |
 | 3 | Replaying the stored transfers reproduces the checkpoint ledger | ✅ |
 | 4 | No negative balance in the ledger | ✅ |
-| 5 | `holders.csv` adds up to `totalSupply()`; every balance equals `balanceOf` | ✅ <!-- copm:celo.holders -->998<!-- /copm --> holders, <!-- copm:celo.addressesEverSeen -->3,123<!-- /copm --> addresses |
+| 5 | `holders.csv` adds up to `totalSupply()`; every balance equals `balanceOf` | ✅ <!-- copm:celo.holders -->936<!-- /copm --> holders, <!-- copm:celo.addressesEverSeen -->3,123<!-- /copm --> addresses |
 | 6 | Partitions strictly ordered, no duplicate (tx hash, log index) | ✅ |
 | 7 | Every row sits in the partition of its UTC month | ✅ |
 | 8 | Nothing above the checkpoint block | ✅ |
 | 9 | Nothing before the deploy block | ✅ block <!-- copm:celo.deployBlock -->27,680,993<!-- /copm --> |
-| 10 | Every transfer has an exact block timestamp | ✅ <!-- copm:celo.transfers -->132,944<!-- /copm --> events, 0 missing |
+| 10 | Every transfer has an exact block timestamp | ✅ <!-- copm:celo.transfers -->133,200<!-- /copm --> events, 0 missing |
 | 11 | Timestamps inside the deploy → checkpoint window | ✅ |
 | 12 | Admin events strictly ordered, none above the checkpoint | ✅ |
 | 13 | Admin event count equals the checkpoint | ✅ <!-- copm:celo.adminEvents -->12<!-- /copm --> events |
 | 14 | `daily.csv` equals the series rebuilt from the ledger, ending at `totalSupply()` | ✅ |
-| 15 | Daily series has the length announced in `summary.json` | ✅ <!-- copm:celo.totalDays -->754<!-- /copm --> days |
+| 15 | Daily series has the length announced in `summary.json` | ✅ <!-- copm:celo.totalDays -->774<!-- /copm --> days |
 | 16 | Daily series is continuous (no missing day) | ✅ 0 gaps |
 | 17 | `daily.csv` transfer total equals `summary.json` | ✅ |
 
@@ -155,7 +155,7 @@ Identical to [Polygon's](./polygon.md#methodology) — same pipeline, same scrip
 1. **Celo only.** Polygon is audited in [its own audit](./polygon.md); the consolidated view lives in the [unified audit](../AUDIT.md).
 2. **USD figures are an estimate.** Same as Polygon: 1 COPM is treated as 1 COP and each day uses its own TRM.
 3. **Internal addresses not filtered.** Same as Polygon.
-4. **Provenance of the history.** The public Celo endpoint (`forno.celo.org`) answers `eth_getLogs` with empty arrays and no error for a large share of non-empty ranges, so a full-history scan could not finish there on 2026-10-11. The history up to block 79,856,063 was assembled from the union of seven scans plus the earlier dataset and certified with the same checks: supply equal to `totalSupply()` to the wei and every balance equal to `balanceOf`. Transfers are covered by that proof. The approval counters (<!-- copm:celo.approvals -->82,623<!-- /copm -->) are a lower bound. A scan from the deploy block against an archive endpoint (`scan --fresh --chain celo`) rebuilds the history from scratch.
+4. **Provenance of the history.** The public Celo endpoint (`forno.celo.org`) answers `eth_getLogs` with empty arrays and no error for a large share of non-empty ranges, so a full-history scan could not finish there on 2026-10-11. The history up to block 79,856,063 was assembled from the union of seven scans plus the earlier dataset and certified with the same checks: supply equal to `totalSupply()` to the wei and every balance equal to `balanceOf`. Transfers are covered by that proof. The approval counters (<!-- copm:celo.approvals -->82,629<!-- /copm -->) are a lower bound. A scan from the deploy block against an archive endpoint (`scan --fresh --chain celo`) rebuilds the history from scratch.
 5. **Transfers are not payments.** A single payment can emit several transfers, so the average ticket is a value per transfer, not per payment.
 
 ## Reproduce this audit
