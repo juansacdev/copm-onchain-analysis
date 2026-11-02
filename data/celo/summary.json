@@ -4,11 +4,11 @@
   "address": "0xC92E8Fc2947E32F2B574CCA9F2F12097A71d5606",
   "range": {
     "firstDay": "2024-09-17",
-    "lastDay": "2026-10-30",
-    "totalDays": 774
+    "lastDay": "2026-11-01",
+    "totalDays": 776
   },
   "totals": {
-    "transferEvents": 133200,
+    "transferEvents": 133204,
     "grossVolumeCOPM": 54030546253.210304,
     "grossVolumeUSD": 14022479.23,
     "netVolumeCOPM": 43569066201.3991,
@@ -18,14 +18,14 @@
     "totalBurnedCOPM": 5179806968.591542,
     "totalBurnedUSD": 1373273.17,
     "currentSupplyCOPM": 101866114.62811,
-    "currentSupplyUSD": 32165.78
+    "currentSupplyUSD": 32003.28
   },
   "averages": {
-    "avgEndOfDaySupplyCOPM": 561091624.4706341,
-    "avgEndOfDaySupplyUSD": 152478.01,
-    "avgDailyTransfers": 172.09302325581396,
-    "avgDailyGrossVolumeCOPM": 69806907.30388927,
-    "avgDailyGrossVolumeUSD": 18116.898229974162
+    "avgEndOfDaySupplyCOPM": 559908053.5689782,
+    "avgEndOfDaySupplyUSD": 152167.51,
+    "avgDailyTransfers": 171.65463917525773,
+    "avgDailyGrossVolumeCOPM": 69626992.59434317,
+    "avgDailyGrossVolumeUSD": 18070.20519329897
   },
   "peaks": {
     "maxTransfersInOneDay": {
@@ -47,8 +47,8 @@
     }
   },
   "fx": {
-    "latestDay": "2026-10-30",
-    "latestCopPerUsd": 3166.91,
+    "latestDay": "2026-11-01",
+    "latestCopPerUsd": 3182.99,
     "provisionalDays": 0,
     "provisionalFrom": null,
     "minCopPerUsd": 3048.12,
